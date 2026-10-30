@@ -3,9 +3,9 @@
 Small standalone programs that establish the facts
 [OSMESA-GL-PLAN.md](../OSMESA-GL-PLAN.md) is built on. They are the reason the plan chose OSMesa
 over EGL and over Vulkan/DXVK — rerun them before trusting any of those conclusions on a
-different Haiku revision or Mesa version.
+different Haiku or RenkuOS revision or Mesa version.
 
-Build and run on the Haiku target:
+Build and run on the target machine:
 
 | Probe | Build | Establishes |
 |---|---|---|

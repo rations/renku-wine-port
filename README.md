@@ -1,12 +1,14 @@
-# haiku-wine-port
+# renku-wine-port-jackdaw
 
-> **Users:** install the whole stack from the [JackDAW release](https://github.com/rations/jackDAW-haiku/releases)
-> (`sh install.sh`). This repository is the source of the `wine` package.
+> This repository is the source of the `wine` package, part of the
+> [JackDAW stack](https://github.com/rations/jackDAW-renku) for RenkuOS. The 0.5
+> release's `install.sh` is for Haiku hrev60256; there is no RenkuOS release yet.
 
-Haiku patches for **Wine 11.19**, packaged as a HaikuPorts port. They exist so that
-[vstbridge-haiku](https://github.com/rations/vstbridge-haiku) can run **Windows VST2 and VST3
-plug-ins** inside [jackDAW-haiku](https://github.com/rations/jackDAW-haiku) — the stock
-HaikuPorts Wine package is missing the Haiku fixes the bridge depends on.
+Patches for **Wine 11.19** on RenkuOS (and Haiku, where they were developed), packaged as a
+HaikuPorts port. They exist so that
+[vstbridge-renku](https://github.com/rations/vstbridge-renku) can run **Windows VST2 and VST3
+plug-ins** inside [JackDAW](https://github.com/rations/jackDAW-renku) — the stock
+HaikuPorts Wine package is missing the fixes the bridge depends on.
 
 **This repository is the source of truth for these patches.** They were offered upstream and
 declined (HaikuPorts does not accept AI-assisted contributions), so they are maintained here
@@ -59,6 +61,10 @@ Seventeen patches. **1–4 are upstream HaikuPorts'**, with original authorship 
 | 15 | ntdll: support WoW64 (32-bit code) on Haiku | local | 32-bit Windows code needs a 32-bit code selector and a per-thread `%fs` segment for its TEB; every 32-bit program exited with "No LDT support on this platform". Uses new `arch_thread_control()` calls (`THREAD_SET_LDT_ENTRY`, `THREAD_SET/GET_FS_BASE`, `THREAD_GET_GS_BASE`) that **only a locally built Haiku kernel provides** (per-team LDT, FS/DS/ES kept per thread, FS saved across signals); FreeBSD's model. On a stock kernel 32-bit programs exit with "No LDT support in this Haiku kernel" and 64-bit ones are unaffected. Enables the iLok PACE installer's 32-bit parts (Bonjour, custom actions) and 32-bit installers in general. |
 | 16 | ntdll, server: use the xattr functions from libgnu on Haiku | local | Patch 2 disabled `HAVE_SYS_XATTR_H`, so reparse points (Windows symbolic links) failed with `ENOSYS`. Wine Mono's installer creates symlinks (`CREATELINKS64`, error 1603), so Mono never installed and every .NET custom action failed — iLok's License Support MSI with `0x80070643`. configure now finds `fgetxattr` in libgnu, which maps xattrs to BFS attributes. |
 | 17 | ntdll, server: support hardware breakpoints on Haiku | local | Copy protection (PACE/iLok: Neural DSP, Toontrack and others) points Dr0–Dr3 at a probe with `SetThreadContext` and expects `EXCEPTION_SINGLE_STEP` when it runs; a probe that does not trap marks the process as tampered and the licence check fails later ("no activation", or `LoadLibraryW` "DLL initialization failed" for a plug-in). The server cannot set debug registers on Haiku (no ptrace), so each thread loads its own through `THREAD_SET_DEBUG_REGISTERS`, which **only the locally built Haiku kernel provides**; `trap_handler` reports DR6 with the reserved bits set, as Windows does, which PACE checks. On a stock kernel the breakpoints are ignored with a warning. (Developed as "patch 18"; an SMBIOS patch numbered 17 was dropped because it changed the hardware IDs licences are bound to.) |
+
+On RenkuOS, patches 15 and 17 do nothing: its kernel has neither the LDT calls nor
+`THREAD_SET_DEBUG_REGISTERS`, so, as on a stock Haiku kernel, 32-bit programs exit and
+hardware breakpoints are ignored. Only 64-bit Windows programs run.
 
 Patch 7 removes the need for the `export WINELOADER=/boot/system/bin/wine` workaround earlier
 Haiku Wine builds required in `~/config/settings/profile`: winegcc's generated `.exe` wrapper
@@ -117,14 +123,14 @@ kept only so it is not lost.
 
 ## Building
 
-On the target Haiku machine, with a [haikuports](https://github.com/haikuports/haikuports)
+On the target RenkuOS (or Haiku) machine, with a [haikuports](https://github.com/haikuports/haikuports)
 checkout and `haikuporter` configured:
 
 ```sh
 # 1. Overlay this port onto your haikuports checkout
 cp -a app-emulation/wine/. ~/haikuports/app-emulation/wine/
 
-# 2. Build (roughly an hour; builds both i386 and x86_64)
+# 2. Build (about 30 minutes with -j12 in the RenkuOS build VM; builds i386 and x86_64)
 cd ~/haikuports
 haikuporter -y -j8 wine-11.19
 ```
@@ -159,6 +165,8 @@ The package lands in `~/haikuports/packages/wine-11.19-1-x86_64.hpkg`.
 
 Build dependencies are declared in the recipe (`BUILD_REQUIRES`/`BUILD_PREREQUIRES`) and include
 llvm21 + clang + lld for the PE cross-build; `haikuporter` will tell you what is missing.
+When installing them by hand with `pkgman`, `devel:libSDL2_2.0`, `devel:libEGL` and
+`devel:libOSMesa` are not found by name on RenkuOS: install `libsdl2_devel` and `mesa_devel`.
 
 ### Iterating without an hour-long rebuild
 
@@ -192,7 +200,11 @@ possible:
 pkgman install ./wine-11.19-4-x86_64.hpkg
 ```
 
-- **x86_64**, and **Haiku nightly hrev60256 or newer** (REVISION 4 is built on hrev60256).
+- **On RenkuOS, build it there.** A package built on RenkuOS build 66 requires
+  `haiku>=r1~beta6_hrev60072_422-1` (RenkuOS's system package is still named `haiku`), so a
+  package built on a Haiku nightly does not install on RenkuOS. Both builds are
+  `wine-11.19-4`, so do not mix them in one repository or on one machine.
+- On Haiku: **x86_64**, and **Haiku nightly hrev60256 or newer** (REVISION 4 is built on hrev60256).
   `haikuporter` bakes the build machine's revision in as a floor, so an older nightly — and R1
   beta stable — refuses to install it. Newer is fine — this is a userland package, not a kernel
   add-on. The floor includes the package revision too, so build on the official `-1` system
@@ -266,7 +278,7 @@ git rev-parse HEAD^{tree}   # must equal the dev tree's HEAD^{tree}
 | **this repo** | **Authoritative.** The recipe and patchsets, in git. If it is not committed here, it is not kept. |
 | `third_party/wine-haiku-dev` | Scratch working tree for editing source and regenerating the patchset (the `git am` tree above): pristine 11.19 plus one commit per patch. Regenerable; safe to delete and recreate. |
 | `third_party/wine-osmesa-dev` | The 11.8 tree the 11.19 rebase cherry-picked from. History only. Tag `pre-consolidate-backup-20260726` marks its pre-cleanup history. |
-| build VM `~/haikuports/app-emulation/wine/` | Build machine only (a QEMU VM running the nightly the package is built for). Copy the port in, build, copy the `.hpkg` out. Has no git history of its own — anything edited only there is one `haikuporter -c` from gone. |
+| build VM `~/haikuports/app-emulation/wine/` | Build machine only (a QEMU VM running the RenkuOS build or Haiku nightly the package is built for). Copy the port in, build, copy the `.hpkg` out. Has no git history of its own — anything edited only there is one `haikuporter -c` from gone. |
 
 ## Graphics driver
 
@@ -351,7 +363,7 @@ WINEDEBUG=+winediag wine notepad 2>&1 | head       # the ERR above, if any
 
 | REVISION | Notes |
 |---|---|
-| 4 | Patch 17 (hardware breakpoints, for PACE/iLok copy protection), and `lib:libgnutls` in REQUIRES: Wine dlopens it, so haikuporter could not see the dependency, and without it TLS (and iLok sign-in) failed. Patch 17 was verified from the work tree on hrev60247: the Windows breakpoint tests pass, and the Fortin NTS and Archetype Gojira X VST3s load licensed in JackDAW. The patchset applies to pristine 11.19 and gives tree `26fbb2d8`. **Built** 2026-10-16 with `haikuporter -c` on stock hrev60256-1: all 17 patches applied from the committed patchset; the package requires `haiku>=r1~beta6_hrev60256-1` and `lib:libgnutls`. **Verified installed** (VM, JackDAW stack 0.5 installer on the hrev60256-2 system package): a 32-bit `syswow64\cmd.exe` reports `x86`, Wine Mono installs, and the hardware breakpoint test passes. **Not yet run on the test machine.** |
+| 4 | Patch 17 (hardware breakpoints, for PACE/iLok copy protection), and `lib:libgnutls` in REQUIRES: Wine dlopens it, so haikuporter could not see the dependency, and without it TLS (and iLok sign-in) failed. Patch 17 was verified from the work tree on hrev60247: the Windows breakpoint tests pass, and the Fortin NTS and Archetype Gojira X VST3s load licensed in JackDAW. The patchset applies to pristine 11.19 and gives tree `26fbb2d8`. **Built** 2026-10-16 with `haikuporter -c` on stock hrev60256-1: all 17 patches applied from the committed patchset; the package requires `haiku>=r1~beta6_hrev60256-1` and `lib:libgnutls`. **Verified installed** (VM, JackDAW stack 0.5 installer on the hrev60256-2 system package): a 32-bit `syswow64\cmd.exe` reports `x86`, Wine Mono installs, and the hardware breakpoint test passes. **Not yet run on the test machine.** **Built for RenkuOS** 2026-10-30 in a RenkuOS build 66 VM (`haikuporter -y -j12`, ~30 min, recipe and patchset unchanged): the package requires `haiku>=r1~beta6_hrev60072_422-1`. Installed on the RenkuOS test laptop with vstbridge 0.3.0-1; `wine --version` reports `wine-11.19`. On first run the Wine Mono download stalled. No plug-in has been loaded yet. |
 | 3 | Patches 13–16: thread-directed signals, no `-ldl` in winegcc, WoW64 (32-bit code) on a kernel with LDT support, xattrs through libgnu. Built on hrev60247, so it requires `haiku>=r1~beta6_hrev60247-1`. Verified with the work tree before packaging (VM, custom hrev60247 kernel): a 32-bit `syswow64\cmd.exe` runs and reports `x86`; Wine Mono 11.3.0 installs; iLok's PACE License Support bundle installs (exit `0x0`) and iLok License Manager starts. **Built** 2026-10-15 with `haikuporter -c`: the work tree's `HEAD^{tree}` equals the verified patchset's (`3035eeed`); `config.h` has `HAVE_SYS_XATTR_H 1` and the Makefile `XATTR_LIBS = -lgnu`; `ntdll.so` and `wineserver` link `libgnu.so`; `bin/wine` carries `/packages/wine-11.19-3`; the package requires `haiku>=r1~beta6_hrev60247-1`. **Not yet run as an installed package or on the test machine.** |
 | 2 | Patch 12 (wineserver `free_async_queue()` double release). Built on hrev60236. |
 | 1 | Rebase onto Wine 11.19 (tarball SHA256 `73eb0b02…c4087f`). Eleven patches: the 11.8 set minus `get_current_thread_data` (upstreamed in 11.11) and the debug stack scan, plus two installer fixes for iLok/PACE (sechost failure actions, Windows 10 manifests for msiexec/rundll32). Patch 2 needed two conflict resolutions; the OSMesa backend (patch 8) was ported to the version-41 GL driver interface and compile-checked only. Dependency declarations unchanged from 11.8-10. **Built** on hrev60236 (2026-10-14), after one more patch 2 fix: 11.19 adds a static `spawn_thread()` to `dlls/ntdll/unix/thread.c` that clashes with Haiku's `OS.h`, so it is renamed around that include like `cpu_info` and `exit_thread`. Confirmed in the build: `HAVE_OSMESA 1` in the work tree's `config.h`; the package requires `haiku>=r1~beta6_hrev60236-1` and `lib:libosmesa`; `bin/wine` carries `/packages/wine-11.19-1/.self`. In 11.19, `bin/wine` is a small launcher (`tools/wine`), and the loader that patch 7 changes is `lib/wine/x86_64-unix/Wine`, which imports `find_path`. **Not yet run on a test machine.** |
