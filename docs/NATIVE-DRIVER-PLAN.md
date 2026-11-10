@@ -111,8 +111,51 @@ Programs in `probes/` that settle platform facts before driver code depends on t
 | Probe | Question | Result |
 |---|---|---|
 | P1+P2 `beprobe.cpp` | Can a BApplication run off the main thread while another thread creates, locks and draws into a window, with looper events waking that thread's `poll()` through a pipe? | **Passed, 11/11**, 2026-11-10, on the RenkuOS build VM (hrev60072+518, `B_HAIKU_VERSION_1_PRE_BETA_7`). Show → first Draw event 2.2 ms; Invalidate → Draw event 1.8 ms, both with a 12-job Wine build loading every core. The first run found rule 4. |
-| P3 | Inside a Wine process: does the BApplication thread start, open a window, and survive Wine's signals (rule 3)? | Not run yet; needs the 11.21 base build. |
+| P3 `sigprobe.c` + `sigprobe_be.cpp` | Inside a Wine process: does the BApplication thread start, open a window, and survive Wine's signals (rule 3)? | **Built, not run yet** (2026-11-10). Creating a prefix for it on the 11.21 base surfaced the problems below. |
 | P4 `winprobe.cpp` | Window behaviour: exact and off-screen placement, popups that never take focus, owned/modal windows, decorator geometry, size limits. | **Passed, 14/14**, 2026-11-10, same VM, run over ssh. See below. |
+
+What P3 has established so far, from the sources:
+
+- **Which signals can reach a Be thread.** wineserver signals a specific thread by id
+  (`server/ptrace.c`, `tkill()` → `send_signal()` under `__HAIKU__`), so its SIGUSR1 suspends
+  only reach Wine threads. Process-directed signals are the risk: RenkuOS queues them on the
+  team and wakes every thread that doesn't block them (`src/system/kernel/signal.cpp`,
+  `send_signal_to_team_locked`). That covers Ctrl-C's SIGINT from a Terminal, and SIGQUIT and
+  SIGHUP, all of which Wine handles.
+- **Wine's handlers can't cope with a foreign thread.** `get_current_thread_data()` is
+  `rsp & ~0xffff` with no check (`signal_x86_64.c:572`, `unix_private.h:182`).
+- **What gets blocked.** The set to block is ntdll's `server_block_set`: ALRM, IO, INT, HUP,
+  QUIT, USR1, USR2 and CHLD (`dlls/ntdll/unix/server.c:1643`). RenkuOS has no `SIGIO`; the port
+  uses `SIGPOLL` instead (`server.c:75`). ntdll doesn't export the set, so the driver keeps its
+  own copy.
+- **Where Be threads come from.** `BWindow::Show()` spawns the looper from the calling thread
+  (`Looper.cpp:480`), so that call needs the block as well as the app thread's creation.
+- **Not blockable.** Synchronous faults (SIGSEGV) on a Be thread still run Wine's handler.
+  `sigprobe --fault` will show what that looks like.
+
+The probe is a Winelib program built against the 11.21 work tree (commands in
+[probes/README.md](probes/README.md)). Getting a prefix for it found three problems with the
+no-driver base, all on the build VM:
+
+1. **A prefix never finishes while libEGL is visible.** `explorer /desktop` logs
+   `err:wgl:internal_context_create Failed to create internal root context`, and then its only
+   thread waits forever on a `pthread once` semaphore (seen with `ps -as`). With no other thread
+   left, that is a recursive `pthread_once`. It happens with the `null` driver too. Shadowing
+   `libEGL.so.1` with an empty library on `LIBRARY_PATH` removes it: win32u's `egl_init` fails
+   at `dlsym`. Which `pthread_once` it is was not found: `Debugger -s --thread` could not stop
+   that thread. **Consequence: EGL has to be off in this build** (configure `SONAME_LIBEGL`),
+   now rather than in phase 6. Not yet done.
+2. **With no driver configured, explorer falls back to nothing.** `default_driver` is
+   "mac,x11,wayland" and none of them exists, so programs get
+   `nodrv_CreateWindow … no driver could be loaded`. For the probe, the prefix is seeded with
+   `HKCU\Software\Wine\Drivers` `Graphics=null` ([probes/sigprobe-user.reg](probes/sigprobe-user.reg)).
+   Phase 2 replaces this with `renku` first in `default_driver`.
+3. **Wine Mono's install prompt waits for a click**, with 11.19 as well, so an unattended
+   prefix needs `WINEDLLOVERRIDES=mscoree,mshtml=`.
+
+With all three worked around, `wineboot -i` on 11.21 finished: exit 0, about 5 minutes, at
+`~/probes/p3prefix` on the VM. 32-bit code there logs `THREAD_SET_LDT_ENTRY … failed`, as
+expected without the WoW64 kernel work.
 
 What P4 established:
 
