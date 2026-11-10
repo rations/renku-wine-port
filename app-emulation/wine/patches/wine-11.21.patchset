@@ -1,7 +1,7 @@
-From f1ae6aa31e602ac1b357b9f7f400258367d26d1f Mon Sep 17 00:00:00 2001
+From 9794aa43c5296cda799020d712961ddef6ce4367 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Thu, 23 Apr 2026 02:37:32 +0200
-Subject: [PATCH 01/17] Add Wayland input header
+Subject: [PATCH 01/15] Add Wayland input header
 
 ---
  dlls/winewayland.drv/input-event-codes.h | 980 +++++++++++++++++++++++
@@ -998,14 +998,22 @@ index 00000000..a4206723
 2.47.3
 
 
-From 6f1edabb0f0a5ba40feeb0f5652ca46699d33e24 Mon Sep 17 00:00:00 2001
+From 54edd959ff8bc6a4d39da1d1fdfb739d3b02f010 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 02/17] 11.8 patches
+Subject: [PATCH 02/15] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
+
+[rations: rebased onto wine-11.21. configure.ac: upstream split the combined Wayland
+dependency check into one WINE_NOTICE_WITH per dependency (c280fc05bd5); kept the split checks
+and dropped the linux/input.h one, as this patch had dropped it from the combined check --
+patch 1 supplies the input header winewayland needs. The RenkuOS port builds
+--without-wayland, so the winewayland hunks below are not compiled; patch 1 is still required,
+because makedep resolves every quoted #include of every module, built or not, and fails
+configure ("input-event-codes.h: No such file or directory") without it.]
 ---
- configure.ac                            |   2 +-
+ configure.ac                            |   3 -
  dlls/crypt32/unixlib.c                  |   4 +
  dlls/nsiproxy.sys/ndis.c                |  13 +++
  dlls/ntdll/unix/file.c                  |   7 ++
@@ -1030,26 +1038,27 @@ Subject: [PATCH 02/17] 11.8 patches
  server/signal.c                         |   6 ++
  server/sock.c                           |  14 +++
  tools/winegcc/winegcc.c                 |   3 +
- 25 files changed, 312 insertions(+), 4 deletions(-)
+ 25 files changed, 311 insertions(+), 6 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 03327404..40418304 100644
+index 91225fd0..8fd51065 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1453,7 +1453,7 @@ then
-         fi
-     fi
- fi
--WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" -o "$ac_cv_header_linux_input_h" = "no"],
-+WINE_NOTICE_WITH(wayland, [test -z "$WAYLAND_CLIENT_LIBS" -o -z "$WAYLAND_SCANNER" -o -z "$XKBCOMMON_LIBS" -o -z "$XKBREGISTRY_LIBS" = "no"],
-                  [Wayland ${notice_platform}development files not found, the Wayland driver won't be supported.],
+@@ -1472,9 +1472,6 @@ WINE_NOTICE_WITH(wayland, [test -z "$XKBCOMMON_LIBS"],
+ WINE_NOTICE_WITH(wayland, [test -z "$XKBREGISTRY_LIBS"],
+                  [libxkbregistry ${notice_platform}development files not found, the Wayland driver won't be supported.],
                   [enable_winewayland_drv])
+-WINE_NOTICE_WITH(wayland, [test "$ac_cv_header_linux_input_h" = "no"],
+-                 [linux/input.h not found, the Wayland driver won't be supported.],
+-                 [enable_winewayland_drv])
  
+ if test "$enable_wineandroid_drv$enable_winemac_drv$enable_winewayland_drv" = "nonono"
+ then
 diff --git a/dlls/crypt32/unixlib.c b/dlls/crypt32/unixlib.c
-index 4b9f0da0..9ecbc44b 100644
+index e5de77a2..4fd62f52 100644
 --- a/dlls/crypt32/unixlib.c
 +++ b/dlls/crypt32/unixlib.c
-@@ -945,6 +945,9 @@ static void import_certs_from_path(LPCSTR path, BOOL allow_dir)
+@@ -948,6 +948,9 @@ static void import_certs_from_path(LPCSTR path, BOOL allow_dir)
  }
  
  static const char * const CRYPT_knownLocations[] = {
@@ -1059,7 +1068,7 @@ index 4b9f0da0..9ecbc44b 100644
   "/etc/ssl/certs/ca-certificates.crt",
   "/etc/ssl/certs",
   "/etc/pki/tls/certs/ca-bundle.crt",
-@@ -952,6 +955,7 @@ static const char * const CRYPT_knownLocations[] = {
+@@ -955,6 +958,7 @@ static const char * const CRYPT_knownLocations[] = {
   "/usr/local/share/certs/",
   "/etc/sfw/openssl/certs",
   "/etc/security/cacerts",  /* Android */
@@ -1129,7 +1138,7 @@ index 5dde1724..56e476cd 100644
      close( fd );
  
 diff --git a/dlls/ntdll/unix/file.c b/dlls/ntdll/unix/file.c
-index 1bfec7a4..e6099c2c 100644
+index f63b6bdf..5bd392ae 100644
 --- a/dlls/ntdll/unix/file.c
 +++ b/dlls/ntdll/unix/file.c
 @@ -165,6 +165,11 @@ typedef struct
@@ -1144,7 +1153,7 @@ index 1bfec7a4..e6099c2c 100644
  #define IS_SEPARATOR(ch)   ((ch) == '\\' || (ch) == '/')
  
  #define INVALID_NT_CHARS   '*','?','<','>','|','"'
-@@ -7522,6 +7527,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
+@@ -7180,6 +7185,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
          }
  
          if (!get_mountmgr_fs_info( handle, fd, &drive, sizeof(drive) )) fs_type = drive.fs_type;
@@ -1152,7 +1161,7 @@ index 1bfec7a4..e6099c2c 100644
          else
          {
              struct statfs stfs;
-@@ -7553,6 +7559,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
+@@ -7211,6 +7217,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
  #endif
              }
          }
@@ -1161,7 +1170,7 @@ index 1bfec7a4..e6099c2c 100644
          switch (fs_type)
          {
 diff --git a/dlls/ntdll/unix/loader.c b/dlls/ntdll/unix/loader.c
-index ebfb6af5..e20df5e6 100644
+index dde4b58d..470bf455 100644
 --- a/dlls/ntdll/unix/loader.c
 +++ b/dlls/ntdll/unix/loader.c
 @@ -646,7 +646,15 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
@@ -1211,7 +1220,7 @@ index fa9138d2..d626ad11 100644
  #include "ntstatus.h"
  #include "windef.h"
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index f807caa4..b022ec70 100644
+index 7bff70ba..50a7990f 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -75,6 +75,20 @@
@@ -1235,7 +1244,7 @@ index f807caa4..b022ec70 100644
  #include "ntstatus.h"
  #include "windef.h"
  #include "winternl.h"
-@@ -364,6 +378,35 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
+@@ -324,6 +338,35 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
  
  #define XState_sig(context)  NULL
  
@@ -1271,7 +1280,7 @@ index f807caa4..b022ec70 100644
  #else
  #error You must define the signal context functions for your platform
  #endif
-@@ -755,9 +798,11 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
+@@ -715,9 +758,11 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
      R14_sig(sigcontext) = context->R14;
      R15_sig(sigcontext) = context->R15;
      RIP_sig(sigcontext) = context->Rip;
@@ -1283,7 +1292,7 @@ index f807caa4..b022ec70 100644
  }
  
  
-@@ -870,9 +915,11 @@ static void save_context( struct thread_data *data, struct xcontext *xcontext,
+@@ -830,9 +875,11 @@ static void save_context( struct thread_data *data, struct xcontext *xcontext,
      context->R14    = R14_sig(sigcontext);
      context->R15    = R15_sig(sigcontext);
      context->Rip    = RIP_sig(sigcontext);
@@ -1295,7 +1304,7 @@ index f807caa4..b022ec70 100644
      context->SegDs  = ds64_sel;
      context->SegEs  = ds64_sel;
      context->SegGs  = ds64_sel;
-@@ -1514,7 +1561,9 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
+@@ -1474,7 +1521,9 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
          context_init_xstate( &stack->context, NULL );
      }
  
@@ -1305,7 +1314,7 @@ index f807caa4..b022ec70 100644
      RIP_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
      RSP_sig(sigcontext) = (ULONG_PTR)stack;
      /* clear single-step, direction, and align check flag */
-@@ -1914,6 +1963,7 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
+@@ -1874,6 +1923,7 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
      case 0x2c:
          rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
          break;
@@ -1313,7 +1322,7 @@ index f807caa4..b022ec70 100644
      case 0x2d:
          if (CS_sig(sigcontext) == cs64_sel)
          {
-@@ -1934,6 +1984,7 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
+@@ -1894,6 +1944,7 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
          rec->NumberParameters = 1;
          rec->ExceptionInformation[0] = context->Rax;
          break;
@@ -1321,7 +1330,7 @@ index f807caa4..b022ec70 100644
      default:
          return FALSE;
      }
-@@ -2269,6 +2320,45 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
+@@ -2229,6 +2280,45 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
      return TRUE;
  }
  
@@ -1367,7 +1376,7 @@ index f807caa4..b022ec70 100644
  
  /**********************************************************************
   *		segv_handler
-@@ -2282,6 +2372,20 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2242,6 +2332,20 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
      struct xcontext context;
      EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(sigcontext) };
  
@@ -1388,7 +1397,7 @@ index f807caa4..b022ec70 100644
      save_context( data, &context, sigcontext );
  
      switch(TRAP_sig(sigcontext))
-@@ -2512,6 +2616,20 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2472,6 +2576,20 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
  {
      ucontext_t *sigcontext = _sigcontext;
@@ -1409,7 +1418,7 @@ index f807caa4..b022ec70 100644
      struct thread_data *data = init_handler( sigcontext );
      struct xcontext context;
      EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_WINE_ASSERTION,
-@@ -2914,6 +3032,9 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+@@ -2874,6 +2992,9 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
      sysarch( X86_64_SET_GSBASE, &teb );
  #elif defined (__APPLE__)
      thread_data->pthread_teb = mac_thread_gsbase();
@@ -1510,7 +1519,7 @@ index aaae9a2f..7ecb8b4c 100644
      if (!totalswap) totalswap = page_size;
  
 diff --git a/dlls/ntdll/unix/thread.c b/dlls/ntdll/unix/thread.c
-index d5a5f57c..0acd00b5 100644
+index 070effd9..85d888d0 100644
 --- a/dlls/ntdll/unix/thread.c
 +++ b/dlls/ntdll/unix/thread.c
 @@ -24,6 +24,16 @@
@@ -1545,7 +1554,7 @@ index d5a5f57c..0acd00b5 100644
      static int once;
      if (!once++) FIXME("not implemented on this platform\n");
 diff --git a/dlls/ntdll/unix/virtual.c b/dlls/ntdll/unix/virtual.c
-index 64eed726..80e5a176 100644
+index b61da599..1899ca3d 100644
 --- a/dlls/ntdll/unix/virtual.c
 +++ b/dlls/ntdll/unix/virtual.c
 @@ -24,6 +24,17 @@
@@ -1566,7 +1575,7 @@ index 64eed726..80e5a176 100644
  #include <assert.h>
  #include <errno.h>
  #include <fcntl.h>
-@@ -816,6 +827,45 @@ static void release_builtin_module( void *module )
+@@ -721,6 +732,45 @@ static void release_builtin_module( void *module )
      free( builtin );
  }
  
@@ -1612,7 +1621,7 @@ index 64eed726..80e5a176 100644
  
  /***********************************************************************
   *           get_builtin_so_handle
-@@ -4498,6 +4548,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
+@@ -4080,6 +4130,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
  
      if (!reserve_size) reserve_size = main_image_info.MaximumStackSize;
      if (!commit_size) commit_size = main_image_info.CommittedStackSize;
@@ -1762,7 +1771,7 @@ index 4ebc8aaf..dfaa199b 100644
      req->u.req.request_header.reply_size = max_size;
  }
 diff --git a/programs/winedbg/winedbg.c b/programs/winedbg/winedbg.c
-index 9707120d..073a6cc9 100644
+index be2a3494..52343a7c 100644
 --- a/programs/winedbg/winedbg.c
 +++ b/programs/winedbg/winedbg.c
 @@ -704,6 +704,9 @@ static void restart_if_wow64(void)
@@ -1790,7 +1799,7 @@ index 37fa9460..34f3522a 100644
  #include "ntstatus.h"
  #include "windef.h"
 diff --git a/server/fd.c b/server/fd.c
-index 19aee941..acb4668f 100644
+index 7cb48a2d..fa51e21f 100644
 --- a/server/fd.c
 +++ b/server/fd.c
 @@ -86,6 +86,10 @@
@@ -1907,10 +1916,10 @@ index caa32a32..837ae2f2 100644
      return MIB_TCP_STATE_ESTAB;
  }
 diff --git a/tools/winegcc/winegcc.c b/tools/winegcc/winegcc.c
-index e92397eb..75129b66 100644
+index f800c0f7..ad509c18 100644
 --- a/tools/winegcc/winegcc.c
 +++ b/tools/winegcc/winegcc.c
-@@ -1407,6 +1407,9 @@ static void build(struct strarray input_files, const char *output)
+@@ -1416,6 +1416,9 @@ static void build(struct strarray input_files, const char *output)
  	strarray_add(&link_args, "-ldl");
  	strarray_add(&link_args, "-lm");
  	strarray_add(&link_args, "-lc");
@@ -1924,39 +1933,15 @@ index e92397eb..75129b66 100644
 2.47.3
 
 
-From 73178b9128cdc18ca1e8c80834be4a1c4034cf48 Mon Sep 17 00:00:00 2001
-From: Peppersawce <michaelpeppers89@yahoo.it>
-Date: Fri, 24 Apr 2026 15:59:56 +0200
-Subject: [PATCH 03/17] Disable Bluetooth on Beta 5
-
----
- server/sock.c | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/server/sock.c b/server/sock.c
-index 837ae2f2..722b4abb 100644
---- a/server/sock.c
-+++ b/server/sock.c
-@@ -97,6 +97,10 @@
- 
- #ifdef __HAIKU__
- #define SIGIO SIGPOLL
-+#if B_HAIKU_VERSION <= B_HAIKU_VERSION_1_BETA_5
-+#undef AF_BLUETOOTH
-+#undef HAS_BLUETOOTH
-+#endif
- #endif
- 
- #include "ntstatus.h"
--- 
-2.47.3
-
-
-From 5446418205ffcb48c2076981e0990fe57c7745b7 Mon Sep 17 00:00:00 2001
+From 352d50b4e95f0fb797d4cebc18a99a2c0460035e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 04/17] Opensound support
+Subject: [PATCH 03/15] Opensound support
 
+[rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
+AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
+HAVE_OSS_SYSINFO_NUMAUDIOENGINES define); kept that alongside this patch's
+audio/soundcard.h header. Nothing in the tree used the dropped define.]
 ---
  configure.ac               | 6 +++---
  dlls/wineoss.drv/oss.c     | 4 ++++
@@ -1964,10 +1949,10 @@ Subject: [PATCH 04/17] Opensound support
  3 files changed, 11 insertions(+), 3 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 40418304..72da4685 100644
+index 8fd51065..575a6406 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1776,14 +1776,14 @@ then
+@@ -1788,14 +1788,14 @@ then
      then
          . /etc/oss.conf
      fi
@@ -1976,7 +1961,7 @@ index 40418304..72da4685 100644
      CPPFLAGS="$CPPFLAGS $ac_oss_incl"
 -    AC_CHECK_HEADER([sys/soundcard.h],
 +    AC_CHECK_HEADER([audio/soundcard.h],
-         [AC_CHECK_MEMBERS([oss_sysinfo.numaudioengines],
+         [AC_CHECK_MEMBER([oss_sysinfo.numaudioengines],
              [AC_SUBST(OSS4_CFLAGS,"$ac_oss_incl")
               AC_CHECK_LIB(ossaudio,_oss_ioctl,
                   [AC_SUBST(OSS4_LIBS,"-lossaudio")])],,
@@ -1986,7 +1971,7 @@ index 40418304..72da4685 100644
  fi
  WINE_NOTICE_WITH(oss,[test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes],
 diff --git a/dlls/wineoss.drv/oss.c b/dlls/wineoss.drv/oss.c
-index 431264fa..788014dc 100644
+index 6682a0c0..e8a55ef3 100644
 --- a/dlls/wineoss.drv/oss.c
 +++ b/dlls/wineoss.drv/oss.c
 @@ -30,7 +30,11 @@
@@ -2021,10 +2006,10 @@ index f5844912..1aee2585 100644
 2.47.3
 
 
-From a00e31e6af0880333e69a17739eb15e24a170d89 Mon Sep 17 00:00:00 2001
+From f5d50f5cdf38fa53c60eadd89c86a060bf47063f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 05/17] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 04/15] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -2138,10 +2123,10 @@ index 88d00d1f..f4ab87b1 100644
 2.47.3
 
 
-From fcc0c63c656ab6be540025fb5339cc4c11f41310 Mon Sep 17 00:00:00 2001
+From 8a38b157fdfebeb3415dce2dd0d00bb5aa95092d Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 06/17] Do not block in the SIGSEGV handler on Haiku
+Subject: [PATCH 05/15] Do not block in the SIGSEGV handler on Haiku
 
 The Haiku port left an interactive debug hook in segv_handler: after
 printing the fault it called fgetc(stdin) and waited for a keypress, with
@@ -2162,10 +2147,10 @@ normal exception dispatch as upstream does.
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index b022ec70..af4d8024 100644
+index 50a7990f..51159fcb 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
-@@ -2382,7 +2382,14 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2342,7 +2342,14 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
      printf("  FP: %#" PRIx64 "\n", RBP_sig(sigcontext));
      printf("  address: %#" PRIx64 "\n", siginfo->si_addr);
      WriteModuleName(RIP_sig(sigcontext));
@@ -2185,10 +2170,10 @@ index b022ec70..af4d8024 100644
 2.47.3
 
 
-From 1a0088de0f925cc344bce03290b211cd4a2cae94 Mon Sep 17 00:00:00 2001
+From d35ff24f3e83023b4415c6a2491bce2fbf6f24f2 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 07/17] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 06/15] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -2234,793 +2219,10 @@ index 71ba308c..e959a762 100644
 2.47.3
 
 
-From f209fb6cc04d5ee35536c4d154cc166c7f8555c5 Mon Sep 17 00:00:00 2001
-From: rations <ehqcar@proton.me>
-Date: Fri, 24 Jul 2026 16:53:02 +1000
-Subject: [PATCH 08/17] winewayland: add OSMesa software OpenGL backend for
- Haiku
-
-Haiku's Mesa has no DRI swrast and no Wayland EGL platform, so the EGL path
-in opengl.c can never initialize a display there. Add opengl_osmesa.c, an
-OSMesa-backed opengl_driver_funcs (offscreen software GL, llvmpipe) that
-presents to the Wayland client subsurface via wl_shm. It installs no
-p_init_egl_platform, so win32u runs no EGL init. Selected via HAVE_OSMESA;
-opengl.c is compiled out there so exactly one TU defines WAYLAND_OpenGLInit.
-
-Report the WGL pixel type as WGL_TYPE_RGBA_ARB rather than PFD_TYPE_RGBA in
-osmesa_describe_pixel_format(). The two enums are unrelated and PFD_TYPE_RGBA
-is 0; opengl32's wglGetPixelFormatAttrib*ARB reads a zero pixel_type on the
-first format as "this driver supplies no ARB attribute information" and falls
-back to a (void *)1 "never called" driver entry point, which the first ARB
-query then calls -> null call. With the real WGL enum, opengl32 answers the
-ARB queries locally from these fields.
-
-Ported to the wine-11.19 GL driver interface (WINE_OPENGL_DRIVER_VERSION
-41; the original targeted 37):
-- p_context_create allocates and returns the struct opengl_context, with
-  the OSMesa context in host_context, from struct opengl_context_attrs.
-  An unversioned core-profile request asks OSMesa for 3.2, because
-  OSMesaCreateContextAttribs defaults to 1.0 (Mesa 22.0.5 osmesa.c).
-- p_make_current is replaced by p_context_activate.
-- p_surface_create receives the client surface that win32u now creates
-  (wayland_client_surface_create is gone); the size comes from the
-  drawable's virtual/monitor size, which win32u keeps current and flags
-  with GL_FLUSH_UPDATED, instead of polling NtUserGetClientRect.
-- opengl_drawable_create takes the size, and the struct size now lives in
-  opengl_drawable_funcs.size.
-- New p_null_surface_create (1x1). win32u activates its internal root and
-  thread contexts on it whenever there is no drawable, and OSMesa cannot
-  bind a context without a buffer.
-- New p_cleanup_thread: OSMesaMakeCurrent(NULL, NULL, 0, 0, 0), the unbind
-  Mesa 22.0.5's OSMesaMakeCurrent implements.
-- p_pbuffer_updated / p_pbuffer_bind no longer exist.
-- broken_sharing = TRUE: sharing objects between core- and
-  compatibility-profile OSMesa contexts is NOT verified for Mesa 22; this
-  keeps a separate root context per profile instead of relying on it.
-- OSMesa framebuffers have only a front-left colour buffer
-  (osmesa_init_st_visual), so map GL_BACK/GL_BACK_LEFT/GL_FRONT_AND_BACK
-  onto the front buffer through the new opengl_drawable buffer map.
-
-Also fixes the deferred resize-while-current bug: the render buffer used to
-be realloc'd in place under a bound OSMesa context. It is now a fresh
-allocation, and if OSMesaGetColorBuffer shows the old buffer bound on this
-thread the context is rebound to the new one before the old is freed.
-
-Compile-checked against the 11.19 headers only; not yet runtime-verified on
-Haiku.
----
- configure.ac                         |   9 +
- dlls/winewayland.drv/Makefile.in     |   1 +
- dlls/winewayland.drv/opengl.c        |   9 +-
- dlls/winewayland.drv/opengl_osmesa.c | 655 +++++++++++++++++++++++++++
- 4 files changed, 673 insertions(+), 1 deletion(-)
- create mode 100644 dlls/winewayland.drv/opengl_osmesa.c
-
-diff --git a/configure.ac b/configure.ac
-index 72da4685..676d0ac6 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -1255,6 +1255,15 @@ fi
- WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL"],
-     [EGL ${notice_platform}development files not found])
- 
-+dnl **** Check for OSMesa (software offscreen OpenGL, used by winewayland.drv on Haiku) ****
-+
-+if test "x$with_opengl" != "xno"
-+then
-+    AC_CHECK_HEADER([GL/osmesa.h],
-+        [WINE_CHECK_SONAME(OSMesa,OSMesaGetProcAddress,
-+            [AC_DEFINE(HAVE_OSMESA, 1, [Define if we have the OSMesa software OpenGL library])])])
-+fi
-+
- dnl **** Check for X11 ****
- 
- AC_PATH_X
-diff --git a/dlls/winewayland.drv/Makefile.in b/dlls/winewayland.drv/Makefile.in
-index 411d045f..51c0ca65 100644
---- a/dlls/winewayland.drv/Makefile.in
-+++ b/dlls/winewayland.drv/Makefile.in
-@@ -14,6 +14,7 @@ SOURCES = \
- 	dllmain.c \
- 	fractional-scale-v1.xml \
- 	opengl.c \
-+	opengl_osmesa.c \
- 	pointer-constraints-unstable-v1.xml \
- 	pointer-warp-v1.xml \
- 	relative-pointer-unstable-v1.xml \
-diff --git a/dlls/winewayland.drv/opengl.c b/dlls/winewayland.drv/opengl.c
-index b9d56f8c..19526275 100644
---- a/dlls/winewayland.drv/opengl.c
-+++ b/dlls/winewayland.drv/opengl.c
-@@ -33,6 +33,11 @@
- #include "waylanddrv.h"
- #include "wine/debug.h"
- 
-+/* On Haiku the EGL path can never initialize (no Wayland EGL platform, no DRI
-+ * swrast), so opengl_osmesa.c provides WAYLAND_OpenGLInit there instead and
-+ * this translation unit is compiled out. */
-+#ifndef HAVE_OSMESA
-+
- #ifdef HAVE_LIBWAYLAND_EGL
- 
- WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
-@@ -254,4 +259,6 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
-     return STATUS_NOT_IMPLEMENTED;
- }
- 
--#endif
-+#endif /* HAVE_LIBWAYLAND_EGL */
-+
-+#endif /* !HAVE_OSMESA */
-diff --git a/dlls/winewayland.drv/opengl_osmesa.c b/dlls/winewayland.drv/opengl_osmesa.c
-new file mode 100644
-index 00000000..74dd38f7
---- /dev/null
-+++ b/dlls/winewayland.drv/opengl_osmesa.c
-@@ -0,0 +1,655 @@
-+/*
-+ * Wayland OpenGL functions, OSMesa (software) backend for Haiku
-+ *
-+ * Copyright 2020 Alexandros Frantzis for Collabora Ltd. (EGL backend, opengl.c)
-+ * Copyright 2026 rations (OSMesa backend)
-+ *
-+ * This library is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public
-+ * License as published by the Free Software Foundation; either
-+ * version 2.1 of the License, or (at your option) any later version.
-+ *
-+ * This library is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * Lesser General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Lesser General Public
-+ * License along with this library; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
-+ */
-+
-+/* Why this exists: Haiku's Mesa builds no DRI swrast module and has no Wayland
-+ * EGL platform, so the EGL path in opengl.c can never initialize a display on
-+ * Haiku (eglInitialize fails). Haiku does ship OSMesa (offscreen software GL,
-+ * llvmpipe), which gives a windowless desktop-GL 4.5 context. This backend
-+ * renders GL with OSMesa into a CPU buffer and presents it to the window's
-+ * Wayland client subsurface via wl_shm, reusing the driver's existing shm
-+ * primitives. It plugs into win32u purely through the opengl_driver_funcs
-+ * table (no p_init_egl_platform, so no EGL platform init runs) — see
-+ * win32u/opengl.c display_funcs_init(). */
-+
-+#if 0
-+#pragma makedep unix
-+#endif
-+
-+#include "config.h"
-+
-+#include <assert.h>
-+#include <dlfcn.h>
-+#include <stdlib.h>
-+#include <string.h>
-+
-+#include "ntstatus.h"
-+#include "waylanddrv.h"
-+#include "wine/debug.h"
-+
-+#ifdef HAVE_OSMESA
-+
-+WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
-+
-+#include "wine/opengl_driver.h"
-+
-+/* OSMesa constants and the opaque context type, declared locally. Including
-+ * <GL/osmesa.h> would pull in the system <GL/gl.h>, which conflicts with
-+ * wine/wgl.h (both define the GL enums/types). We dlopen libOSMesa and only
-+ * need these few values; GL types (GLenum, GLsizei, GLboolean, GLint,
-+ * GL_UNSIGNED_BYTE, GL_TRUE) come from wine/wgl.h via opengl_driver.h. */
-+typedef struct osmesa_context *OSMesaContext;
-+#define OSMESA_BGRA                   0x1
-+#define OSMESA_Y_UP                   0x11
-+#define OSMESA_FORMAT                 0x22
-+#define OSMESA_DEPTH_BITS             0x30
-+#define OSMESA_STENCIL_BITS           0x31
-+#define OSMESA_ACCUM_BITS             0x32
-+#define OSMESA_PROFILE                0x33
-+#define OSMESA_CORE_PROFILE           0x34
-+#define OSMESA_COMPAT_PROFILE         0x35
-+#define OSMESA_CONTEXT_MAJOR_VERSION  0x36
-+#define OSMESA_CONTEXT_MINOR_VERSION  0x37
-+
-+/* wl_shm little-endian XRGB8888 byte order is B,G,R,X, matching OSMESA_BGRA
-+ * (bytes B,G,R,A); the alpha byte is treated as opaque padding. */
-+#define OSMESA_SHM_FORMAT WL_SHM_FORMAT_XRGB8888
-+
-+/* Largest pbuffer side advertised and accepted (also caps "largest"). */
-+#define OSMESA_MAX_PBUFFER_SIZE 4096
-+
-+static const struct opengl_funcs *funcs;
-+static const struct opengl_drawable_funcs osmesa_surface_funcs;
-+static const struct opengl_drawable_funcs osmesa_pbuffer_funcs;
-+
-+/* Resolved from libOSMesa once. GL entry points come from OSMesaGetProcAddress. */
-+static void *osmesa_handle;
-+static OSMesaContext (*p_OSMesaCreateContextAttribs)(const int *, OSMesaContext);
-+static OSMesaContext (*p_OSMesaCreateContextExt)(GLenum, GLint, GLint, GLint, OSMesaContext);
-+static void (*p_OSMesaDestroyContext)(OSMesaContext);
-+static GLboolean (*p_OSMesaMakeCurrent)(OSMesaContext, void *, GLenum, GLsizei, GLsizei);
-+static OSMesaContext (*p_OSMesaGetCurrentContext)(void);
-+static GLboolean (*p_OSMesaGetColorBuffer)(OSMesaContext, GLint *, GLint *, GLint *, void **);
-+static void (*p_OSMesaPixelStore)(GLint, GLint);
-+static void *(*p_OSMesaGetProcAddress)(const char *);
-+
-+/* A tiny shm buffer rotation for presentation, mirroring the queue in
-+ * window_surface.c (those helpers are static there, so we keep our own). */
-+struct osmesa_buffer_queue
-+{
-+    struct wl_event_queue *wl_event_queue;
-+    struct wl_list buffer_list;
-+    int width, height;
-+};
-+
-+struct osmesa_drawable
-+{
-+    struct opengl_drawable base;
-+    struct osmesa_buffer_queue *queue;       /* present targets; NULL for pbuffers */
-+    int width, height;
-+    void *buffer;                            /* width*height*4 BGRA render target */
-+    size_t buffer_size;
-+};
-+
-+static struct osmesa_drawable *impl_from_opengl_drawable(struct opengl_drawable *base)
-+{
-+    return CONTAINING_RECORD(base, struct osmesa_drawable, base);
-+}
-+
-+/**********************************************************************
-+ *          shm buffer queue (present targets)
-+ */
-+static void osmesa_buffer_release(void *data, struct wl_buffer *buffer)
-+{
-+    struct wayland_shm_buffer *shm_buffer = data;
-+    shm_buffer->busy = FALSE;
-+    wayland_shm_buffer_unref(shm_buffer);
-+}
-+
-+static const struct wl_buffer_listener osmesa_buffer_listener = { osmesa_buffer_release };
-+
-+static void osmesa_buffer_queue_destroy(struct osmesa_buffer_queue *queue)
-+{
-+    struct wayland_shm_buffer *shm_buffer, *next;
-+
-+    wl_list_for_each_safe(shm_buffer, next, &queue->buffer_list, link)
-+    {
-+        wl_list_remove(&shm_buffer->link);
-+        wl_list_init(&shm_buffer->link);
-+        /* May still be busy: move release events to the per-process queue. */
-+        wl_proxy_set_queue((struct wl_proxy *)shm_buffer->wl_buffer,
-+                           process_wayland.wl_event_queue);
-+        wayland_shm_buffer_unref(shm_buffer);
-+    }
-+
-+    if (queue->wl_event_queue)
-+    {
-+        wl_display_dispatch_queue_pending(process_wayland.wl_display, queue->wl_event_queue);
-+        wl_event_queue_destroy(queue->wl_event_queue);
-+    }
-+    free(queue);
-+}
-+
-+static struct osmesa_buffer_queue *osmesa_buffer_queue_create(int width, int height)
-+{
-+    struct osmesa_buffer_queue *queue;
-+
-+    if (!(queue = calloc(1, sizeof(*queue)))) return NULL;
-+    queue->wl_event_queue = wl_display_create_queue(process_wayland.wl_display);
-+    if (!queue->wl_event_queue) { free(queue); return NULL; }
-+    queue->width = width;
-+    queue->height = height;
-+    wl_list_init(&queue->buffer_list);
-+    return queue;
-+}
-+
-+static struct wayland_shm_buffer *osmesa_buffer_queue_get_free(struct osmesa_buffer_queue *queue)
-+{
-+    struct wayland_shm_buffer *shm_buffer;
-+
-+    while (TRUE)
-+    {
-+        int nbuffers = 0;
-+
-+        wl_display_dispatch_queue_pending(process_wayland.wl_display, queue->wl_event_queue);
-+
-+        wl_list_for_each(shm_buffer, &queue->buffer_list, link)
-+        {
-+            if (!shm_buffer->busy) return shm_buffer;
-+            nbuffers++;
-+        }
-+
-+        if (nbuffers < 3)
-+        {
-+            shm_buffer = wayland_shm_buffer_create(queue->width, queue->height, OSMESA_SHM_FORMAT);
-+            if (shm_buffer)
-+            {
-+                wl_proxy_set_queue((struct wl_proxy *)shm_buffer->wl_buffer, queue->wl_event_queue);
-+                wl_buffer_add_listener(shm_buffer->wl_buffer, &osmesa_buffer_listener, shm_buffer);
-+                wl_list_insert(&queue->buffer_list, &shm_buffer->link);
-+                return shm_buffer;
-+            }
-+            if (nbuffers < 2) { ERR("failed to acquire shm buffer\n"); return NULL; }
-+        }
-+
-+        if (wl_display_dispatch_queue(process_wayland.wl_display, queue->wl_event_queue) == -1)
-+            return NULL;
-+    }
-+}
-+
-+/**********************************************************************
-+ *          drawable
-+ */
-+
-+/* Point the current OSMesa binding at gl's buffer, if gl is what is bound on
-+ * this thread. Used after the buffer is reallocated, so llvmpipe never keeps
-+ * writing into freed memory (resize while current). */
-+static BOOL osmesa_rebind_if_current(void *old_buffer, struct osmesa_drawable *gl)
-+{
-+    OSMesaContext ctx = p_OSMesaGetCurrentContext();
-+    GLint width, height, format;
-+    void *bound = NULL;
-+
-+    if (!ctx || !p_OSMesaGetColorBuffer(ctx, &width, &height, &format, &bound)) return TRUE;
-+    if (bound != old_buffer) return TRUE;
-+
-+    if (!p_OSMesaMakeCurrent(ctx, gl->buffer, GL_UNSIGNED_BYTE, gl->width, gl->height))
-+    {
-+        ERR("OSMesaMakeCurrent failed after resize\n");
-+        return FALSE;
-+    }
-+    /* wl_shm is top-origin; make OSMesa render top-down so no vertical flip. */
-+    p_OSMesaPixelStore(OSMESA_Y_UP, 0);
-+    return TRUE;
-+}
-+
-+static BOOL osmesa_drawable_resize(struct osmesa_drawable *gl, SIZE size)
-+{
-+    int width = max(size.cx, 1), height = max(size.cy, 1);
-+    size_t buffer_size = (size_t)width * height * 4;
-+    void *old_buffer = gl->buffer, *buffer;
-+
-+    if (gl->buffer && width == gl->width && height == gl->height) return TRUE;
-+
-+    /* Allocate a new buffer rather than realloc in place: a bound OSMesa
-+     * context still points at the old one until it is rebound below. */
-+    if (!(buffer = calloc(1, buffer_size))) return FALSE;
-+    gl->buffer = buffer;
-+    gl->buffer_size = buffer_size;
-+    gl->width = width;
-+    gl->height = height;
-+
-+    if (old_buffer)
-+    {
-+        osmesa_rebind_if_current(old_buffer, gl);
-+        free(old_buffer);
-+    }
-+
-+    /* Drop the shm queue so the next present recreates buffers at the new size. */
-+    if (gl->queue)
-+    {
-+        osmesa_buffer_queue_destroy(gl->queue);
-+        gl->queue = NULL;
-+    }
-+    return TRUE;
-+}
-+
-+static SIZE osmesa_drawable_size(struct osmesa_drawable *gl)
-+{
-+    if (gl->base.client && gl->base.client->raw) return gl->base.monitor_size;
-+    return gl->base.virtual_size;
-+}
-+
-+/* OSMesa framebuffers have a single (front left) colour buffer, see
-+ * osmesa_init_st_visual(), so a double-buffered format renders to the front
-+ * buffer and swap presents it. Map the back buffers onto it. */
-+static void osmesa_drawable_map_buffers(struct osmesa_drawable *gl)
-+{
-+    opengl_drawable_map_buffer(&gl->base, GL_BACK_LEFT, GL_FRONT_LEFT);
-+    opengl_drawable_map_buffer(&gl->base, GL_BACK, GL_FRONT);
-+    opengl_drawable_map_buffer(&gl->base, GL_FRONT_AND_BACK, GL_FRONT);
-+}
-+
-+static void osmesa_drawable_destroy(struct opengl_drawable *base)
-+{
-+    struct osmesa_drawable *gl = impl_from_opengl_drawable(base);
-+
-+    TRACE("drawable %s\n", debugstr_opengl_drawable(base));
-+
-+    if (gl->queue) osmesa_buffer_queue_destroy(gl->queue);
-+    free(gl->buffer);
-+}
-+
-+static void osmesa_surface_flush(struct opengl_drawable *base, UINT flags)
-+{
-+    struct osmesa_drawable *gl = impl_from_opengl_drawable(base);
-+
-+    TRACE("drawable %s, flags %#x\n", debugstr_opengl_drawable(base), flags);
-+
-+    /* win32u has already latched the new client size into base. */
-+    if (flags & GL_FLUSH_UPDATED) osmesa_drawable_resize(gl, osmesa_drawable_size(gl));
-+}
-+
-+static BOOL osmesa_surface_swap(struct opengl_drawable *base)
-+{
-+    struct osmesa_drawable *gl = impl_from_opengl_drawable(base);
-+    struct wayland_client_surface *client = impl_from_client_surface(base->client);
-+    struct wayland_shm_buffer *shm_buffer;
-+
-+    /* Make sure llvmpipe has finished writing gl->buffer before we copy it. */
-+    if (funcs->p_glFinish) funcs->p_glFinish();
-+
-+    client_surface_present(base->client);
-+
-+    if (!gl->queue && !(gl->queue = osmesa_buffer_queue_create(gl->width, gl->height)))
-+        return FALSE;
-+
-+    if (!(shm_buffer = osmesa_buffer_queue_get_free(gl->queue))) return FALSE;
-+
-+    /* Copy the rendered frame into the shm buffer. Both are BGRA/XRGB with a
-+     * width*4 stride and top-left origin (OSMESA_Y_UP set to 0 at activation). */
-+    memcpy(shm_buffer->map_data, gl->buffer, min(gl->buffer_size, shm_buffer->map_size));
-+
-+    shm_buffer->busy = TRUE;
-+    wayland_shm_buffer_ref(shm_buffer);
-+
-+    wl_surface_attach(client->wl_surface, shm_buffer->wl_buffer, 0, 0);
-+    wl_surface_damage_buffer(client->wl_surface, 0, 0, gl->width, gl->height);
-+    wp_viewport_set_source(client->wp_viewport, 0, 0,
-+                           wl_fixed_from_int(gl->width), wl_fixed_from_int(gl->height));
-+    wl_surface_commit(client->wl_surface);
-+
-+    return TRUE;
-+}
-+
-+static const struct opengl_drawable_funcs osmesa_surface_funcs =
-+{
-+    .size = sizeof(struct osmesa_drawable),
-+    .destroy = osmesa_drawable_destroy,
-+    .flush = osmesa_surface_flush,
-+    .swap = osmesa_surface_swap,
-+};
-+
-+static const struct opengl_drawable_funcs osmesa_pbuffer_funcs =
-+{
-+    .size = sizeof(struct osmesa_drawable),
-+    .destroy = osmesa_drawable_destroy,
-+};
-+
-+/**********************************************************************
-+ *          driver funcs
-+ */
-+static void *osmesa_get_proc_address(const char *name)
-+{
-+    void *proc = p_OSMesaGetProcAddress(name);
-+    if (!proc && osmesa_handle) proc = dlsym(osmesa_handle, name);
-+    return proc;
-+}
-+
-+/* Software RGBA formats; window + pbuffer + double-buffer capable. */
-+static const struct
-+{
-+    BYTE color_bits;
-+    BYTE red_bits, red_shift;
-+    BYTE green_bits, green_shift;
-+    BYTE blue_bits, blue_shift;
-+    BYTE alpha_bits, alpha_shift;
-+    BYTE depth_bits;
-+    BYTE stencil_bits;
-+} osmesa_pixel_formats[] =
-+{
-+    { 32, 8, 16, 8, 8, 8, 0, 8, 24, 24, 8 },
-+    { 32, 8, 16, 8, 8, 8, 0, 8, 24, 16, 8 },
-+    { 32, 8, 16, 8, 8, 8, 0, 0,  0, 24, 8 },
-+};
-+
-+static UINT osmesa_init_pixel_formats(UINT *onscreen_count)
-+{
-+    *onscreen_count = ARRAY_SIZE(osmesa_pixel_formats);
-+    return ARRAY_SIZE(osmesa_pixel_formats);
-+}
-+
-+static BOOL osmesa_describe_pixel_format(int format, struct wgl_pixel_format *descr)
-+{
-+    if (format <= 0 || format > ARRAY_SIZE(osmesa_pixel_formats)) return FALSE;
-+
-+    memset(descr, 0, sizeof(*descr));
-+    descr->pfd.nSize        = sizeof(descr->pfd);
-+    descr->pfd.nVersion     = 1;
-+    descr->pfd.dwFlags      = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER |
-+                              PFD_GENERIC_FORMAT;
-+    descr->pfd.iPixelType   = PFD_TYPE_RGBA;
-+    descr->pfd.cColorBits   = osmesa_pixel_formats[format - 1].color_bits;
-+    descr->pfd.cRedBits     = osmesa_pixel_formats[format - 1].red_bits;
-+    descr->pfd.cRedShift    = osmesa_pixel_formats[format - 1].red_shift;
-+    descr->pfd.cGreenBits   = osmesa_pixel_formats[format - 1].green_bits;
-+    descr->pfd.cGreenShift  = osmesa_pixel_formats[format - 1].green_shift;
-+    descr->pfd.cBlueBits    = osmesa_pixel_formats[format - 1].blue_bits;
-+    descr->pfd.cBlueShift   = osmesa_pixel_formats[format - 1].blue_shift;
-+    descr->pfd.cAlphaBits   = osmesa_pixel_formats[format - 1].alpha_bits;
-+    descr->pfd.cAlphaShift  = osmesa_pixel_formats[format - 1].alpha_shift;
-+    descr->pfd.cDepthBits   = osmesa_pixel_formats[format - 1].depth_bits;
-+    descr->pfd.cStencilBits = osmesa_pixel_formats[format - 1].stencil_bits;
-+    descr->pfd.cAuxBuffers  = 0;
-+    descr->pfd.iLayerType   = PFD_MAIN_PLANE;
-+
-+    /* This is the WGL pixel-type enum, NOT the PFD one: PFD_TYPE_RGBA is 0, and
-+     * opengl32's wglGetPixelFormatAttrib*ARB treats a zero pixel_type on the
-+     * first format as "driver supplies no ARB attrib info" and falls back to a
-+     * (void *)1 "never called" driver entry point -> null call. Use the real
-+     * WGL enum so opengl32 answers the ARB queries locally from these fields. */
-+    descr->pixel_type          = WGL_TYPE_RGBA_ARB;
-+    descr->draw_to_pbuffer     = 1;
-+    descr->max_pbuffer_width   = OSMESA_MAX_PBUFFER_SIZE;
-+    descr->max_pbuffer_height  = OSMESA_MAX_PBUFFER_SIZE;
-+    descr->max_pbuffer_pixels  = OSMESA_MAX_PBUFFER_SIZE * OSMESA_MAX_PBUFFER_SIZE;
-+
-+    return TRUE;
-+}
-+
-+static void osmesa_init_extensions(struct opengl_funcs *funcs, BOOLEAN extensions[GL_EXTENSION_COUNT])
-+{
-+    /* Core GL functionality is exposed through win32u's own GL queries; we add
-+     * no driver-specific WGL extensions here. */
-+}
-+
-+static struct opengl_context *osmesa_context_create(const struct opengl_context_attrs *attrs,
-+                                                    struct opengl_context *share)
-+{
-+    OSMesaContext host_share = share ? share->host_context : NULL;
-+    int os_attribs[16], *attr = os_attribs;
-+    int profile = OSMESA_COMPAT_PROFILE;
-+    struct opengl_context *context;
-+    OSMesaContext ctx;
-+
-+    TRACE("attrs %s, share %p\n", debugstr_opengl_context_attrs(attrs), share);
-+
-+    if (attrs->profile & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-+    {
-+        WARN("OpenGL ES contexts are not supported by the OSMesa backend\n");
-+        return NULL;
-+    }
-+    if (attrs->profile & WGL_CONTEXT_CORE_PROFILE_BIT_ARB) profile = OSMESA_CORE_PROFILE;
-+    /* attrs->flags (debug / forward-compatible) and no_error have no OSMesa
-+     * equivalent; OSMesaCreateContextAttribs rejects unknown attributes. */
-+
-+    *attr++ = OSMESA_FORMAT;        *attr++ = OSMESA_BGRA;
-+    *attr++ = OSMESA_DEPTH_BITS;    *attr++ = 24;
-+    *attr++ = OSMESA_STENCIL_BITS;  *attr++ = 8;
-+    *attr++ = OSMESA_ACCUM_BITS;    *attr++ = 0;
-+    *attr++ = OSMESA_PROFILE;       *attr++ = profile;
-+    if (attrs->major != -1)
-+    {
-+        *attr++ = OSMESA_CONTEXT_MAJOR_VERSION; *attr++ = attrs->major;
-+        *attr++ = OSMESA_CONTEXT_MINOR_VERSION; *attr++ = attrs->minor != -1 ? attrs->minor : 0;
-+    }
-+    else if (profile == OSMESA_CORE_PROFILE)
-+    {
-+        /* OSMesa defaults to version 1.0, which no core profile has; 3.2 is the
-+         * lowest core version and Mesa still returns its highest supported one. */
-+        *attr++ = OSMESA_CONTEXT_MAJOR_VERSION; *attr++ = 3;
-+        *attr++ = OSMESA_CONTEXT_MINOR_VERSION; *attr++ = 2;
-+    }
-+    *attr = 0;
-+
-+    ctx = p_OSMesaCreateContextAttribs(os_attribs, host_share);
-+    if (!ctx && profile == OSMESA_COMPAT_PROFILE && attrs->major == -1)
-+    {
-+        /* Last resort for an unversioned compatibility context. */
-+        ctx = p_OSMesaCreateContextExt(OSMESA_BGRA, 24, 8, 0, host_share);
-+    }
-+    if (!ctx)
-+    {
-+        WARN("OSMesa context creation failed for attrs %s\n", debugstr_opengl_context_attrs(attrs));
-+        return NULL;
-+    }
-+
-+    if (!(context = calloc(1, sizeof(*context))))
-+    {
-+        p_OSMesaDestroyContext(ctx);
-+        return NULL;
-+    }
-+    context->host_context = ctx;
-+
-+    TRACE("-> %p/%p\n", context, ctx);
-+    return context;
-+}
-+
-+static BOOL osmesa_context_destroy(struct opengl_context *context)
-+{
-+    TRACE("context %p\n", context);
-+
-+    if (context->host_context) p_OSMesaDestroyContext(context->host_context);
-+    free(context);
-+    return TRUE;
-+}
-+
-+static BOOL osmesa_context_activate(struct opengl_context *context, struct opengl_drawable *draw_base,
-+                                    struct opengl_drawable *read_base)
-+{
-+    struct osmesa_drawable *draw;
-+
-+    TRACE("context %p, draw %s, read %s\n", context, debugstr_opengl_drawable(draw_base),
-+          debugstr_opengl_drawable(read_base));
-+
-+    if (!context || !context->host_context || !draw_base) return FALSE;
-+    /* An OSMesa context renders into exactly one buffer, so a separate read
-+     * drawable cannot be bound; reads come from the draw buffer. */
-+    if (read_base && read_base != draw_base) FIXME("separate read drawable not supported\n");
-+
-+    draw = impl_from_opengl_drawable(draw_base);
-+    if (!draw->buffer && !osmesa_drawable_resize(draw, osmesa_drawable_size(draw))) return FALSE;
-+
-+    if (!p_OSMesaMakeCurrent(context->host_context, draw->buffer, GL_UNSIGNED_BYTE,
-+                             draw->width, draw->height))
-+    {
-+        ERR("OSMesaMakeCurrent failed\n");
-+        return FALSE;
-+    }
-+    /* wl_shm is top-origin; make OSMesa render top-down so no vertical flip. */
-+    p_OSMesaPixelStore(OSMESA_Y_UP, 0);
-+    return TRUE;
-+}
-+
-+static BOOL osmesa_cleanup_thread(void)
-+{
-+    /* OSMesaMakeCurrent(NULL, NULL, ...) is OSMesa's documented unbind. */
-+    return p_OSMesaMakeCurrent(NULL, NULL, 0, 0, 0);
-+}
-+
-+static struct osmesa_drawable *osmesa_offscreen_create(int format, SIZE size)
-+{
-+    struct osmesa_drawable *gl;
-+
-+    if (!(gl = opengl_drawable_create(&osmesa_pbuffer_funcs, format, NULL, &size))) return NULL;
-+    osmesa_drawable_map_buffers(gl);
-+    if (!osmesa_drawable_resize(gl, size))
-+    {
-+        opengl_drawable_release(&gl->base);
-+        return NULL;
-+    }
-+    return gl;
-+}
-+
-+static BOOL osmesa_surface_create(struct client_surface *client, int format,
-+                                  struct opengl_drawable **drawable)
-+{
-+    struct wayland_client_surface *surface = impl_from_client_surface(client);
-+    struct osmesa_drawable *gl;
-+
-+    TRACE("client %s, format %d\n", debugstr_client_surface(client), format);
-+
-+    if (!(gl = opengl_drawable_create(&osmesa_surface_funcs, format, client, NULL))) return FALSE;
-+    osmesa_drawable_map_buffers(gl);
-+    if (!osmesa_drawable_resize(gl, osmesa_drawable_size(gl)))
-+    {
-+        opengl_drawable_release(&gl->base);
-+        return FALSE;
-+    }
-+
-+    set_client_surface(client->hwnd, surface);
-+
-+    TRACE("created drawable %s\n", debugstr_opengl_drawable(&gl->base));
-+    *drawable = &gl->base;
-+    return TRUE;
-+}
-+
-+static BOOL osmesa_pbuffer_create(HDC hdc, int format, SIZE size, BOOL largest, GLenum texture_format,
-+                                  GLenum texture_target, GLint max_level, struct opengl_drawable **drawable)
-+{
-+    struct osmesa_drawable *gl;
-+
-+    TRACE("hdc %p, format %d, size %s, largest %u\n", hdc, format,
-+          wine_dbgstr_point((POINT *)&size), largest);
-+
-+    if (largest)
-+    {
-+        size.cx = min(size.cx, OSMESA_MAX_PBUFFER_SIZE);
-+        size.cy = min(size.cy, OSMESA_MAX_PBUFFER_SIZE);
-+    }
-+    else if (size.cx > OSMESA_MAX_PBUFFER_SIZE || size.cy > OSMESA_MAX_PBUFFER_SIZE)
-+        return FALSE;
-+
-+    if (!(gl = osmesa_offscreen_create(format, size))) return FALSE;
-+    *drawable = &gl->base;
-+    return TRUE;
-+}
-+
-+/* The surface win32u makes current with internal contexts that have no
-+ * drawable. OSMesa cannot bind a context without a buffer, so use 1x1. */
-+static BOOL osmesa_null_surface_create(int format, struct opengl_drawable **drawable)
-+{
-+    static const SIZE size = {1, 1};
-+    struct osmesa_drawable *gl;
-+
-+    if (!(gl = osmesa_offscreen_create(format, size))) return FALSE;
-+    *drawable = &gl->base;
-+    return TRUE;
-+}
-+
-+static struct opengl_driver_funcs osmesa_driver_funcs =
-+{
-+    /* no p_init_egl_platform: keeps win32u from running any EGL platform init */
-+    .p_get_proc_address      = osmesa_get_proc_address,
-+    .p_init_pixel_formats    = osmesa_init_pixel_formats,
-+    .p_describe_pixel_format = osmesa_describe_pixel_format,
-+    .p_init_extensions       = osmesa_init_extensions,
-+    .p_surface_create        = osmesa_surface_create,
-+    .p_context_create        = osmesa_context_create,
-+    .p_context_destroy       = osmesa_context_destroy,
-+    .p_context_activate      = osmesa_context_activate,
-+    .p_pbuffer_create        = osmesa_pbuffer_create,
-+    .p_null_surface_create   = osmesa_null_surface_create,
-+    .p_cleanup_thread        = osmesa_cleanup_thread,
-+    /* Sharing objects between core- and compatibility-profile OSMesa contexts
-+     * is not verified for Mesa 22; this makes win32u keep a separate root
-+     * context per profile, so a context only ever shares with its own kind. */
-+    .broken_sharing          = TRUE,
-+};
-+
-+static BOOL osmesa_load(void)
-+{
-+    if (osmesa_handle) return TRUE;
-+    if (!(osmesa_handle = dlopen(SONAME_LIBOSMESA, RTLD_NOW | RTLD_GLOBAL)))
-+    {
-+        ERR("Failed to load %s: %s\n", SONAME_LIBOSMESA, dlerror());
-+        return FALSE;
-+    }
-+
-+#define LOAD_FUNCPTR(f) \
-+    if (!(p_##f = dlsym(osmesa_handle, #f))) { ERR("%s not found in OSMesa\n", #f); goto err; }
-+    LOAD_FUNCPTR(OSMesaCreateContextAttribs)
-+    LOAD_FUNCPTR(OSMesaCreateContextExt)
-+    LOAD_FUNCPTR(OSMesaDestroyContext)
-+    LOAD_FUNCPTR(OSMesaMakeCurrent)
-+    LOAD_FUNCPTR(OSMesaGetCurrentContext)
-+    LOAD_FUNCPTR(OSMesaGetColorBuffer)
-+    LOAD_FUNCPTR(OSMesaPixelStore)
-+    LOAD_FUNCPTR(OSMesaGetProcAddress)
-+#undef LOAD_FUNCPTR
-+    return TRUE;
-+
-+err:
-+    dlclose(osmesa_handle);
-+    osmesa_handle = NULL;
-+    return FALSE;
-+}
-+
-+/**********************************************************************
-+ *           WAYLAND_OpenGLInit
-+ */
-+UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs,
-+                        const struct opengl_driver_funcs **driver_funcs)
-+{
-+    if (version != WINE_OPENGL_DRIVER_VERSION)
-+    {
-+        ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
-+            version, WINE_OPENGL_DRIVER_VERSION);
-+        return STATUS_INVALID_PARAMETER;
-+    }
-+
-+    if (!osmesa_load()) return STATUS_NOT_SUPPORTED;
-+
-+    funcs = opengl_funcs;
-+    *driver_funcs = &osmesa_driver_funcs;
-+    return STATUS_SUCCESS;
-+}
-+
-+#endif /* HAVE_OSMESA */
--- 
-2.47.3
-
-
-From cf95cc40bf10ecc94aaba233074015bf7c16508c Mon Sep 17 00:00:00 2001
+From 2bdb8f0a7d1ae692ffd2dc5941678c63dfb6cacc Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 09/17] dxgi: Wait for a refresh interval in
+Subject: [PATCH 07/15] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -3100,10 +2302,10 @@ index e828ed0d..9690dee6 100644
 2.47.3
 
 
-From 488d7fd44e16339c4aecc1357fa766a1fe1e013d Mon Sep 17 00:00:00 2001
+From fe774e7377aed353a4e5659ed8bf6150250020a9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 10/17] sechost: Report no failure actions in
+Subject: [PATCH 08/15] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -3165,10 +2367,10 @@ index f05fd2d7..20a7fb17 100644
 2.47.3
 
 
-From e18ed04994c89eadefb6b93d855e5d9dccf6212f Mon Sep 17 00:00:00 2001
+From d0189450fae6138ad3a08e6a4c6eb5831eb41dd1 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 11/17] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 09/15] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -3212,10 +2414,10 @@ index 0e345455..85d1502e 100644
      <windowsSettings>
          <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
 diff --git a/programs/rundll32/Makefile.in b/programs/rundll32/Makefile.in
-index f2aa9742..5ae53c16 100644
+index 7cb55688..3fb46da0 100644
 --- a/programs/rundll32/Makefile.in
 +++ b/programs/rundll32/Makefile.in
-@@ -4,4 +4,5 @@ IMPORTS   = user32 kernelbase
+@@ -5,4 +5,5 @@ ENABLE_ARCHS = $(PE_ARCHS)
  EXTRADLLFLAGS = -mwindows -municode
  
  SOURCES = \
@@ -3276,10 +2478,10 @@ index 00000000..07b215a1
 2.47.3
 
 
-From 4c2b9640042b3331a1029b8c9f46007f949435f1 Mon Sep 17 00:00:00 2001
+From bc41ff7fcdf81723835367a90ceeb37f2252e204 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 12/17] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 10/15] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -3343,10 +2545,10 @@ index ae51b2f7..691b7984 100644
 2.47.3
 
 
-From e0caeb27c2f4c965b201865974f98999e31b5d03 Mon Sep 17 00:00:00 2001
+From 095354e8ab2b425a21dfacca11ed186403718e15 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 13/17] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 11/15] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -3423,10 +2625,10 @@ index 2e6d93b7..bda79d71 100644
 2.47.3
 
 
-From b678548c02747797e32b6de61f2286d4fa679362 Mon Sep 17 00:00:00 2001
+From c9fb2b6bbe6696036cc0a92053f4ad0cabf5a395 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 14/17] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 12/15] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -3436,10 +2638,10 @@ hand.
  1 file changed, 3 insertions(+)
 
 diff --git a/tools/winegcc/winegcc.c b/tools/winegcc/winegcc.c
-index 75129b66..07d4fb6e 100644
+index ad509c18..eb83446b 100644
 --- a/tools/winegcc/winegcc.c
 +++ b/tools/winegcc/winegcc.c
-@@ -1404,7 +1404,10 @@ static void build(struct strarray input_files, const char *output)
+@@ -1413,7 +1413,10 @@ static void build(struct strarray input_files, const char *output)
  
      if (!nostdlib && !is_pe)
      {
@@ -3454,10 +2656,10 @@ index 75129b66..07d4fb6e 100644
 2.47.3
 
 
-From 55f6487b56b1f22f3f2e3788df756a1fdbc4545b Mon Sep 17 00:00:00 2001
+From 5cb922bb1d177b1cbc4a6068c224960d359b4a23 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 15/17] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 13/15] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -3493,7 +2695,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 107 insertions(+), 18 deletions(-)
 
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index af4d8024..56d94630 100644
+index 51159fcb..4b40607d 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -87,6 +87,19 @@ extern void _thread_set_tsd_base(uint64_t);
@@ -3516,7 +2718,7 @@ index af4d8024..56d94630 100644
  #endif
  
  #include "ntstatus.h"
-@@ -395,15 +408,16 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
+@@ -355,15 +368,16 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
  #define R13_sig(context)     ((context)->uc_mcontext.r13)
  #define R14_sig(context)     ((context)->uc_mcontext.r14)
  #define R15_sig(context)     ((context)->uc_mcontext.r15)
@@ -3538,7 +2740,7 @@ index af4d8024..56d94630 100644
  #define FPU_sig(context)     ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext.fpu)
  #define XState_sig(context)  NULL
  
-@@ -798,11 +812,14 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
+@@ -758,11 +772,14 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
      R14_sig(sigcontext) = context->R14;
      R15_sig(sigcontext) = context->R15;
      RIP_sig(sigcontext) = context->Rip;
@@ -3555,7 +2757,7 @@ index af4d8024..56d94630 100644
  }
  
  
-@@ -915,11 +932,9 @@ static void save_context( struct thread_data *data, struct xcontext *xcontext,
+@@ -875,11 +892,9 @@ static void save_context( struct thread_data *data, struct xcontext *xcontext,
      context->R14    = R14_sig(sigcontext);
      context->R15    = R15_sig(sigcontext);
      context->Rip    = RIP_sig(sigcontext);
@@ -3567,7 +2769,7 @@ index af4d8024..56d94630 100644
      context->SegDs  = ds64_sel;
      context->SegEs  = ds64_sel;
      context->SegGs  = ds64_sel;
-@@ -1561,9 +1576,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
+@@ -1521,9 +1536,7 @@ static void setup_raise_exception( struct thread_data *data, ucontext_t *sigcont
          context_init_xstate( &stack->context, NULL );
      }
  
@@ -3577,7 +2779,7 @@ index af4d8024..56d94630 100644
      RIP_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
      RSP_sig(sigcontext) = (ULONG_PTR)stack;
      /* clear single-step, direction, and align check flag */
-@@ -1724,7 +1737,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
+@@ -1684,7 +1697,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                     "1:\tmovq %rdi,%rsp\n\t"    /* user_rsp */
                     "movq 0x98(%r14),%rbp\n\t"  /* prev_frame->rbp */
                     "ldmxcsr 0xd8(%r14)\n\t"    /* prev_frame->xsave.MxCsr */
@@ -3586,7 +2788,7 @@ index af4d8024..56d94630 100644
                     "movb $1,0x340(%r13)\n\t"   /* amd64_thread_data()->syscall_dispatch */
                     "movw 0x338(%r13),%ax\n"    /* amd64_thread_data()->fs */
                     "testw %ax,%ax\n\t"
-@@ -1963,7 +1976,6 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
+@@ -1923,7 +1936,6 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
      case 0x2c:
          rec->ExceptionCode = STATUS_ASSERTION_FAILURE;
          break;
@@ -3594,7 +2796,7 @@ index af4d8024..56d94630 100644
      case 0x2d:
          if (CS_sig(sigcontext) == cs64_sel)
          {
-@@ -1984,7 +1996,6 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
+@@ -1944,7 +1956,6 @@ static inline BOOL handle_interrupt( struct thread_data *data, ucontext_t *sigco
          rec->NumberParameters = 1;
          rec->ExceptionInformation[0] = context->Rax;
          break;
@@ -3602,7 +2804,7 @@ index af4d8024..56d94630 100644
      default:
          return FALSE;
      }
-@@ -2253,6 +2264,9 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
+@@ -2213,6 +2224,9 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
      amd64_get_gsbase( (void**)&cur_gsbase );
  #elif defined(__NetBSD__)
      sysarch( X86_64_GET_GSBASE, &cur_gsbase );
@@ -3612,7 +2814,7 @@ index af4d8024..56d94630 100644
  #elif defined(__APPLE__)
      /* init_handler() has already reset GSBASE, we can't determine what it was before the signal */
  #endif
-@@ -2314,6 +2328,8 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
+@@ -2274,6 +2288,8 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
      amd64_set_gsbase( data->teb );
  #elif defined(__NetBSD__)
      sysarch( X86_64_SET_GSBASE, &data->teb );
@@ -3621,7 +2823,7 @@ index af4d8024..56d94630 100644
  #elif defined(__APPLE__)
      /* leave_handler() will set GSBASE to the TEB */
  #endif
-@@ -2807,6 +2823,18 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+@@ -2767,6 +2783,18 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
          perror("i386_set_ldt");
          exit(1);
      }
@@ -3640,7 +2842,7 @@ index af4d8024..56d94630 100644
  #else
      fprintf( stderr, "No LDT support on this platform\n" );
      exit(1);
-@@ -2951,6 +2979,8 @@ void signal_init_process( TEB *teb )
+@@ -2911,6 +2939,8 @@ void signal_init_process( TEB *teb )
          cs32_sel = ldt_alloc_entry( ldt_make_cs32_entry() );
  #elif defined(__FreeBSD__)
          cs32_sel = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -3649,7 +2851,7 @@ index af4d8024..56d94630 100644
  #endif
      }
  
-@@ -3145,6 +3175,19 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
+@@ -3105,6 +3135,19 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                     "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
  
  
@@ -3669,7 +2871,7 @@ index af4d8024..56d94630 100644
  /***********************************************************************
   *           __wine_syscall_dispatcher
   */
-@@ -3274,6 +3317,24 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+@@ -3234,6 +3277,24 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     "popq %r8\n\t"
                     "leaq -0x98(%rbp),%rcx\n"
                     "2:\n\t"
@@ -3694,7 +2896,7 @@ index af4d8024..56d94630 100644
  #elif defined __APPLE__
                     "movq 0x320(%r13),%rdi\n\t"     /* amd64_thread_data()->pthread_teb */
                     "xorl %esi,%esi\n\t"
-@@ -3320,15 +3381,19 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+@@ -3280,15 +3341,19 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     __ASM_CFI(".cfi_remember_state\n\t")
                     __ASM_CFI_CFA_IS_AT2(rcx, 0xa8, 0x01) /* frame->syscall_cfa */
                     "leaq 0x70(%rcx),%rsp\n\t"      /* %rsp > frame means no longer inside syscall */
@@ -3716,7 +2918,7 @@ index af4d8024..56d94630 100644
                     "movw %dx,%ss\n\t"
  # endif
                     "1:\n\t"
-@@ -3590,6 +3655,24 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+@@ -3550,6 +3615,24 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                     "popq %r9\n\t"
                     "popq %r8\n\t"
                     "2:\n\t"
@@ -3741,7 +2943,7 @@ index af4d8024..56d94630 100644
  #elif defined __APPLE__
                     "movq 0x320(%r13),%rdi\n\t"     /* amd64_thread_data()->pthread_teb */
                     "xorl %esi,%esi\n\t"
-@@ -3616,15 +3699,19 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+@@ -3576,15 +3659,19 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                     /* switch to user stack */
                     "movq 0x88(%rcx),%rsp\n\t"
                     __ASM_CFI(".cfi_restore_state\n\t")
@@ -3780,10 +2982,10 @@ index 7ecb8b4c..6fc66d4a 100644
 2.47.3
 
 
-From 1ad619ff5f32cffd938b8b03713663b98c7cf1c6 Mon Sep 17 00:00:00 2001
+From 48b4dfdad9513bee675271ee2c9508c0dae377c8 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 16/17] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 14/15] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -3807,10 +3009,10 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  5 files changed, 4 insertions(+), 8 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index 676d0ac6..68590bf1 100644
+index 575a6406..3aa27f7b 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -941,6 +941,8 @@ then
+@@ -948,6 +948,8 @@ then
          [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/xattr.h>]], [[getxattr("", "", "", 0, 0, 0);]])],
                             [wine_cv_xattr_extra_args=yes],[wine_cv_xattr_extra_args=no])])
      test $wine_cv_xattr_extra_args != yes || AC_DEFINE(XATTR_ADDITIONAL_OPTIONS, 1, [Define if xattr functions take additional arguments (macOS)])
@@ -3820,7 +3022,7 @@ index 676d0ac6..68590bf1 100644
  
  dnl **** Check for working dll ****
 diff --git a/dlls/ntdll/Makefile.in b/dlls/ntdll/Makefile.in
-index 9a15bc31..3974a8f3 100644
+index 4c43b771..471a7f3e 100644
 --- a/dlls/ntdll/Makefile.in
 +++ b/dlls/ntdll/Makefile.in
 @@ -5,7 +5,7 @@ IMPORTLIB = ntdll
@@ -3833,7 +3035,7 @@ index 9a15bc31..3974a8f3 100644
  EXTRADLLFLAGS = -nodefaultlibs
  i386_EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
 diff --git a/dlls/ntdll/unix/file.c b/dlls/ntdll/unix/file.c
-index e6099c2c..8c7979fc 100644
+index 5bd392ae..66933910 100644
 --- a/dlls/ntdll/unix/file.c
 +++ b/dlls/ntdll/unix/file.c
 @@ -165,11 +165,6 @@ typedef struct
@@ -3861,7 +3063,7 @@ index 0dd53951..e6cd264a 100644
  
  unicode_EXTRADEFS = -DBINDIR="\"${bindir}\"" -DDATADIR="\"${datadir}\""
 diff --git a/server/fd.c b/server/fd.c
-index acb4668f..c2eb0419 100644
+index fa51e21f..4e275a5c 100644
 --- a/server/fd.c
 +++ b/server/fd.c
 @@ -88,7 +88,6 @@
@@ -3876,10 +3078,10 @@ index acb4668f..c2eb0419 100644
 2.47.3
 
 
-From 8a18eb55c9d2b67ef0660a95b18b598ae4192d6d Mon Sep 17 00:00:00 2001
+From 440cdc4b66a2023cdded462937a7f57eb3cedfd7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 17/17] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 15/15] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -3913,7 +3115,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 121 insertions(+)
 
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index 56d94630..98faf75d 100644
+index 4b40607d..80cda84c 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -100,6 +100,15 @@ struct thread_ldt_entry
@@ -3932,7 +3134,7 @@ index 56d94630..98faf75d 100644
  #endif
  
  #include "ntstatus.h"
-@@ -411,6 +420,8 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
+@@ -371,6 +380,8 @@ static inline const WORD *SS_sig_ptr( const ucontext_t *context )
  #define CS_sig(context)      ((context)->uc_mcontext.fpu.fp_fxsave.cs)
  /* %fs is saved after trap_number by kernels with 32-bit code support */
  #define FS_sig(context)      (*(WORD *)((char *)&(context)->uc_mcontext.fpu.fp_fxsave + 486))
@@ -3941,7 +3143,7 @@ index 56d94630..98faf75d 100644
  #define GS_sig(context)      NULL
  #define SS_sig(context)      ((context)->uc_mcontext.fpu.fp_fxsave.ss)
  #define EFL_sig(context)     ((context)->uc_mcontext.rflags)
-@@ -903,6 +914,46 @@ static inline void leave_handler( struct thread_data *data, ucontext_t *sigconte
+@@ -863,6 +874,46 @@ static inline void leave_handler( struct thread_data *data, ucontext_t *sigconte
  }
  
  
@@ -3988,7 +3190,7 @@ index 56d94630..98faf75d 100644
  /***********************************************************************
   *           save_context
   *
-@@ -1017,6 +1068,9 @@ static void restore_context( struct thread_data *data, const struct xcontext *xc
+@@ -977,6 +1028,9 @@ static void restore_context( struct thread_data *data, const struct xcontext *xc
  
      if (amd64_data)
      {
@@ -3998,7 +3200,7 @@ index 56d94630..98faf75d 100644
          amd64_data->dr0 = context->Dr0;
          amd64_data->dr1 = context->Dr1;
          amd64_data->dr2 = context->Dr2;
-@@ -1110,6 +1164,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+@@ -1070,6 +1124,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
          if (ret || !self) return ret;
          if (flags & CONTEXT_DEBUG_REGISTERS)
          {
@@ -4009,7 +3211,7 @@ index 56d94630..98faf75d 100644
              amd64_data->dr0 = context->Dr0;
              amd64_data->dr1 = context->Dr1;
              amd64_data->dr2 = context->Dr2;
-@@ -1180,8 +1238,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+@@ -1140,8 +1198,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
  
      if (self && !frame) return STATUS_ACCESS_DENIED;
  
@@ -4020,7 +3222,7 @@ index 56d94630..98faf75d 100644
  
      if (!self)
      {
-@@ -1296,12 +1356,23 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+@@ -1256,12 +1316,23 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
      /* update the cached version of the debug registers */
      if (needed_flags & CONTEXT_DEBUG_REGISTERS)
      {
@@ -4044,7 +3246,7 @@ index 56d94630..98faf75d 100644
      }
      set_context_exception_reporting_flags( &context->ContextFlags, CONTEXT_SERVICE_ACTIVE );
      return STATUS_SUCCESS;
-@@ -1339,6 +1410,10 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
+@@ -1299,6 +1370,10 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
          if (ret || !self) return ret;
          if (flags & CONTEXT_I386_DEBUG_REGISTERS)
          {
@@ -4055,7 +3257,7 @@ index 56d94630..98faf75d 100644
              amd64_data->dr0 = context->Dr0;
              amd64_data->dr1 = context->Dr1;
              amd64_data->dr2 = context->Dr2;
-@@ -1441,12 +1516,23 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
+@@ -1401,12 +1476,23 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
          /* update the cached version of the debug registers */
          if (needed_flags & CONTEXT_I386_DEBUG_REGISTERS)
          {
@@ -4079,7 +3281,7 @@ index 56d94630..98faf75d 100644
          }
          if (!(needed_flags & ~CONTEXT_I386_DEBUG_REGISTERS)) return ret;
      }
-@@ -2514,11 +2600,20 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2474,11 +2560,20 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
           * and only do a server call if there is any hw bp enabled. */
          if (!(context.c.EFlags & 0x100) || (context.c.Dr7 & 0xff))
          {
@@ -4100,7 +3302,7 @@ index 56d94630..98faf75d 100644
          }
          context.c.EFlags &= ~0x100;  /* clear single-step flag */
          break;
-@@ -2713,6 +2808,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2673,6 +2768,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
              frame->eflags = 0x200;
              fixup_frame_fpu_state( frame, sigcontext );
          }
@@ -4111,7 +3313,7 @@ index 56d94630..98faf75d 100644
          NtGetContextThread( GetCurrentThread(), &context->c );
          if (xstate_extended_features)
          {
-@@ -3110,6 +3209,22 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+@@ -3070,6 +3169,22 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
      }
  
      if (data->suspend) wait_suspend( &context );
@@ -4135,7 +3337,7 @@ index 56d94630..98faf75d 100644
      ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
      *ctx = context;
 diff --git a/server/thread.c b/server/thread.c
-index bdf48c4b..151d2817 100644
+index bb9728f6..4522128d 100644
 --- a/server/thread.c
 +++ b/server/thread.c
 @@ -123,7 +123,13 @@ struct context

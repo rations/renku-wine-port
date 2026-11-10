@@ -6,9 +6,9 @@ support; a stock kernel runs Win64 executables only."
 HOMEPAGE="https://www.winehq.org/"
 COPYRIGHT="1993-2026 the Wine project authors"
 LICENSE="GNU LGPL v2.1"
-REVISION="4"
+REVISION="1"
 SOURCE_URI="https://github.com/wine-mirror/wine/archive/refs/tags/wine-${portVersion}.tar.gz"
-CHECKSUM_SHA256="73eb0b02dfc0cb0ff4f4d8d36c5786261e9725ac91968ae4d4e4b9a498c4087f"
+CHECKSUM_SHA256="046cb0519b7d385be7912304910ccde9e3c0268ebdce7ef35a3c14446cfb8029"
 SOURCE_DIR="wine-wine-${portVersion}"
 PATCHES="wine-$portVersion.patchset"
 ADDITIONAL_FILES="wine.rdef.in"
@@ -47,22 +47,16 @@ REQUIRES="
 	haiku$secondaryArchSuffix
 	lib:libfreetype$secondaryArchSuffix
 	lib:libgnutls$secondaryArchSuffix
-	lib:libOSMesa$secondaryArchSuffix
 	lib:libusb_1.0$secondaryArchSuffix
 	lib:libvulkan$secondaryArchSuffix
-	lib:libwayland_client$secondaryArchSuffix
-	lib:libwayland_egl$secondaryArchSuffix
-	lib:libxkbcommon$secondaryArchSuffix
-	lib:libxkbregistry$secondaryArchSuffix
-	lib:wayland_server_inproc$secondaryArchSuffix
 	"
 # NOTE: no comment lines inside REQUIRES. haikuporter only strips '#' entries on
 # the --update-dependencies path (RequiresUpdater.updateRequiresList); on the
 # normal path they reach the resolver and dependency analysis dies with
 # "'NoneType' object is not iterable". BUILD_REQUIRES is unaffected.
-# The four wayland/xkb entries are what winewayland.so links (objdump -p NEEDED);
-# lib:wayland_server_inproc is Haiku's in-process compositor add-on, which
-# libwayland-client dlopens. Without them Wine loads but can create no window.
+# No Wayland, xkb or OSMesa entries: this port builds --without-wayland (the
+# native winerenku.drv replaces winewayland.drv) and no longer carries the
+# winewayland OSMesa patch, so nothing links or dlopens those libraries.
 # lib:libgnutls: Wine dlopens libgnutls.so.30 for secur32/bcrypt/crypt32, so
 # haikuporter cannot see it. Without it TLS fails ("secure connections will not
 # be available") and iLok reports a ServerConnectionError.
@@ -84,7 +78,6 @@ BUILD_REQUIRES="
 	samba4${secondaryArchSuffix}_devel # Optional
 	sane_backends${secondaryArchSuffix}_devel # Optional
 	devel:libdbus_1$secondaryArchSuffix # Optional
-	devel:libEGL$secondaryArchSuffix # Optional, used with wayland
 	devel:libfontconfig$secondaryArchSuffix # Optional
 	devel:libfreetype$secondaryArchSuffix
 	devel:libgnutls$secondaryArchSuffix
@@ -92,13 +85,9 @@ BUILD_REQUIRES="
 	devel:libopenal$secondaryArchSuffix # Optional
 	devel:libopencl$secondaryArchSuffix # Optional
 	devel:libopencl_headers$secondaryArchSuffix # Optional
-	devel:libOSMesa$secondaryArchSuffix # Required by the Haiku software GL patch
 	devel:libSDL2_2.0$secondaryArchSuffix # Optional
 	devel:libvulkan$secondaryArchSuffix
-	devel:libwayland_egl$secondaryArchSuffix
-	devel:libwayland_client$secondaryArchSuffix
 	#devel:libX11$secondaryArchSuffix # xLibe_devel, needed if built --with-x
-	devel:libxkbcommon$secondaryArchSuffix
 	"
 BUILD_PREREQUIRES="
 	cmd:autoconf
@@ -124,7 +113,7 @@ BUILD()
 	LDFLAGS=-lnetwork runConfigure ./configure \
 		--enable-archs=i386,x86_64 \
 		--disable-tests \
-		--with-wayland --without-x
+		--without-wayland --without-x
 
 	make $jobArgs
 }
