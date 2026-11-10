@@ -1,8 +1,8 @@
-# Wine tests for the RenkuOS/Haiku patches
+# Wine tests for the RenkuOS patches
 
 Small Windows programs that check the behaviour copy protection depends on. Each one prints
 PASS or FAIL, or what it found. Build them on any machine with a MinGW-w64 cross compiler (the
-build line is at the top of each file), then run them with `wine` on RenkuOS or Haiku. For comparison,
+build line is at the top of each file), then run them with `wine` on RenkuOS. For comparison,
 run them on Linux or Windows too.
 
 | Test | Checks | Needs |
