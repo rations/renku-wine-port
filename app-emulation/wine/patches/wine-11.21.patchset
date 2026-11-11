@@ -1,7 +1,7 @@
 From 9794aa43c5296cda799020d712961ddef6ce4367 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Thu, 23 Apr 2026 02:37:32 +0200
-Subject: [PATCH 01/15] Add Wayland input header
+Subject: [PATCH 01/17] Add Wayland input header
 
 ---
  dlls/winewayland.drv/input-event-codes.h | 980 +++++++++++++++++++++++
@@ -1001,7 +1001,7 @@ index 00000000..a4206723
 From 54edd959ff8bc6a4d39da1d1fdfb739d3b02f010 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 02/15] 11.8 patches
+Subject: [PATCH 02/17] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -1936,7 +1936,7 @@ index f800c0f7..ad509c18 100644
 From 352d50b4e95f0fb797d4cebc18a99a2c0460035e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 03/15] Opensound support
+Subject: [PATCH 03/17] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -2009,7 +2009,7 @@ index f5844912..1aee2585 100644
 From f5d50f5cdf38fa53c60eadd89c86a060bf47063f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 04/15] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 04/17] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -2126,7 +2126,7 @@ index 88d00d1f..f4ab87b1 100644
 From 8a38b157fdfebeb3415dce2dd0d00bb5aa95092d Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 05/15] Do not block in the SIGSEGV handler on Haiku
+Subject: [PATCH 05/17] Do not block in the SIGSEGV handler on Haiku
 
 The Haiku port left an interactive debug hook in segv_handler: after
 printing the fault it called fgetc(stdin) and waited for a keypress, with
@@ -2173,7 +2173,7 @@ index 50a7990f..51159fcb 100644
 From d35ff24f3e83023b4415c6a2491bce2fbf6f24f2 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 06/15] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 06/17] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -2222,7 +2222,7 @@ index 71ba308c..e959a762 100644
 From 2bdb8f0a7d1ae692ffd2dc5941678c63dfb6cacc Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 07/15] dxgi: Wait for a refresh interval in
+Subject: [PATCH 07/17] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -2305,7 +2305,7 @@ index e828ed0d..9690dee6 100644
 From fe774e7377aed353a4e5659ed8bf6150250020a9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 08/15] sechost: Report no failure actions in
+Subject: [PATCH 08/17] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -2370,7 +2370,7 @@ index f05fd2d7..20a7fb17 100644
 From d0189450fae6138ad3a08e6a4c6eb5831eb41dd1 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 09/15] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 09/17] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -2481,7 +2481,7 @@ index 00000000..07b215a1
 From bc41ff7fcdf81723835367a90ceeb37f2252e204 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 10/15] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 10/17] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -2548,7 +2548,7 @@ index ae51b2f7..691b7984 100644
 From 095354e8ab2b425a21dfacca11ed186403718e15 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 11/15] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 11/17] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -2628,7 +2628,7 @@ index 2e6d93b7..bda79d71 100644
 From c9fb2b6bbe6696036cc0a92053f4ad0cabf5a395 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 12/15] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 12/17] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -2659,7 +2659,7 @@ index ad509c18..eb83446b 100644
 From 5cb922bb1d177b1cbc4a6068c224960d359b4a23 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 13/15] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 13/17] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -2985,7 +2985,7 @@ index 7ecb8b4c..6fc66d4a 100644
 From 48b4dfdad9513bee675271ee2c9508c0dae377c8 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 14/15] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 14/17] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -3081,7 +3081,7 @@ index fa51e21f..4e275a5c 100644
 From 440cdc4b66a2023cdded462937a7f57eb3cedfd7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 15/15] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 15/17] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -3354,6 +3354,1728 @@ index bb9728f6..4522128d 100644
  
  static void context_dump( struct object *obj, int verbose );
  static struct object *context_get_sync( struct object *obj );
+-- 
+2.47.3
+
+
+From 1f790f5b24947fbcde26aa9ffe5a5a9c4350cc81 Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Wed, 11 Nov 2026 09:50:19 +1000
+Subject: [PATCH 16/17] winerenku.drv: Add a native RenkuOS (Be API) graphics
+ driver.
+
+Every Wine port for Haiku-family systems draws through winewayland.drv,
+and on RenkuOS Wayland is an in-process server that turns the protocol
+back into BWindows and BBitmaps. This driver talks to the Be API
+directly: each shown top-level HWND gets a BWindow, and win32u draws
+child windows into the top-level window's surface as usual.
+
+Layout follows winemac.drv: the Wine side is C (display.c, window.c,
+surface.c, renku_main.c), the Be side is C++ (be_app.cpp, be_window.cpp),
+and the two meet only in the plain-C header renku_be.h, because Wine's
+internal headers and the Be headers cannot share a file.
+
+- The BApplication starts lazily, on its own thread, the first time a
+  screen or window is needed, so processes that never show a window
+  never contact app_server. BScreen is only constructed after it runs:
+  without be_app the screen is invalid.
+- Be threads (the application looper and every BWindow looper) are
+  spawned with Wine's asynchronous signals blocked, and restore the
+  mask afterwards. Without that, the kernel may deliver SIGINT, SIGALRM
+  or SIGUSR1 to a thread that has no TEB and Wine's handler faults on
+  it; the sigprobe test (docs/probes in the port repo) shows both the
+  fault without the block and that it is gone with it.
+- UpdateDisplayDevices reports one GPU, and per BScreen a source, a
+  monitor and the current mode. BScreen::SetToNext() returns an error
+  on the last screen but leaves the BScreen valid, so the walk stops on
+  the return value, not on IsValid().
+- WS_CAPTION windows get B_TITLED_WINDOW_LOOK and GetWindowStyleMasks
+  tells win32u that the decorator draws their caption and frame; all
+  other windows are borderless and Wine paints them. A BWindow is only
+  created once the window is shown, so hidden helper windows get none.
+- Window surfaces are 32bpp top-down DIBs from window_surface_create();
+  flush copies the dirty rows into a B_RGB32 BBitmap, whose byte order
+  is the DIB's (B, G, R, X; "BGR-" in GraphicsDefs.h), and invalidates
+  that rect in the view.
+- Win32 threads only post messages to Be loopers (BMessenger blocks
+  only when a port is full); a Be thread never waits on a Win32 thread.
+  The driver's own mutex is never held across NtUser calls or surface
+  creation and release, which can take win32u's locks.
+
+configure builds the driver on Haiku when the Be headers are found and
+fails with an error otherwise; --without-renku turns it off. It is never
+built on other hosts.
+
+Verified on RenkuOS (hrev60072+518) in a VM: notepad opens in a single
+native titled window with its title, menu bar, a white edit area and a
+blinking caret, drawn correctly; the display query reports the screen
+(1024x768, 60 Hz). That window is black and white only, so the
+red/blue channel order has not yet been seen on screen.
+
+Not done yet: keyboard and mouse input, focus, and moving, resizing or
+closing from the decorator (windows are created B_NOT_MOVABLE and
+B_NOT_RESIZABLE until input exists); the work area does not leave out
+the Deskbar; window shapes and layered windows; OpenGL; system
+shutdown and Deskbar "Quit" requests are refused instead of becoming
+WM_CLOSE. A fault on a Be thread runs Wine's SIGSEGV handler, which
+does not return, so that thread freezes silently.
+---
+ configure.ac                     |  20 ++
+ dlls/winerenku.drv/Makefile.in   |  14 ++
+ dlls/winerenku.drv/be_app.cpp    | 206 +++++++++++++++++++
+ dlls/winerenku.drv/be_private.h  |  48 +++++
+ dlls/winerenku.drv/be_window.cpp | 341 +++++++++++++++++++++++++++++++
+ dlls/winerenku.drv/display.c     |  89 ++++++++
+ dlls/winerenku.drv/dllmain.c     |  37 ++++
+ dlls/winerenku.drv/renku.h       |  65 ++++++
+ dlls/winerenku.drv/renku_be.h    |  92 +++++++++
+ dlls/winerenku.drv/renku_main.c  |  88 ++++++++
+ dlls/winerenku.drv/surface.c     | 155 ++++++++++++++
+ dlls/winerenku.drv/unixlib.h     |  32 +++
+ dlls/winerenku.drv/window.c      | 308 ++++++++++++++++++++++++++++
+ 13 files changed, 1495 insertions(+)
+ create mode 100644 dlls/winerenku.drv/Makefile.in
+ create mode 100644 dlls/winerenku.drv/be_app.cpp
+ create mode 100644 dlls/winerenku.drv/be_private.h
+ create mode 100644 dlls/winerenku.drv/be_window.cpp
+ create mode 100644 dlls/winerenku.drv/display.c
+ create mode 100644 dlls/winerenku.drv/dllmain.c
+ create mode 100644 dlls/winerenku.drv/renku.h
+ create mode 100644 dlls/winerenku.drv/renku_be.h
+ create mode 100644 dlls/winerenku.drv/renku_main.c
+ create mode 100644 dlls/winerenku.drv/surface.c
+ create mode 100644 dlls/winerenku.drv/unixlib.h
+ create mode 100644 dlls/winerenku.drv/window.c
+
+diff --git a/configure.ac b/configure.ac
+index 3aa27f7b..1a7d5e94 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -54,6 +54,7 @@ AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Ca
+ AC_ARG_WITH(pcsclite,  AS_HELP_STRING([--without-pcsclite],[do not use PCSC lite]))
+ AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]))
+ AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
++AC_ARG_WITH(renku,     AS_HELP_STRING([--without-renku],[do not build the native RenkuOS (Be API) driver]))
+ AC_ARG_WITH(sane,      AS_HELP_STRING([--without-sane],[do not use SANE (scanner support)]))
+ AC_ARG_WITH(sdl,       AS_HELP_STRING([--without-sdl],[do not use SDL]))
+ AC_ARG_WITH(udev,      AS_HELP_STRING([--without-udev],[do not use udev (plug and play support)]))
+@@ -1488,6 +1489,24 @@ else
+                      [enable_winex11_drv])
+ fi
+ 
++dnl **** Check for the Be API (RenkuOS native driver) ****
++case $host_os in
++  haiku*)
++    if test "x$with_renku" != "xno"
++    then
++        AC_LANG_PUSH([C++])
++        AC_CHECK_HEADER([Application.h],[AC_SUBST(RENKU_LIBS,["-lbe -lstdc++"])])
++        AC_LANG_POP([C++])
++    fi
++    WINE_ERROR_WITH(renku,[test -z "$RENKU_LIBS"],
++                    [Be API development files (Application.h) not found, the RenkuOS driver won't be supported.],
++                    [enable_winerenku_drv])
++    ;;
++  *)
++    enable_winerenku_drv=${enable_winerenku_drv:-no}
++    ;;
++esac
++
+ dnl **** Check for OpenCL ****
+ if test "x$with_opencl" != "xno"
+ then
+@@ -3336,6 +3355,7 @@ WINE_CONFIG_MAKEFILE(dlls/wineoss.drv)
+ WINE_CONFIG_MAKEFILE(dlls/wineps.drv)
+ WINE_CONFIG_MAKEFILE(dlls/wineps16.drv16)
+ WINE_CONFIG_MAKEFILE(dlls/winepulse.drv)
++WINE_CONFIG_MAKEFILE(dlls/winerenku.drv)
+ WINE_CONFIG_MAKEFILE(dlls/wineusb.sys)
+ WINE_CONFIG_MAKEFILE(dlls/winevulkan)
+ WINE_CONFIG_MAKEFILE(dlls/winewayland.drv)
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+new file mode 100644
+index 00000000..8750a8f5
+--- /dev/null
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -0,0 +1,14 @@
++MODULE    = winerenku.drv
++UNIXLIB   = winerenku.so
++UNIX_LIBS = -lwin32u $(RENKU_LIBS) $(PTHREAD_LIBS)
++
++VER_FILEDESCRIPTION_STR = "Wine RenkuOS driver"
++
++SOURCES = \
++	be_app.cpp \
++	be_window.cpp \
++	display.c \
++	dllmain.c \
++	renku_main.c \
++	surface.c \
++	window.c
+diff --git a/dlls/winerenku.drv/be_app.cpp b/dlls/winerenku.drv/be_app.cpp
+new file mode 100644
+index 00000000..c63abf43
+--- /dev/null
++++ b/dlls/winerenku.drv/be_app.cpp
+@@ -0,0 +1,206 @@
++/*
++ * RenkuOS driver: the process's BApplication, and the screens
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++
++#include <Application.h>
++#include <Screen.h>
++
++#include <pthread.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++/* RenkuOS has SIGPOLL and no SIGIO; ntdll's server.c makes the same substitution. */
++#if !defined(SIGIO) && defined(SIGPOLL)
++#define SIGIO SIGPOLL
++#endif
++
++/* The signals Wine expects only on its own threads: ntdll's server_block_set
++ * (dlls/ntdll/unix/server.c, server_init_process), which ntdll does not export. On x86-64,
++ * Wine's handlers find the thread's data from the stack pointer (signal_x86_64.c), which only
++ * works on the signal stack of a Wine thread. A process-directed signal (Ctrl-C's SIGINT from
++ * a Terminal) goes to any thread that does not block it (RenkuOS, src/system/kernel/signal.cpp,
++ * send_signal_to_team_locked), so Be threads must block all of them. A new thread starts with
++ * its creator's mask (src/system/kernel/thread.cpp), so blocking them around each call that
++ * spawns a Be thread is enough. */
++static void wine_async_signals(sigset_t *set)
++{
++    sigemptyset(set);
++    sigaddset(set, SIGALRM);
++    sigaddset(set, SIGIO);
++    sigaddset(set, SIGINT);
++    sigaddset(set, SIGHUP);
++    sigaddset(set, SIGQUIT);
++    sigaddset(set, SIGUSR1);
++    sigaddset(set, SIGUSR2);
++    sigaddset(set, SIGCHLD);
++}
++
++be_spawn_guard::be_spawn_guard()
++{
++    sigset_t set;
++    wine_async_signals(&set);
++    pthread_sigmask(SIG_BLOCK, &set, &old_mask);
++}
++
++be_spawn_guard::~be_spawn_guard()
++{
++    pthread_sigmask(SIG_SETMASK, &old_mask, NULL);
++}
++
++namespace {
++
++class RenkuApp : public BApplication
++{
++public:
++    RenkuApp(sem_id ready) : BApplication("application/x-vnd.wine"), fReady(ready) {}
++
++    void ReadyToRun() override
++    {
++        release_sem(fReady);
++    }
++
++    /* Wine decides when a Wine process ends, not the roster, so a B_QUIT_REQUESTED from
++     * outside (the Deskbar's Quit, or a system shutdown) is refused for now. A BApplication
++     * that quits takes its app_server connection with it, and any BBitmap freed after that
++     * drops into the debugger (BBitmap::_CleanUp). Not yet done: turning the request into
++     * WM_CLOSE for the process's windows, with the input work. */
++    bool QuitRequested() override
++    {
++        return false;
++    }
++
++private:
++    sem_id fReady;
++};
++
++pthread_mutex_t app_mutex = PTHREAD_MUTEX_INITIALIZER;
++enum { APP_NONE, APP_RUNNING, APP_FAILED } app_state = APP_NONE;
++sem_id app_ready = -1;
++status_t app_init = B_ERROR;
++
++/* BApplication's constructor locks it for the constructing thread, and Run() expects that lock
++ * (src/kits/app/Looper.cpp, BLooper::Loop), so it is constructed and run on this one thread. */
++void *app_thread(void *)
++{
++    RenkuApp *app = new RenkuApp(app_ready);
++
++    app_init = app->InitCheck();
++    if (app_init != B_OK)
++    {
++        release_sem(app_ready);
++        delete app;
++        return NULL;
++    }
++    app->Run();
++    /* Not reached: QuitRequested() never agrees. */
++    return NULL;
++}
++
++}  /* namespace */
++
++extern "C" int be_app_start(void)
++{
++    int ret;
++
++    pthread_mutex_lock(&app_mutex);
++    if (app_state == APP_NONE)
++    {
++        pthread_t thread;
++        int created;
++
++        app_state = APP_FAILED;
++        if ((app_ready = create_sem(0, "winerenku app ready")) >= B_OK)
++        {
++            {
++                be_spawn_guard guard;
++                created = pthread_create(&thread, NULL, app_thread, NULL);
++            }
++            /* Waiting here waits for app_server and the BApplication thread, never for a Win32
++             * thread, so it cannot deadlock against Wine. */
++            if (created == 0 && acquire_sem_etc(app_ready, 1, B_RELATIVE_TIMEOUT, 10000000) == B_OK &&
++                app_init == B_OK)
++            {
++                pthread_detach(thread);
++                app_state = APP_RUNNING;
++            }
++            else fprintf(stderr, "winerenku: cannot start the BApplication: %s\n",
++                         strerror(created ? B_ERROR : app_init));
++        }
++    }
++    ret = app_state == APP_RUNNING ? 0 : -1;
++    pthread_mutex_unlock(&app_mutex);
++    return ret;
++}
++
++/* BScreen talks to app_server through the BApplication's connection: without one, a BScreen
++ * is simply invalid (src/kits/interface/PrivateScreen.cpp, _Get), and its queries call
++ * debugger() (src/kits/app/AppServerLink.cpp). So the app is started before any BScreen is
++ * constructed. */
++/* SetToNext() fails on the last screen and leaves the BScreen as it was, still valid
++ * (src/kits/interface/Screen.cpp), so every walk stops on its result. */
++static bool select_screen(int index, BScreen &screen)
++{
++    if (!screen.IsValid()) return false;
++    for (int i = 0; i < index; i++)
++        if (screen.SetToNext() != B_OK) return false;
++    return true;
++}
++
++static int32 refresh_rate(const display_mode &mode)
++{
++    uint32 total = (uint32)mode.timing.h_total * mode.timing.v_total;
++    if (!total) return 60;
++    return (int32)(((uint64)mode.timing.pixel_clock * 1000 + total / 2) / total);  /* kHz */
++}
++
++extern "C" int be_screen_count(void)
++{
++    int count = 0;
++
++    if (be_app_start()) return 0;
++    BScreen screen;
++    if (!screen.IsValid()) return 0;
++    do count++; while (screen.SetToNext() == B_OK);
++    return count;
++}
++
++extern "C" int be_screen_frame(int index, struct be_rect *frame, int32_t *refresh_hz)
++{
++    display_mode mode;
++
++    if (be_app_start()) return -1;
++    BScreen screen;
++    if (!select_screen(index, screen)) return -1;
++    BRect r = screen.Frame();
++    /* BRect is inclusive: Frame() of a 1920-wide screen is 0..1919. */
++    frame->left = (int32_t)r.left;
++    frame->top = (int32_t)r.top;
++    frame->right = (int32_t)r.right + 1;
++    frame->bottom = (int32_t)r.bottom + 1;
++    *refresh_hz = screen.GetMode(&mode) == B_OK ? refresh_rate(mode) : 60;
++    return 0;
++}
+diff --git a/dlls/winerenku.drv/be_private.h b/dlls/winerenku.drv/be_private.h
+new file mode 100644
+index 00000000..4e365d37
+--- /dev/null
++++ b/dlls/winerenku.drv/be_private.h
+@@ -0,0 +1,48 @@
++/*
++ * RenkuOS driver: definitions shared by the be_*.cpp files (C++, Be API only)
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#ifndef __WINE_RENKU_BE_PRIVATE_H
++#define __WINE_RENKU_BE_PRIVATE_H
++
++#ifndef __cplusplus
++#error be_private.h is for the be_*.cpp files only
++#endif
++
++#include "renku_be.h"
++
++#include <signal.h>
++
++/* Blocks Wine's asynchronous signals on the calling thread for its lifetime, then restores
++ * the caller's mask. Every call that spawns a Be thread runs inside one, so that the thread
++ * starts with them blocked: the BApplication thread's creation, and a window's first Show(),
++ * which spawns its looper (src/kits/app/Looper.cpp, BLooper::Run). */
++class be_spawn_guard
++{
++public:
++    be_spawn_guard();
++    ~be_spawn_guard();
++    be_spawn_guard(const be_spawn_guard &) = delete;
++    be_spawn_guard &operator=(const be_spawn_guard &) = delete;
++
++private:
++    sigset_t old_mask;
++};
++
++#endif /* __WINE_RENKU_BE_PRIVATE_H */
+diff --git a/dlls/winerenku.drv/be_window.cpp b/dlls/winerenku.drv/be_window.cpp
+new file mode 100644
+index 00000000..d5950ed0
+--- /dev/null
++++ b/dlls/winerenku.drv/be_window.cpp
+@@ -0,0 +1,341 @@
++/*
++ * RenkuOS driver: BWindow and BBitmap side of top-level windows
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++
++#include <Bitmap.h>
++#include <Message.h>
++#include <Messenger.h>
++#include <Region.h>
++#include <View.h>
++#include <Window.h>
++
++/* Win32 threads never lock a BWindow: they post a message to it through a BMessenger, which
++ * stays safe to use after the window has gone (the send just fails). Every change below is
++ * applied on the window's own looper thread. */
++
++struct be_bitmap
++{
++    BBitmap *bitmap;
++    int32 refs;
++};
++
++struct be_window
++{
++    BMessenger messenger;
++    int32 refs;
++};
++
++namespace {
++
++enum
++{
++    MSG_SET_FRAME   = 'rFrm',
++    MSG_SET_VISIBLE = 'rVis',
++    MSG_SET_STYLE   = 'rSty',
++    MSG_SET_TITLE   = 'rTtl',
++    MSG_SET_BITMAP  = 'rBmp',
++    MSG_INVALIDATE  = 'rInv',
++    MSG_DESTROY     = 'rDel',
++};
++
++/* Win32 rectangles exclude right and bottom, BRect includes them. */
++BRect to_brect(const struct be_rect *r)
++{
++    return BRect(r->left, r->top, r->right - 1, r->bottom - 1);
++}
++
++window_look look_for(enum be_window_style style)
++{
++    return style == BE_WINDOW_TITLED ? B_TITLED_WINDOW_LOOK : B_NO_BORDER_WINDOW_LOOK;
++}
++
++/* Until Wine hears about it, a window the user moves, resizes, closes, zooms or minimizes
++ * with the decorator would no longer be where Wine thinks it is. Those events reach Wine with
++ * the input work (FrameMoved, FrameResized, QuitRequested -> SC_CLOSE, ...); until then the
++ * decorator offers none of them. */
++const uint32 kFixedWindowFlags = B_NOT_MOVABLE | B_NOT_RESIZABLE | B_NOT_CLOSABLE |
++                                 B_NOT_ZOOMABLE | B_NOT_MINIMIZABLE;
++
++void bitmap_release(struct be_bitmap *bitmap)
++{
++    /* atomic_add returns the previous value. */
++    if (bitmap && atomic_add(&bitmap->refs, -1) == 1)
++    {
++        delete bitmap->bitmap;
++        delete bitmap;
++    }
++}
++
++/* Shows the window surface's bitmap. win32u has already drawn the whole window into it,
++ * non-client area included, so there is nothing else to draw. */
++class RenkuView : public BView
++{
++public:
++    RenkuView(BRect frame)
++        : BView(frame, "wine", B_FOLLOW_ALL, B_WILL_DRAW), fBitmap(NULL), fOrigin(0, 0)
++    {
++        /* app_server must not clear the update area first: Draw() covers it. */
++        SetViewColor(B_TRANSPARENT_COLOR);
++        SetLowColor(255, 255, 255);
++    }
++
++    ~RenkuView() override
++    {
++        bitmap_release(fBitmap);
++    }
++
++    /* Takes over the caller's reference. */
++    void SetBitmap(struct be_bitmap *bitmap, BPoint origin)
++    {
++        bitmap_release(fBitmap);
++        fBitmap = bitmap;
++        fOrigin = origin;
++        Invalidate();
++    }
++
++    void Draw(BRect update) override
++    {
++        BRegion rest(update);
++
++        if (fBitmap)
++        {
++            BRect area = fBitmap->bitmap->Bounds().OffsetByCopy(fOrigin);
++            BRect r = update & area;
++            if (r.IsValid())
++            {
++                DrawBitmapAsync(fBitmap->bitmap, r.OffsetByCopy(-fOrigin.x, -fOrigin.y), r);
++                rest.Exclude(r);
++            }
++        }
++        if (rest.CountRects()) FillRegion(&rest, B_SOLID_LOW);
++    }
++
++private:
++    struct be_bitmap *fBitmap;
++    BPoint fOrigin;
++};
++
++class RenkuWindow : public BWindow
++{
++public:
++    RenkuWindow(BRect frame, const char *title, enum be_window_style style)
++        : BWindow(frame, title ? title : "", look_for(style), B_NORMAL_WINDOW_FEEL,
++                  kFixedWindowFlags)
++    {
++        fView = new RenkuView(Bounds());
++        AddChild(fView);
++    }
++
++    /* Closing is Wine's decision (WM_CLOSE); not yet wired, see kFixedWindowFlags. */
++    bool QuitRequested() override
++    {
++        return false;
++    }
++
++    void MessageReceived(BMessage *msg) override
++    {
++        switch (msg->what)
++        {
++        case MSG_SET_FRAME:
++        {
++            BRect frame;
++            if (msg->FindRect("frame", &frame) != B_OK) break;
++            MoveTo(frame.LeftTop());
++            ResizeTo(frame.Width(), frame.Height());
++            return;
++        }
++        case MSG_SET_VISIBLE:
++        {
++            bool visible;
++            if (msg->FindBool("visible", &visible) != B_OK) break;
++            /* Show() and Hide() nest; keep the level at shown or hidden by one. */
++            if (visible && IsHidden()) Show();
++            else if (!visible && !IsHidden()) Hide();
++            return;
++        }
++        case MSG_SET_STYLE:
++        {
++            int32 style;
++            if (msg->FindInt32("style", &style) != B_OK) break;
++            SetLook(look_for((enum be_window_style)style));
++            return;
++        }
++        case MSG_SET_TITLE:
++        {
++            const char *title;
++            if (msg->FindString("title", &title) != B_OK) break;
++            SetTitle(title);
++            return;
++        }
++        case MSG_SET_BITMAP:
++        {
++            void *bitmap = NULL;
++            BPoint origin;
++            if (msg->FindPointer("bitmap", &bitmap) != B_OK ||
++                msg->FindPoint("origin", &origin) != B_OK) break;
++            fView->SetBitmap((struct be_bitmap *)bitmap, origin);
++            return;
++        }
++        case MSG_INVALIDATE:
++        {
++            BRect rect;
++            if (msg->FindRect("rect", &rect) != B_OK) break;
++            fView->Invalidate(rect);
++            return;
++        }
++        case MSG_DESTROY:
++            /* On the looper thread, with the window locked: Quit() deletes the window, and
++             * the view's destructor drops its bitmap. Wine posts nothing after this. */
++            Quit();
++            return;
++        }
++        BWindow::MessageReceived(msg);
++    }
++
++private:
++    RenkuView *fView;
++};
++
++/* SendMessage() waits only while the window's port is full. That is a wait for the looper,
++ * which never waits for a Win32 thread, so it ends. */
++void post(struct be_window *window, BMessage *msg)
++{
++    if (window) window->messenger.SendMessage(msg);
++}
++
++}  /* namespace */
++
++extern "C" struct be_bitmap *be_bitmap_create(int width, int height)
++{
++    struct be_bitmap *bitmap;
++
++    /* A BBitmap registers with app_server through the BApplication. */
++    if (be_app_start() || width <= 0 || height <= 0) return NULL;
++    bitmap = new struct be_bitmap;
++    bitmap->bitmap = new BBitmap(BRect(0, 0, width - 1, height - 1), B_RGB32);
++    bitmap->refs = 1;
++    if (bitmap->bitmap->InitCheck() != B_OK)
++    {
++        delete bitmap->bitmap;
++        delete bitmap;
++        return NULL;
++    }
++    return bitmap;
++}
++
++extern "C" void *be_bitmap_bits(struct be_bitmap *bitmap, int *stride)
++{
++    *stride = bitmap->bitmap->BytesPerRow();
++    return bitmap->bitmap->Bits();
++}
++
++extern "C" void be_bitmap_release(struct be_bitmap *bitmap)
++{
++    bitmap_release(bitmap);
++}
++
++extern "C" struct be_window *be_window_create(enum be_window_style style, const struct be_rect *frame,
++                                              const char *title_utf8)
++{
++    struct be_window *handle;
++    RenkuWindow *window;
++
++    if (be_app_start()) return NULL;
++
++    window = new RenkuWindow(to_brect(frame), title_utf8, style);
++    handle = new struct be_window;
++    handle->messenger = BMessenger(window);
++    handle->refs = 1;
++
++    /* A new BWindow is hidden at show level 1, and its first Show() also runs the looper
++     * (src/kits/interface/Window.cpp). Hide() then Show() leaves it hidden with the looper
++     * running. Both are called by the constructing thread, which still holds the window's
++     * lock until Run() releases it. */
++    {
++        be_spawn_guard guard;
++        window->Hide();
++        window->Show();
++    }
++    return handle;
++}
++
++extern "C" void be_window_add_ref(struct be_window *window)
++{
++    atomic_add(&window->refs, 1);
++}
++
++extern "C" void be_window_release(struct be_window *window)
++{
++    if (!window || atomic_add(&window->refs, -1) != 1) return;
++    BMessage msg(MSG_DESTROY);
++    post(window, &msg);
++    delete window;
++}
++
++extern "C" void be_window_set_frame(struct be_window *window, const struct be_rect *frame)
++{
++    BMessage msg(MSG_SET_FRAME);
++    msg.AddRect("frame", to_brect(frame));
++    post(window, &msg);
++}
++
++extern "C" void be_window_set_visible(struct be_window *window, int visible)
++{
++    BMessage msg(MSG_SET_VISIBLE);
++    msg.AddBool("visible", visible != 0);
++    post(window, &msg);
++}
++
++extern "C" void be_window_set_style(struct be_window *window, enum be_window_style style)
++{
++    BMessage msg(MSG_SET_STYLE);
++    msg.AddInt32("style", style);
++    post(window, &msg);
++}
++
++extern "C" void be_window_set_title(struct be_window *window, const char *title_utf8)
++{
++    BMessage msg(MSG_SET_TITLE);
++    msg.AddString("title", title_utf8 ? title_utf8 : "");
++    post(window, &msg);
++}
++
++extern "C" void be_window_set_bitmap(struct be_window *window, struct be_bitmap *bitmap, int x, int y)
++{
++    BMessage msg(MSG_SET_BITMAP);
++
++    if (!window) return;
++    if (bitmap) atomic_add(&bitmap->refs, 1);  /* handed to the view with the message */
++    msg.AddPointer("bitmap", bitmap);
++    msg.AddPoint("origin", BPoint(x, y));
++    if (window->messenger.SendMessage(&msg) != B_OK) bitmap_release(bitmap);
++}
++
++extern "C" void be_window_invalidate(struct be_window *window, const struct be_rect *rect)
++{
++    BMessage msg(MSG_INVALIDATE);
++    msg.AddRect("rect", to_brect(rect));
++    post(window, &msg);
++}
+diff --git a/dlls/winerenku.drv/display.c b/dlls/winerenku.drv/display.c
+new file mode 100644
+index 00000000..e6764286
+--- /dev/null
++++ b/dlls/winerenku.drv/display.c
+@@ -0,0 +1,89 @@
++/*
++ * RenkuOS driver: displays
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <stdio.h>
++
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
++
++/***********************************************************************
++ *      UpdateDisplayDevices (RENKU.@)
++ *
++ * One GPU, and one source and monitor per BScreen. Only the current mode is offered: the
++ * driver does not implement ChangeDisplaySettings yet, so a program that picked another mode
++ * would only be told that it failed.
++ */
++UINT RENKU_UpdateDisplayDevices(const struct gdi_device_manager *manager, void *param)
++{
++    UINT state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP | DISPLAY_DEVICE_PRIMARY_DEVICE;
++    UINT dpi = NtUserGetSystemDpiForProcess(NULL);
++    struct pci_id pci_id = {0};
++    int i, count = be_screen_count();
++
++    TRACE("%d screen(s)\n", count);
++
++    /* No BApplication, no screens: let win32u fall back to its default display. */
++    if (count <= 0) return STATUS_NOT_IMPLEMENTED;
++
++    manager->add_gpu(NULL, &pci_id, NULL, param);
++
++    for (i = 0; i < count; i++)
++    {
++        struct gdi_monitor monitor = {0};
++        DEVMODEW mode = {.dmSize = sizeof(mode)};
++        struct be_rect frame;
++        int32_t refresh_hz;
++        char name[32];
++
++        if (be_screen_frame(i, &frame, &refresh_hz)) continue;
++
++        snprintf(name, sizeof(name), "Screen%d", i + 1);
++        manager->add_source(name, state_flags, dpi, param);
++
++        SetRect(&monitor.rc_monitor, frame.left, frame.top, frame.right, frame.bottom);
++        /* BScreen has no work-area query (headers/os/interface/Screen.h), so the work area is
++         * the whole screen. Not yet done: leaving out the Deskbar (BDeskbar::Frame()). */
++        monitor.rc_work = monitor.rc_monitor;
++        manager->add_monitor(&monitor, param);
++
++        mode.dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
++                        DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
++        mode.dmDisplayOrientation = DMDO_DEFAULT;
++        mode.dmBitsPerPel = 32;
++        mode.dmPelsWidth = frame.right - frame.left;
++        mode.dmPelsHeight = frame.bottom - frame.top;
++        mode.dmDisplayFrequency = refresh_hz;
++        mode.dmPosition.x = frame.left;
++        mode.dmPosition.y = frame.top;
++        manager->add_modes(&mode, 1, &mode, param);
++
++        TRACE("%s: %s, %d Hz\n", name, wine_dbgstr_rect(&monitor.rc_monitor), refresh_hz);
++        state_flags &= ~DISPLAY_DEVICE_PRIMARY_DEVICE;
++    }
++    return STATUS_SUCCESS;
++}
+diff --git a/dlls/winerenku.drv/dllmain.c b/dlls/winerenku.drv/dllmain.c
+new file mode 100644
+index 00000000..917622b3
+--- /dev/null
++++ b/dlls/winerenku.drv/dllmain.c
+@@ -0,0 +1,37 @@
++/*
++ * RenkuOS driver: PE side
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#include <stdarg.h>
++
++#include "windef.h"
++#include "winbase.h"
++#include "unixlib.h"
++
++BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
++{
++    if (reason != DLL_PROCESS_ATTACH) return TRUE;
++
++    DisableThreadLibraryCalls(instance);
++    if (__wine_init_unix_call()) return FALSE;
++
++    /* Registers the driver with win32u. It does not contact app_server: the BApplication is
++     * started by the first thing that needs it (a window, a bitmap or a screen query). */
++    return !WINE_UNIX_CALL(renku_unix_func_init, NULL);
++}
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+new file mode 100644
+index 00000000..7eeb6d13
+--- /dev/null
++++ b/dlls/winerenku.drv/renku.h
+@@ -0,0 +1,65 @@
++/*
++ * RenkuOS driver: definitions for the Wine side (unix library, C)
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#ifndef __WINE_RENKU_H
++#define __WINE_RENKU_H
++
++#ifndef __WINE_CONFIG_H
++# error You must include config.h to use this header
++#endif
++
++#include <stdarg.h>
++
++#include "ntstatus.h"
++#include "windef.h"
++#include "winbase.h"
++#include "ntgdi.h"
++#include "ntuser.h"
++#include "wine/gdi_driver.h"
++#include "wine/rbtree.h"
++
++#include "unixlib.h"
++#include "renku_be.h"
++
++/* display.c */
++extern UINT RENKU_UpdateDisplayDevices(const struct gdi_device_manager *manager, void *param);
++
++/* window.c */
++extern BOOL RENKU_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect,
++                                      struct window_surface **surface);
++extern void RENKU_DestroyWindow(HWND hwnd);
++extern BOOL RENKU_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask,
++                                      UINT *ex_style_mask);
++extern void RENKU_SetWindowText(HWND hwnd, LPCWSTR text);
++extern void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
++                                   const struct window_rects *new_rects,
++                                   struct window_surface *surface);
++extern BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped,
++                                    const struct window_rects *rects);
++
++/* surface.c */
++extern struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
++                                                   const RECT *rect);
++extern struct be_bitmap *renku_surface_bitmap(struct window_surface *surface);
++
++/* UTF-8 copy of a Win32 string, malloc()ed; NULL on failure. */
++extern char *renku_utf8_from_wstr(const WCHAR *str);
++
++#endif /* __WINE_RENKU_H */
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+new file mode 100644
+index 00000000..6f36bdc0
+--- /dev/null
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -0,0 +1,92 @@
++/*
++ * RenkuOS driver: the plain-C seam between the Wine side and the Be API side
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++/* Wine's internal headers are not C++-safe and the Be headers are C++ only, so the two
++ * never meet in one file. The C files (renku.h) see only this header; the be_*.cpp files see
++ * only this header and the Be API. Nothing here uses a Wine or a Be type.
++ *
++ * Threading rules (see the commit message of the driver patch for the evidence):
++ *   - every function here may be called from any Win32 thread;
++ *   - none of them waits for a Be looper thread, except be_app_start() and be_screen_*(),
++ *     which wait for the BApplication and app_server, never for a Win32 thread;
++ *   - Be threads never call into Wine. */
++
++#ifndef __WINE_RENKU_BE_H
++#define __WINE_RENKU_BE_H
++
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/* Rectangles are Win32-style: right and bottom exclusive, virtual screen coordinates. */
++struct be_rect
++{
++    int32_t left, top, right, bottom;
++};
++
++/* Start this process's BApplication on a thread of its own, once. Returns 0 when it runs. */
++int be_app_start(void);
++
++/* Screens. Indexes are 0 .. count-1; screen 0 is the main screen. */
++int be_screen_count(void);
++int be_screen_frame(int index, struct be_rect *frame, int32_t *refresh_hz);
++
++/* A B_RGB32 bitmap: 32 bits per pixel, B, G, R, X in memory, top row first, the same layout
++ * as a top-down 32-bpp BI_RGB DIB. Reference counted: windows that draw it hold a reference. */
++struct be_bitmap;
++struct be_bitmap *be_bitmap_create(int width, int height);
++void *be_bitmap_bits(struct be_bitmap *bitmap, int *stride);
++void be_bitmap_release(struct be_bitmap *bitmap);
++
++/* One BWindow. The handle is reference counted and stays valid after the BWindow has gone:
++ * every call on it then does nothing. */
++struct be_window;
++
++enum be_window_style
++{
++    BE_WINDOW_TITLED,      /* the system decorator draws the caption and the frame */
++    BE_WINDOW_BORDERLESS,  /* Wine draws everything */
++};
++
++/* Created hidden, its looper already running. frame is the area Wine draws, which becomes the
++ * BWindow's Frame(); the decorator, if any, is drawn around it. */
++struct be_window *be_window_create(enum be_window_style style, const struct be_rect *frame,
++                                   const char *title_utf8);
++void be_window_add_ref(struct be_window *window);
++/* Drops a reference. The last one also closes the BWindow. */
++void be_window_release(struct be_window *window);
++
++void be_window_set_frame(struct be_window *window, const struct be_rect *frame);
++void be_window_set_visible(struct be_window *window, int visible);
++void be_window_set_style(struct be_window *window, enum be_window_style style);
++void be_window_set_title(struct be_window *window, const char *title_utf8);
++/* Draw bitmap (or nothing, if NULL) with its top-left pixel at (x, y) in window coordinates.
++ * The window takes its own reference. */
++void be_window_set_bitmap(struct be_window *window, struct be_bitmap *bitmap, int x, int y);
++/* Redraw rect, in window coordinates. */
++void be_window_invalidate(struct be_window *window, const struct be_rect *rect);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __WINE_RENKU_BE_H */
+diff --git a/dlls/winerenku.drv/renku_main.c b/dlls/winerenku.drv/renku_main.c
+new file mode 100644
+index 00000000..7efa4b3b
+--- /dev/null
++++ b/dlls/winerenku.drv/renku_main.c
+@@ -0,0 +1,88 @@
++/*
++ * RenkuOS driver: initialization and the driver function table
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <stdlib.h>
++
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
++
++char *renku_utf8_from_wstr(const WCHAR *str)
++{
++    DWORD len = 0, bytes = (str ? wcslen(str) + 1 : 1) * sizeof(WCHAR);
++    static const WCHAR empty[] = {0};
++    char *utf8;
++
++    if (!str) str = empty;
++    if (RtlUnicodeToUTF8N(NULL, 0, &len, str, bytes) && !len) return NULL;
++    if (!(utf8 = malloc(len))) return NULL;
++    if (RtlUnicodeToUTF8N(utf8, len, &len, str, bytes))
++    {
++        free(utf8);
++        return NULL;
++    }
++    return utf8;
++}
++
++/* Only what win32u cannot do without a window system is here; everything else is win32u's
++ * own default (dlls/win32u/driver.c). Input, focus, cursors, clipboard and the other entries
++ * come in later patches. */
++static const struct user_driver_funcs renku_funcs =
++{
++    .pCreateWindowSurface = RENKU_CreateWindowSurface,
++    .pDestroyWindow = RENKU_DestroyWindow,
++    .pGetWindowStyleMasks = RENKU_GetWindowStyleMasks,
++    .pSetWindowText = RENKU_SetWindowText,
++    .pUpdateDisplayDevices = RENKU_UpdateDisplayDevices,
++    .pWindowPosChanged = RENKU_WindowPosChanged,
++    .pWindowPosChanging = RENKU_WindowPosChanging,
++};
++
++static NTSTATUS renku_unix_init(void *arg)
++{
++    __wine_set_user_driver(&renku_funcs, WINE_GDI_DRIVER_VERSION);
++    TRACE("driver registered\n");
++    return STATUS_SUCCESS;
++}
++
++const unixlib_entry_t __wine_unix_call_funcs[] =
++{
++    renku_unix_init,
++};
++
++C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == renku_unix_func_count);
++
++#ifdef _WIN64
++
++const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
++{
++    renku_unix_init,
++};
++
++C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == renku_unix_func_count);
++
++#endif /* _WIN64 */
+diff --git a/dlls/winerenku.drv/surface.c b/dlls/winerenku.drv/surface.c
+new file mode 100644
+index 00000000..818ed679
+--- /dev/null
++++ b/dlls/winerenku.drv/surface.c
+@@ -0,0 +1,155 @@
++/*
++ * RenkuOS driver: window surfaces
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
++
++/* win32u draws into the surface's own DIB section. flush() copies the dirty rectangle into a
++ * B_RGB32 BBitmap that the window's view draws, then asks the window to redraw that part.
++ * The copy means app_server only ever shows what Wine has finished drawing, never a frame
++ * that GDI is still painting. B_RGB32 is B, G, R, X in memory, top row first
++ * (headers/os/interface/GraphicsDefs.h), which is the layout of the top-down 32-bpp BI_RGB
++ * DIB below, so rows are copied as they are. */
++struct renku_surface
++{
++    struct window_surface header;
++    struct be_bitmap     *bitmap;   /* owned */
++    struct be_window     *window;   /* referenced; safe to use after the BWindow has gone */
++};
++
++static const struct window_surface_funcs renku_surface_funcs;
++
++static struct renku_surface *get_renku_surface(struct window_surface *surface)
++{
++    if (!surface || surface->funcs != &renku_surface_funcs) return NULL;
++    return (struct renku_surface *)surface;
++}
++
++static void renku_surface_set_clip(struct window_surface *window_surface, const RECT *rects, UINT count)
++{
++}
++
++static BOOL renku_surface_flush(struct window_surface *window_surface, const RECT *rect, const RECT *dirty,
++                                const BITMAPINFO *color_info, const void *color_bits, BOOL shape_changed,
++                                const BITMAPINFO *shape_info, const void *shape_bits)
++{
++    struct renku_surface *surface = get_renku_surface(window_surface);
++    int src_stride = color_info->bmiHeader.biWidth * 4, dst_stride, y;
++    int bytes = (dirty->right - dirty->left) * 4;
++    const char *src;
++    char *dst;
++    struct be_rect area;
++
++    if (!surface->bitmap || bytes <= 0) return TRUE;
++    dst = be_bitmap_bits(surface->bitmap, &dst_stride);
++
++    src = (const char *)color_bits + dirty->top * src_stride + dirty->left * 4;
++    dst += dirty->top * dst_stride + dirty->left * 4;
++    for (y = dirty->top; y < dirty->bottom; y++, src += src_stride, dst += dst_stride)
++        memcpy(dst, src, bytes);
++
++    /* dirty is relative to the surface, rect places the surface in the window. */
++    area.left = rect->left + dirty->left;
++    area.top = rect->top + dirty->top;
++    area.right = rect->left + dirty->right;
++    area.bottom = rect->top + dirty->bottom;
++    be_window_invalidate(surface->window, &area);
++
++    /* Not yet done: window shapes (SetWindowRgn) and layered windows; see the plan, phase 4. */
++    return TRUE;
++}
++
++static void renku_surface_destroy(struct window_surface *window_surface)
++{
++    struct renku_surface *surface = get_renku_surface(window_surface);
++
++    TRACE("freeing %p\n", surface);
++    if (surface->bitmap) be_bitmap_release(surface->bitmap);
++    if (surface->window) be_window_release(surface->window);
++    /* win32u frees the structure itself (window_surface_release). */
++}
++
++static const struct window_surface_funcs renku_surface_funcs =
++{
++    .size = sizeof(struct renku_surface),
++    .set_clip = renku_surface_set_clip,
++    .flush = renku_surface_flush,
++    .destroy = renku_surface_destroy,
++};
++
++struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window, const RECT *rect)
++{
++    int width = rect->right - rect->left, height = rect->bottom - rect->top;
++    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
++    BITMAPINFO *info = (BITMAPINFO *)buffer;
++    struct window_surface *window_surface;
++    struct renku_surface *surface;
++    struct be_bitmap *bitmap;
++    int stride;
++    void *bits;
++
++    if (!(bitmap = be_bitmap_create(width, height)))
++    {
++        ERR("no BBitmap for %p, %dx%d\n", hwnd, width, height);
++        return NULL;
++    }
++    /* The view may draw it before the first flush; win32u starts its own bits white too. */
++    bits = be_bitmap_bits(bitmap, &stride);
++    memset(bits, 0xff, (size_t)stride * height);
++
++    memset(info, 0, sizeof(*info));
++    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
++    info->bmiHeader.biWidth       = width;
++    info->bmiHeader.biHeight      = -height; /* top-down */
++    info->bmiHeader.biPlanes      = 1;
++    info->bmiHeader.biBitCount    = 32;
++    info->bmiHeader.biSizeImage   = width * 4 * height;
++    info->bmiHeader.biCompression = BI_RGB;
++
++    if (!(window_surface = window_surface_create(&renku_surface_funcs, hwnd, rect, info, 0)))
++    {
++        be_bitmap_release(bitmap);
++        return NULL;
++    }
++    surface = get_renku_surface(window_surface);
++    surface->bitmap = bitmap;
++    be_window_add_ref(window);
++    surface->window = window;
++
++    TRACE("hwnd %p rect %s surface %p\n", hwnd, wine_dbgstr_rect(rect), surface);
++    return window_surface;
++}
++
++struct be_bitmap *renku_surface_bitmap(struct window_surface *window_surface)
++{
++    struct renku_surface *surface = get_renku_surface(window_surface);
++    return surface ? surface->bitmap : NULL;
++}
+diff --git a/dlls/winerenku.drv/unixlib.h b/dlls/winerenku.drv/unixlib.h
+new file mode 100644
+index 00000000..15fea273
+--- /dev/null
++++ b/dlls/winerenku.drv/unixlib.h
+@@ -0,0 +1,32 @@
++/*
++ * RenkuOS driver: unix library interface
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#ifndef __WINE_RENKU_UNIXLIB_H
++#define __WINE_RENKU_UNIXLIB_H
++
++#include "wine/unixlib.h"
++
++enum renku_unix_func
++{
++    renku_unix_func_init,
++    renku_unix_func_count,
++};
++
++#endif /* __WINE_RENKU_UNIXLIB_H */
+diff --git a/dlls/winerenku.drv/window.c b/dlls/winerenku.drv/window.c
+new file mode 100644
+index 00000000..8e499aee
+--- /dev/null
++++ b/dlls/winerenku.drv/window.c
+@@ -0,0 +1,308 @@
++/*
++ * RenkuOS driver: top-level windows
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <assert.h>
++#include <pthread.h>
++#include <stdlib.h>
++#include <string.h>
++
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
++
++/* Only top-level windows (children of the desktop window) get a BWindow. win32u draws child
++ * windows into their top-level's surface, and message-only windows are never shown.
++ *
++ * Locking: win_data_mutex guards the tree and every renku_win_data. While it is held, the
++ * code calls only the be_window_* functions that post a message and win32u's reference
++ * increment; nothing that can take another lock. win32u calls the driver with its own locks
++ * held, so NtUser* queries, surface creation (a DIB section) and the release of a surface
++ * (which may free one) all happen with the mutex unlocked. Be threads never take it. */
++struct renku_win_data
++{
++    struct rb_entry        entry;
++    HWND                   hwnd;
++    struct be_window      *window;
++    enum be_window_style   style;
++    struct be_rect         frame;     /* the BWindow's frame as last set */
++    struct window_surface *surface;   /* the surface the BWindow draws, referenced */
++    BOOL                   visible;
++};
++
++static int win_data_cmp(const void *key, const struct rb_entry *entry)
++{
++    HWND hwnd = (HWND)key;
++    const struct renku_win_data *data = RB_ENTRY_VALUE(entry, const struct renku_win_data, entry);
++
++    if (hwnd < data->hwnd) return -1;
++    if (hwnd > data->hwnd) return 1;
++    return 0;
++}
++
++static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
++static struct rb_tree win_data_tree = { win_data_cmp };
++
++/* Locks win_data_mutex and returns the data, or unlocks and returns NULL. */
++static struct renku_win_data *get_win_data(HWND hwnd)
++{
++    struct rb_entry *entry;
++
++    pthread_mutex_lock(&win_data_mutex);
++    if ((entry = rb_get(&win_data_tree, hwnd))) return RB_ENTRY_VALUE(entry, struct renku_win_data, entry);
++    pthread_mutex_unlock(&win_data_mutex);
++    return NULL;
++}
++
++static void release_win_data(struct renku_win_data *data)
++{
++    assert(data);
++    pthread_mutex_unlock(&win_data_mutex);
++}
++
++static BOOL is_toplevel(HWND hwnd)
++{
++    HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
++    return parent && parent == NtUserGetDesktopWindow();
++}
++
++/* A window with a caption gets the system decorator, which then draws the caption and the
++ * frame in place of Wine's (see GetWindowStyleMasks). Everything else, popups and menus
++ * included, is borderless and drawn entirely by Wine. */
++static enum be_window_style style_for(UINT style)
++{
++    return (style & WS_CAPTION) == WS_CAPTION ? BE_WINDOW_TITLED : BE_WINDOW_BORDERLESS;
++}
++
++static struct be_rect be_rect_from(const RECT *r)
++{
++    struct be_rect rect = { r->left, r->top, r->right, r->bottom };
++    return rect;
++}
++
++static char *get_window_title(HWND hwnd)
++{
++    WCHAR text[1024];
++
++    if (!NtUserInternalGetWindowText(hwnd, text, ARRAY_SIZE(text))) text[0] = 0;
++    return renku_utf8_from_wstr(text);
++}
++
++/***********************************************************************
++ *      WindowPosChanging (RENKU.@)
++ *
++ * Creates the BWindow the first time a top-level window is shown. It starts hidden;
++ * WindowPosChanged gives it its frame and shows it.
++ */
++BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects)
++{
++    struct renku_win_data *data, *created;
++    enum be_window_style style;
++    struct be_rect frame;
++    UINT win_style;
++    char *title;
++
++    TRACE("hwnd %p, swp_flags %04x, shaped %u, rects %s\n", hwnd, swp_flags, shaped, debugstr_window_rects(rects));
++
++    if ((data = get_win_data(hwnd)))
++    {
++        release_win_data(data);
++        return TRUE;
++    }
++    if (!is_toplevel(hwnd)) return FALSE;  /* no surface of its own */
++
++    /* Many top-level windows are never shown (IME, DDE and OLE helpers, explorer's own), and
++     * win32u gives a hidden window no surface anyway (get_window_surface), so the BWindow
++     * waits until the window is visible or being shown. */
++    win_style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
++    if (!(win_style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)) return FALSE;
++
++    style = style_for(win_style);
++    title = get_window_title(hwnd);
++    /* rects->visible is not final yet; WindowPosChanged sets the real frame. */
++    frame = be_rect_from(&rects->window);
++
++    if (!(created = calloc(1, sizeof(*created))))
++    {
++        free(title);
++        return FALSE;
++    }
++    created->hwnd = hwnd;
++    created->style = style;
++    created->frame = frame;
++    if (!(created->window = be_window_create(style, &frame, title)))
++    {
++        ERR("no BWindow for %p\n", hwnd);
++        free(created);
++        free(title);
++        return FALSE;
++    }
++    free(title);
++
++    pthread_mutex_lock(&win_data_mutex);
++    if (rb_get(&win_data_tree, hwnd))
++    {
++        /* Another thread got there first. */
++        pthread_mutex_unlock(&win_data_mutex);
++        be_window_release(created->window);
++        free(created);
++        return TRUE;
++    }
++    rb_put(&win_data_tree, hwnd, &created->entry);
++    pthread_mutex_unlock(&win_data_mutex);
++
++    TRACE("hwnd %p: BWindow %p, %s\n", hwnd, created->window, style == BE_WINDOW_TITLED ? "titled" : "borderless");
++    return TRUE;
++}
++
++/***********************************************************************
++ *      GetWindowStyleMasks (RENKU.@)
++ *
++ * The window styles whose non-client parts the system decorator draws. win32u leaves them
++ * out of the window's visible rect (get_visible_rect, dlls/win32u/window.c), so the surface
++ * and the BWindow's frame cover only what Wine draws: the client area, plus the menu bar and
++ * any client edge.
++ */
++BOOL RENKU_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask)
++{
++    *style_mask = *ex_style_mask = 0;
++    if (style_for(style) == BE_WINDOW_TITLED)
++    {
++        *style_mask = WS_CAPTION | WS_THICKFRAME;
++        *ex_style_mask = WS_EX_TOOLWINDOW | WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE;
++    }
++    return TRUE;
++}
++
++/***********************************************************************
++ *      CreateWindowSurface (RENKU.@)
++ */
++BOOL RENKU_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface)
++{
++    struct window_surface *previous;
++    struct renku_win_data *data;
++    struct be_window *window;
++
++    TRACE("hwnd %p, layered %u, surface_rect %s, surface %p\n", hwnd, layered, wine_dbgstr_rect(surface_rect), surface);
++
++    /* win32u reuses a driver surface only if its rect still matches (dlls/win32u/dce.c). */
++    if ((previous = *surface) && renku_surface_bitmap(previous)) return TRUE;
++    if (!(data = get_win_data(hwnd))) return FALSE;
++    window = data->window;
++    be_window_add_ref(window);
++    release_win_data(data);
++
++    if (previous) window_surface_release(previous);
++    /* Not yet done: layered windows; they get an opaque surface for now. */
++    *surface = renku_surface_create(hwnd, window, surface_rect);
++    be_window_release(window);
++    return TRUE;
++}
++
++/***********************************************************************
++ *      WindowPosChanged (RENKU.@)
++ */
++void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
++                            const struct window_rects *new_rects, struct window_surface *surface)
++{
++    UINT style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
++    struct be_rect frame = be_rect_from(&new_rects->visible);
++    struct renku_win_data *data;
++    struct window_surface *old_surface = NULL;
++    enum be_window_style be_style = style_for(style);
++    struct be_bitmap *bitmap = renku_surface_bitmap(surface);
++    /* Minimizing comes with the decorator's input; until then a minimized window is hidden. */
++    BOOL visible = (style & WS_VISIBLE) && !(style & WS_MINIMIZE) && !(swp_flags & SWP_HIDEWINDOW);
++
++    TRACE("hwnd %p new_rects %s after %p flags %08x surface %p\n", hwnd, debugstr_window_rects(new_rects),
++          insert_after, swp_flags, surface);
++
++    if (!(data = get_win_data(hwnd))) return;
++
++    if (be_style != data->style)
++    {
++        be_window_set_style(data->window, be_style);
++        data->style = be_style;
++    }
++    if (memcmp(&frame, &data->frame, sizeof(frame)))
++    {
++        be_window_set_frame(data->window, &frame);
++        data->frame = frame;
++    }
++    if (!bitmap) surface = NULL;  /* win32u's dummy surface, or none */
++    if (surface != data->surface)
++    {
++        /* surface->rect places the surface in the visible rect, which is the BWindow's frame. */
++        be_window_set_bitmap(data->window, bitmap, surface ? surface->rect.left : 0,
++                             surface ? surface->rect.top : 0);
++        if (surface) window_surface_add_ref(surface);
++        old_surface = data->surface;
++        data->surface = surface;
++    }
++    if (visible != data->visible)
++    {
++        be_window_set_visible(data->window, visible);
++        data->visible = visible;
++    }
++
++    release_win_data(data);
++    if (old_surface) window_surface_release(old_surface);
++}
++
++/***********************************************************************
++ *      SetWindowText (RENKU.@)
++ */
++void RENKU_SetWindowText(HWND hwnd, LPCWSTR text)
++{
++    struct renku_win_data *data;
++    char *title = renku_utf8_from_wstr(text);
++
++    if ((data = get_win_data(hwnd)))
++    {
++        be_window_set_title(data->window, title);
++        release_win_data(data);
++    }
++    free(title);
++}
++
++/***********************************************************************
++ *      DestroyWindow (RENKU.@)
++ */
++void RENKU_DestroyWindow(HWND hwnd)
++{
++    struct renku_win_data *data;
++
++    TRACE("%p\n", hwnd);
++
++    if (!(data = get_win_data(hwnd))) return;
++    rb_remove(&win_data_tree, &data->entry);
++    release_win_data(data);
++
++    /* The surface holds its own reference to the window handle. */
++    if (data->surface) window_surface_release(data->surface);
++    be_window_release(data->window);
++    free(data);
++}
+-- 
+2.47.3
+
+
+From 6673a9cd8c7d665cb1334ffd7a9f1f2f1c48f5a7 Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Wed, 11 Nov 2026 09:50:19 +1000
+Subject: [PATCH 17/17] explorer: Try the RenkuOS driver first.
+
+explorer picks the graphics driver from default_driver when the prefix
+sets none. Put "renku" (winerenku.drv) at its head.
+
+explorer is PE code, built for a Windows target, so __HAIKU__ is not
+defined there and cannot select the entry. It does not need to: where
+winerenku.drv is not built, LoadLibrary fails with ERROR_MOD_NOT_FOUND
+and the next name is tried, which is how "mac" is already skipped on
+every other host. winewayland.drv remains the fallback.
+---
+ programs/explorer/desktop.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/programs/explorer/desktop.c b/programs/explorer/desktop.c
+index ce70c5dd..f0956929 100644
+--- a/programs/explorer/desktop.c
++++ b/programs/explorer/desktop.c
+@@ -40,7 +40,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+ #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
+ #define DESKTOP_ALL_ACCESS 0x01ff
+ 
+-static const WCHAR default_driver[] = L"mac,x11,wayland";
++/* renku (winerenku.drv, RenkuOS) is tried first. explorer is PE code, built for a Windows
++ * target, so __HAIKU__ cannot select it here; where the driver is not built, LoadLibrary
++ * fails with ERROR_MOD_NOT_FOUND and the next name is tried, as it is for mac today. */
++static const WCHAR default_driver[] = L"renku,mac,x11,wayland";
+ 
+ static BOOL using_root = TRUE;
+ 
 -- 
 2.47.3
 

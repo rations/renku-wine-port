@@ -6,7 +6,7 @@ support; a stock kernel runs Win64 executables only."
 HOMEPAGE="https://www.winehq.org/"
 COPYRIGHT="1993-2026 the Wine project authors"
 LICENSE="GNU LGPL v2.1"
-REVISION="1"
+REVISION="3"
 SOURCE_URI="https://github.com/wine-mirror/wine/archive/refs/tags/wine-${portVersion}.tar.gz"
 CHECKSUM_SHA256="046cb0519b7d385be7912304910ccde9e3c0268ebdce7ef35a3c14446cfb8029"
 SOURCE_DIR="wine-wine-${portVersion}"
@@ -47,6 +47,7 @@ REQUIRES="
 	haiku$secondaryArchSuffix
 	lib:libfreetype$secondaryArchSuffix
 	lib:libgnutls$secondaryArchSuffix
+	lib:libstdc++$secondaryArchSuffix
 	lib:libusb_1.0$secondaryArchSuffix
 	lib:libvulkan$secondaryArchSuffix
 	"
@@ -60,6 +61,8 @@ REQUIRES="
 # lib:libgnutls: Wine dlopens libgnutls.so.30 for secur32/bcrypt/crypt32, so
 # haikuporter cannot see it. Without it TLS fails ("secure connections will not
 # be available") and iLok reports a ServerConnectionError.
+# lib:libstdc++ (package gcc_syslibs): winerenku.so is C++ and links libbe and
+# libstdc++.so.6. libbe.so itself ships in the haiku package.
 # lib:libusb_1.0 (package libusb) is what wineusb.so links; plain lib:libusb is
 # the 0.1 API from libusb_compat and is used by nothing here.
 REPLACES="
@@ -110,10 +113,16 @@ BUILD_PREREQUIRES="
 BUILD()
 {
 	autoreconf -i
+	# --without-opengl: configure otherwise finds libEGL in the build chroot and
+	# defines SONAME_LIBEGL. win32u then loads it at run time, its internal GL
+	# context fails, and explorer /desktop hangs for good on a pthread_once, so
+	# no prefix can be created. Without SONAME_LIBEGL, win32u's egl_init returns
+	# FALSE and GL is simply absent. OpenGL returns through winerenku.drv's own
+	# OSMesa backend, not through EGL.
 	LDFLAGS=-lnetwork runConfigure ./configure \
 		--enable-archs=i386,x86_64 \
 		--disable-tests \
-		--without-wayland --without-x
+		--without-wayland --without-x --without-opengl
 
 	make $jobArgs
 }

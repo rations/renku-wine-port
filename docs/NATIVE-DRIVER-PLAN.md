@@ -37,13 +37,16 @@ quoted `#include` of every module. Without the header, configure fails: `dlls/wi
 error: input-event-codes.h: No such file or directory` / `config.status: error: could not
 create Makefile`. Observed on the build VM, 2026-11-10.
 
-**EGL:** win32u calls the display driver's own GL setup whether or not EGL is available
-(`dlls/win32u/opengl.c:3504-3506`), and EGL cannot initialize on RenkuOS anyway, so the driver
-does not need it. Note that the build still compiles win32u's EGL code: configure found
-`libEGL` in the build chroot even though the recipe no longer declares `devel:libEGL`, so
-`SONAME_LIBEGL` is defined, and at run time win32u will try to `dlopen("libEGL.so.1")` and
-carry on without it if it is missing (`opengl.c:1679-1681`). Whether to force it off is a
-phase 6 decision.
+**EGL is off: the recipe configures `--without-opengl` (REVISION 2).** win32u calls the display
+driver's own GL setup whether or not EGL is available (`dlls/win32u/opengl.c:3504-3506`), and
+EGL cannot initialize on RenkuOS anyway, so the driver does not need it. REVISION 1 still
+compiled win32u's EGL code: configure found `libEGL` in the build chroot even though the recipe
+no longer declares `devel:libEGL`, so `SONAME_LIBEGL` was defined, and win32u loaded
+`libEGL.so.1` at run time. That hangs explorer (§3, problem 1), so it could not wait for
+phase 6. `--without-opengl` is the only thing that gates the EGL check (`configure.ac:1259`);
+the other two uses are the X11 and Wayland GL checks, neither built. Without `SONAME_LIBEGL`,
+`egl_init` is a stub returning FALSE (`opengl.c:1855-1860`), the same result the empty-libEGL
+workaround produced by failing at `dlsym`.
 
 **configure checks for the driver go into Makefile variables, not `config.h`.** Every unix-side
 object depends on `include/config.h` in the generated Makefile, so a new `config.h` define
@@ -94,8 +97,8 @@ headers.
    garbage. A new RenkuOS user thread inherits its creator's signal mask
    (`src/system/kernel/thread.cpp:694`). So the driver blocks those signals around the calls
    that spawn Be threads (creating the app thread, and a window's first `Show()`, which starts
-   its looper), and the Be threads begin with them blocked. **To be confirmed in a running
-   Wine by P3.**
+   its looper), and the Be threads begin with them blocked. Confirmed in a running Wine by P3
+   (§3), which also shows the failure without it.
 4. **Every BBitmap is freed before the BApplication goes away.** Freeing a server-backed
    BBitmap after the app's app_server connection is gone drops into the debugger:
    `You need to have a valid app_server connection first!` in `BBitmap::_CleanUp`. Observed by
@@ -111,10 +114,10 @@ Programs in `probes/` that settle platform facts before driver code depends on t
 | Probe | Question | Result |
 |---|---|---|
 | P1+P2 `beprobe.cpp` | Can a BApplication run off the main thread while another thread creates, locks and draws into a window, with looper events waking that thread's `poll()` through a pipe? | **Passed, 11/11**, 2026-11-10, on the RenkuOS build VM (hrev60072+518, `B_HAIKU_VERSION_1_PRE_BETA_7`). Show → first Draw event 2.2 ms; Invalidate → Draw event 1.8 ms, both with a 12-job Wine build loading every core. The first run found rule 4. |
-| P3 `sigprobe.c` + `sigprobe_be.cpp` | Inside a Wine process: does the BApplication thread start, open a window, and survive Wine's signals (rule 3)? | **Built, not run yet** (2026-11-10). Creating a prefix for it on the 11.21 base surfaced the problems below. |
+| P3 `sigprobe.c` + `sigprobe_be.cpp` | Inside a Wine process: does the BApplication thread start, open a window, and survive Wine's signals (rule 3)? | **Passed, 15/15**, 2026-11-11, on the build VM against 11.21 REVISION 2 plus the first `winerenku.drv` (run once the driver drew). The control fails as predicted, and a fault on a Be thread freezes that thread. See below. |
 | P4 `winprobe.cpp` | Window behaviour: exact and off-screen placement, popups that never take focus, owned/modal windows, decorator geometry, size limits. | **Passed, 14/14**, 2026-11-10, same VM, run over ssh. See below. |
 
-What P3 has established so far, from the sources:
+What P3 established. First, from the sources:
 
 - **Which signals can reach a Be thread.** wineserver signals a specific thread by id
   (`server/ptrace.c`, `tkill()` → `send_signal()` under `__HAIKU__`), so its SIGUSR1 suspends
@@ -131,7 +134,28 @@ What P3 has established so far, from the sources:
 - **Where Be threads come from.** `BWindow::Show()` spawns the looper from the calling thread
   (`Looper.cpp:480`), so that call needs the block as well as the app thread's creation.
 - **Not blockable.** Synchronous faults (SIGSEGV) on a Be thread still run Wine's handler.
-  `sigprobe --fault` will show what that looks like.
+
+Then from the three runs (prefix `~/probes/drvprefix`, a copy of the one described below):
+
+- **Rule 3 applied (default mode): 15/15.** Both loopers start with ALRM, IO, INT, HUP, QUIT,
+  USR1, USR2 and CHLD blocked, and the Win32 thread's own mask is restored afterwards. A
+  SIGINT sent to the window looper alone stays pending: Wine's handler does not run and the
+  looper keeps answering. All 10 process-directed SIGINTs reached the console Ctrl-C handler
+  through a Wine thread.
+- **Control (`--unblocked`): rule 3 is necessary.** The loopers inherit Wine's unblocked
+  mask. One SIGINT to the window looper runs Wine's handler there, which faults at once
+  (`segv_handler`, address `0x1c`: thread data read through `rsp & ~0xffff`). The looper never
+  answers again and the process hangs at teardown (killed by `timeout`).
+- **A fault on a Be thread (`--fault`) freezes that thread, silently.** The window looper
+  writes through a null pointer; Wine's `segv_handler` runs on it and never returns. The rest
+  of the process keeps running (checked for 10 s), with no crash report and no debugger.
+  Consequence: a bug in the driver's Be-side code, or in libbe, shows up as one frozen
+  window, not a crash. Not yet done: an ntdll change so that `segv_handler` passes faults on
+  threads Wine did not create to the system's default action (haiku-rpi carries a kernel fix
+  for the same class of fault).
+- libbe prints `Error parsing B_ARGV_RECEIVED message` at BApplication start when the
+  program has no arguments: the message says `argc = 2` and carries one `argv`. Harmless so
+  far; not yet traced.
 
 The probe is a Winelib program built against the 11.21 work tree (commands in
 [probes/README.md](probes/README.md)). Getting a prefix for it found three problems with the
@@ -143,15 +167,22 @@ no-driver base, all on the build VM:
    left, that is a recursive `pthread_once`. It happens with the `null` driver too. Shadowing
    `libEGL.so.1` with an empty library on `LIBRARY_PATH` removes it: win32u's `egl_init` fails
    at `dlsym`. Which `pthread_once` it is was not found: `Debugger -s --thread` could not stop
-   that thread. **Consequence: EGL has to be off in this build** (configure `SONAME_LIBEGL`),
-   now rather than in phase 6. Not yet done.
+   that thread. **Consequence: EGL has to be off in this build**, now rather than in phase 6:
+   REVISION 2 configures `--without-opengl` (§2).
 2. **With no driver configured, explorer falls back to nothing.** `default_driver` is
    "mac,x11,wayland" and none of them exists, so programs get
    `nodrv_CreateWindow … no driver could be loaded`. For the probe, the prefix is seeded with
    `HKCU\Software\Wine\Drivers` `Graphics=null` ([probes/sigprobe-user.reg](probes/sigprobe-user.reg)).
-   Phase 2 replaces this with `renku` first in `default_driver`.
-3. **Wine Mono's install prompt waits for a click**, with 11.19 as well, so an unattended
-   prefix needs `WINEDLLOVERRIDES=mscoree,mshtml=`.
+   Patch 17 replaces this with `renku` first in `default_driver`.
+3. **Wine Mono's install prompt waits for a click**, with 11.19 as well. Mono and Gecko are
+   wanted, so prefixes are created with the prompt answered by hand, not skipped. The one
+   unattended prefix, `~/probes/p3prefix`, was made with `WINEDLLOVERRIDES=mscoree,mshtml=`
+   and has neither. P3 ran in a copy of it, `~/probes/drvprefix`, which is a test prefix only:
+   automatic updates are off (`.update-timestamp` = `disable`) and `winerenku.drv` was copied
+   into its `system32` by hand, because the prefix predates the driver. Outside prefix creation,
+   ntdll finds a builtin DLL without a file in `system32` only for 16-bit names
+   (`dlls/ntdll/loader.c`, `find_builtin_without_file`); a new prefix gets the file from
+   wineboot.
 
 With all three worked around, `wineboot -i` on 11.21 finished: exit 0, about 5 minutes, at
 `~/probes/p3prefix` on the VM. 32-bit code there logs `THREAD_SET_LDT_ENTRY … failed`, as
@@ -179,13 +210,28 @@ What P4 established:
   shape or a per-window alpha. Unless app_server turns out to support one privately,
   `SetWindowRgn` and `WS_EX_LAYERED` alpha degrade to rectangular, opaque windows.
 
+What the first driver stage (patch 16) found on the build VM:
+
+- **`BScreen` needs `be_app`.** Constructed before the BApplication runs, it is invalid, so the
+  driver starts the application before asking for screens.
+- **`BScreen::SetToNext()` fails on the last screen but leaves the `BScreen` valid.** A walk
+  that stops on `IsValid()` never ends; the first explorer runs span on it at 100% CPU. The
+  walk stops on the return value.
+- **Hidden top-level windows are common.** explorer and every program create several that are
+  never shown. A BWindow is made only once a window is first shown, so they get none.
+- **Win32u locks.** Creating or releasing a window surface can take win32u's own locks, so the
+  driver never does either while holding its window-table mutex.
+- **Colour order not yet seen.** `B_RGB32` is B, G, R, X in memory (`GraphicsDefs.h`), the
+  same as a 32bpp DIB, so the surface is copied without conversion. Notepad is black and white,
+  so a coloured window still has to confirm it.
+
 ## 4. Gates
 
 Checked by the user on bare-metal RenkuOS. The build VM is for building and the probes.
 
 | Gate | What has to work | Status |
 |---|---|---|
-| G1 | notepad and winecfg appear in native windows | not started |
+| G1 | notepad and winecfg appear in native windows | **partly**: notepad passed in the build VM on 2026-11-11 (patch 16): one titled native window with its title, menu bar, a white edit area and a blinking caret, nothing garbled. winecfg not tried yet, and not checked on bare metal yet. |
 | G2 | typing, clicking, menus, dialogs | not started |
 | G3 | moving, resizing, minimizing and closing from the system decorator | not started |
 | G4 | clipboard, both ways | not started |
@@ -197,7 +243,7 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
 0. Rebase onto 11.21 without Wayland (§1).
 1. Probes P1–P4 (§3).
 2. Skeleton: BApplication thread, displays from `BScreen`, BWindow per top-level, surfaces →
-   G1.
+   G1. **Done as patches 16 and 17** (G1 partly checked, see §4).
 3. Input and focus: event queue, keyboard (raw key code → scancode table read from RenkuOS's
    keyboard sources, then KBDTABLES from `get_key_map()`), mouse, capture, cursors → G2, G3.
 4. Window management: menus and tooltips, owned and modal windows, layered windows and regions
