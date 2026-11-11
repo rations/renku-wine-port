@@ -11,6 +11,15 @@ Build on top of this port tree (`haiku-wine-port`, Wine 11.8 from HaikuPorts, al
 running on the laptop). **No changes to win32u / opengl32 are required** — the change is a new
 GL backend inside the Haiku display driver (`winewayland.drv`) plus recipe/build wiring.
 
+> **Now in `winerenku.drv` (11.21, patch 20, 2026-11-11).** The backend described here moved
+> out of `winewayland.drv`, which the 11.21 port does not build, into the native driver
+> (`dlls/winerenku.drv/opengl.c`). §2 and the GL half of §3 still hold. The presentation is new:
+> instead of `wl_shm` buffers, a GL window that nothing clips shows its frames in a BView of
+> its own in its top-level's BWindow, and one that something clips has them drawn into it with
+> GDI (`StretchDIBits`; OSMesa's BGRA with `OSMESA_Y_UP` 0 is a top-down 32-bpp DIB, so no
+> conversion either way). OSMesa has its own configure check (`SONAME_LIBOSMESA`), separate
+> from `--with-opengl`, which stays off. Gates 1–4 re-run under the new driver are in §5.
+
 ---
 
 ## 1. Verified facts (probed on haikulaptop, 2026-07-24, Mesa 22.0.5)
@@ -236,6 +245,14 @@ isolation.
    ✅ **fully green** (REVISION 8, hrev59899, 2026-07-27): the GUI renders, it is interactive,
    and repeated open/close cycles of the plug-in editors leave both `jackd` and jackDAW
    running — the forced-restart symptom is gone, as predicted once the plug-ins displayed.
+
+**Re-run under `winerenku.drv`, 2026-11-11** (RenkuOS build VM, hrev60072+518, Mesa 22.0.5,
+from the work tree, three runs each): gate 1 `osprobe` passes; gates 2 and 4 by
+`probes/glprobe.c`, 29/29, and gate 3 by `probes/d3dprobe.c`, 8/8 (D3D9 and D3D11 devices). Gate
+4 now has what it lacked before: a test pattern read back from the screen itself (right way up,
+right colours) by `probes/screencheck.cpp`, plus a GL child window, the GDI fallback under an
+overlapping window, the last frame of a burst, and a resize. Gate 5 waits for vstbridge to be
+rebuilt on 11.21. Bare metal not checked yet.
 
 ### What this plan missed
 

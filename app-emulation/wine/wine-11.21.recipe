@@ -6,7 +6,7 @@ support; a stock kernel runs Win64 executables only."
 HOMEPAGE="https://www.winehq.org/"
 COPYRIGHT="1993-2026 the Wine project authors"
 LICENSE="GNU LGPL v2.1"
-REVISION="6"
+REVISION="8"
 SOURCE_URI="https://github.com/wine-mirror/wine/archive/refs/tags/wine-${portVersion}.tar.gz"
 CHECKSUM_SHA256="046cb0519b7d385be7912304910ccde9e3c0268ebdce7ef35a3c14446cfb8029"
 SOURCE_DIR="wine-wine-${portVersion}"
@@ -47,6 +47,7 @@ REQUIRES="
 	haiku$secondaryArchSuffix
 	lib:libfreetype$secondaryArchSuffix
 	lib:libgnutls$secondaryArchSuffix
+	lib:libosmesa$secondaryArchSuffix
 	lib:libstdc++$secondaryArchSuffix
 	lib:libusb_1.0$secondaryArchSuffix
 	lib:libvulkan$secondaryArchSuffix
@@ -55,9 +56,10 @@ REQUIRES="
 # the --update-dependencies path (RequiresUpdater.updateRequiresList); on the
 # normal path they reach the resolver and dependency analysis dies with
 # "'NoneType' object is not iterable". BUILD_REQUIRES is unaffected.
-# No Wayland, xkb or OSMesa entries: this port builds --without-wayland (the
-# native winerenku.drv replaces winewayland.drv) and no longer carries the
-# winewayland OSMesa patch, so nothing links or dlopens those libraries.
+# No Wayland or xkb entries: this port builds --without-wayland; the native
+# winerenku.drv replaces winewayland.drv, which is not built.
+# lib:libosmesa (package mesa): winerenku.drv's OpenGL, dlopen()ed, so
+# haikuporter cannot see it. Without it there is no GL and no Direct3D.
 # lib:libgnutls: Wine dlopens libgnutls.so.30 for secur32/bcrypt/crypt32, so
 # haikuporter cannot see it. Without it TLS fails ("secure connections will not
 # be available") and iLok reports a ServerConnectionError.
@@ -85,6 +87,7 @@ BUILD_REQUIRES="
 	devel:libfreetype$secondaryArchSuffix
 	devel:libgnutls$secondaryArchSuffix
 	devel:libkrb5$secondaryArchSuffix # Optional
+	devel:libosmesa$secondaryArchSuffix # mesa_devel; configure fails without it
 	devel:libopenal$secondaryArchSuffix # Optional
 	devel:libopencl$secondaryArchSuffix # Optional
 	devel:libopencl_headers$secondaryArchSuffix # Optional
@@ -117,8 +120,8 @@ BUILD()
 	# defines SONAME_LIBEGL. win32u then loads it at run time, its internal GL
 	# context fails, and explorer /desktop hangs for good on a pthread_once, so
 	# no prefix can be created. Without SONAME_LIBEGL, win32u's egl_init returns
-	# FALSE and GL is simply absent. OpenGL returns through winerenku.drv's own
-	# OSMesa backend, not through EGL.
+	# FALSE. OpenGL comes from winerenku.drv's own OSMesa backend instead, which
+	# configure looks for separately (GL/osmesa.h, libOSMesa) and requires.
 	LDFLAGS=-lnetwork runConfigure ./configure \
 		--enable-archs=i386,x86_64 \
 		--disable-tests \

@@ -105,9 +105,15 @@ Do not re-derive or contradict them without new evidence.
   changed port is built clean (`haikuporter -y -c` then `haikuporter -y -j<n>`), and
   `tools/winework.sh checkpkg` must pass before the package is shipped. Binaries that hash
   identical to the previous revision's are the symptom, not reassurance.
-- **Preserve upstream authorship.** The first patches are HaikuPorts' (on 11.21: 1–2 by X512,
-  3 by Ken Mays; `tools/status.sh` lists the authors by patch). Their `From:` lines are the
-  licence's attribution trail: never rewrite, reorder or absorb them.
+- **Upstream Wine is not forked.** Patches change upstream files minimally and never delete
+  them (§6), so the set still rebases onto each Wine release.
+- **Credit the HaikuPorts patches.** The first patches are HaikuPorts' (on 11.21: 1 by X512,
+  2 by Ken Mays; `tools/status.sh` lists the authors by patch). Their `From:` lines are the
+  licence's attribution trail: keep them, and never fold their work into a local patch. They
+  are not frozen, though: a hunk or a whole patch this port does not need (one for a driver
+  it does not build, say) may be dropped, or a better way taken. The patch then keeps its
+  author, its commit body says what was removed and why, and the README's *Dropped* section
+  lists it. Anything still used from them stays credited.
 - **Local patches carry a real author**, never a placeholder: check
   `git log --format='%h %an <%ae> %s' pristine-<version>..HEAD` in the dev tree.
 - **Debug instrumentation goes last**, labelled as debug, so it can be dropped alone.

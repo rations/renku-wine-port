@@ -16,14 +16,16 @@ and coding agents alike. `tools/` has the scripts it describes.
 > `winerenku.drv`, a native graphics driver that gives Windows programs real RenkuOS windows
 > with no Wayland in between. The plan, its probes and its gates are in
 > [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md). **The driver works but is not
-> finished (patches 16-20):** Windows programs open in native RenkuOS windows and take
+> finished (patches 15-20):** Windows programs open in native RenkuOS windows and take
 > keyboard and mouse input, and the windows can be moved, resized, minimized, zoomed and
 > closed. Keys type what the RenkuOS keymap says, AltGr included. The pointer stays RenkuOS's
 > own arrow. Text copied in a Windows program pastes into RenkuOS programs and the other way
-> round. Not yet: accent (dead) keys, images on the clipboard, OpenGL. configure runs `--without-wayland --without-x --without-opengl`. OpenGL
-> is off because win32u's EGL path hangs explorer on RenkuOS; it comes back through the
-> driver. The released package
-> (Wine 11.19, Wayland) is on `master`.
+> round. OpenGL, and with it Direct3D through wined3d, renders in software with OSMesa
+> (llvmpipe) inside the driver. Not yet: accent (dead) keys, images on the clipboard.
+> configure runs `--without-wayland --without-x --without-opengl`: `--without-opengl` keeps
+> win32u away from libEGL, whose setup hangs explorer on RenkuOS; the driver's OSMesa has its
+> own check. winewayland.drv is not built. The released package (Wine 11.19, Wayland) is on
+> `master`.
 
 **This repository is the source of truth for these patches.** They were offered upstream and
 declined (the upstream ports tree does not accept AI-assisted contributions), so they are maintained here
@@ -37,7 +39,7 @@ downloads the upstream tarball (checksum pinned in the recipe) and applies the p
 
 ```
 app-emulation/wine/            drop-in replacement for the haikuports port directory
-  wine-11.21.recipe            REVISION=6
+  wine-11.21.recipe            REVISION=8
   patches/
     wine-11.21.patchset        the 20 patches below (this is the deliverable)
   additional-files/
@@ -62,38 +64,38 @@ AGENTS.md                      the rules and workflow, for people and coding age
 
 ## The patchset
 
-Twenty patches. **1–3 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
-`From:` line. **4–20 are local.**
+Twenty patches. **1–2 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
+`From:` line. **3–20 are local.**
 
 | # | Patch | Author | Why |
 |---|---|---|---|
-| 1 | Add Wayland input header | X512 | upstream. **Not compiled** (configure runs `--without-wayland`), but required: patch 2's winewayland hunks include it, and makedep resolves every quoted `#include` of every module, built or not, so configure fails without it.
-| 2 | 11.8 patches | X512 | upstream — the bulk of the port. Rebased onto 11.19 and then 11.21; the rebase notes are in the commit body. Its two winewayland hunks are kept but not compiled (configure runs `--without-wayland`).
-| 3 | Opensound support | Ken Mays | upstream — audio |
-| 4 | Run static initializers in Winelib modules | local | Winelib modules never ran their C++ static constructors. vstbridge's Wine host is a C++ Winelib module, so without this it starts with uninitialised globals. **This is the essential one.** |
-| 5 | Do not block in the SIGSEGV handler | local | The port's handler ended in a blocking `fgetc(stdin)` so a developer could inspect the fault. Anything without a usable stdin — a DAW, any GUI app, anything from the Deskbar — hung there instead of letting Wine's handler recover. |
-| 6 | loader: find the loader path via `find_path()` | local | RenkuOS has no `/proc`, so `get_self_exe()` returned NULL and the loader resolved `argv[0]` relative to the current directory — a bare `wine` from `PATH` failed with `could not load ntdll.so`. Fixed with `find_path(B_FIND_PATH_IMAGE_PATH)`. |
-| 7 | dxgi: wait for a refresh interval in `IDXGIOutput::WaitForVBlank()` | local | `WaitForVBlank()` was a stub printing a FIXME and returning `E_NOTIMPL` immediately. JUCE 8's Direct2D renderer drives all repainting from a dedicated thread that calls it in a loop, so with no wait that thread spun — measured at 62,024 calls in ~25 s, saturating a core — and the editor rendered one frame then never responded to input again. Now sleeps to the next refresh-interval boundary. Not specific to RenkuOS: the same gap is why these plug-ins are reported as needing DXVK on Linux, DXVK shipping its own DXGI with a real vblank wait. |
-| 8 | sechost: report no failure actions in `QueryServiceConfig2W` | local | `services.exe` keeps no failure actions, and `QueryServiceConfig2W` failed with `ERROR_INVALID_LEVEL` for them. WiX's ServiceConfig custom action (used by iLok's PACE License Support installer) reads them before setting them and aborts the whole install when the query fails. Now reports what Windows reports for a service with none: the structure, zeroed. Not specific to RenkuOS; carried from the user's ARM64 Wine build. |
-| 9 | msiexec, rundll32: declare Windows 10 compatibility in their manifests | local | Without a `supportedOS` list, Wine reports Windows 8 to the process an MSI custom action runs in, as Windows does. Installers that check for Windows 10 there (iLok's PACE License Support) refuse to install. Adds the same list Windows' own `msiexec.exe`/`rundll32.exe` carry. Not specific to RenkuOS; carried from the user's ARM64 Wine build. On a kernel without LDT support these two only help 64-bit installers, since 32-bit Windows programs need patch 13 and a kernel with LDT support. |
-| 10 | server: detach asyncs from a queue before terminating them in `free_async_queue()` | local | wineserver aborted (`release_object: obj->refcount`) every time a prefix shut down, so registry changes since the last 30-second periodic save were lost — `wine regedit file.reg` never persisted, which broke licences kept in the registry (MachineGuid, per-plugin IDs) — and each crash orphaned the prefix's `services.exe`. When an APC cannot be delivered, `async_terminate()` completes the async through `async_set_result()`, which unlinked it and dropped the queue's reference while `free_async_queue()` still held it, and `free_async_queue()` then dropped it again. On RenkuOS delivery always failed (before patch 11) for a thread not already waiting, because the client reports no Unix thread id (`get_unix_tid()` returns -1) and wineserver cannot signal it; `services.exe` closing its listening `svcctl` pipe at shutdown hits this every time. Not specific to RenkuOS in itself. |
-| 11 | ntdll, server: deliver signals to specific threads | local | `get_unix_tid()` had no branch for this OS and returned -1, so wineserver could never signal one thread: an APC queued to a thread that was not already waiting was destroyed and the pending I/O completed with `STATUS_ALERTED`. Named-pipe readers saw `ERROR_ALERTED` — WiX Burn's engine and UI lost their pipe (`0x800702e3`). Reports `find_thread(NULL)` and signals with `send_signal()`. Also removes the trigger of patch 10's crash. |
-| 12 | winegcc: do not link with `-ldl` | local | RenkuOS has no `libdl` (`dlopen` is in libroot), so every Winelib link failed unless a hand-made empty `libdl.a` stub was installed. |
-| 13 | ntdll: support WoW64 (32-bit code) | local | 32-bit Windows code needs a 32-bit code selector and a per-thread `%fs` segment for its TEB; every 32-bit program exited with "No LDT support on this platform". Uses new `arch_thread_control()` calls (`THREAD_SET_LDT_ENTRY`, `THREAD_SET/GET_FS_BASE`, `THREAD_GET_GS_BASE`) that **only a locally built kernel provides** (per-team LDT, FS/DS/ES kept per thread, FS saved across signals); FreeBSD's model. On a stock kernel 32-bit programs exit with Wine's "No LDT support" error and 64-bit ones are unaffected. Enables the iLok PACE installer's 32-bit parts (Bonjour, custom actions) and 32-bit installers in general. |
-| 14 | ntdll, server: use the xattr functions from libgnu | local | Patch 2 disabled `HAVE_SYS_XATTR_H`, so reparse points (Windows symbolic links) failed with `ENOSYS`. Wine Mono's installer creates symlinks (`CREATELINKS64`, error 1603), so Mono never installed and every .NET custom action failed — iLok's License Support MSI with `0x80070643`. configure now finds `fgetxattr` in libgnu, which maps xattrs to BFS attributes. |
-| 15 | ntdll, server: support hardware breakpoints | local | Copy protection (PACE/iLok: Neural DSP, Toontrack and others) points Dr0–Dr3 at a probe with `SetThreadContext` and expects `EXCEPTION_SINGLE_STEP` when it runs; a probe that does not trap marks the process as tampered and the licence check fails later ("no activation", or `LoadLibraryW` "DLL initialization failed" for a plug-in). The server cannot set debug registers on RenkuOS (no ptrace), so each thread loads its own through `THREAD_SET_DEBUG_REGISTERS`, which **only the locally built kernel provides**; `trap_handler` reports DR6 with the reserved bits set, as Windows does, which PACE checks. On a stock kernel the breakpoints are ignored with a warning. (Developed as "patch 18" in the 11.19 numbering; an SMBIOS patch numbered 17 there was dropped because it changed the hardware IDs licences are bound to.) |
-| 16 | winerenku.drv: add a native RenkuOS (Be API) graphics driver | local | **Work in progress, stage 1 of the plan.** Every other Wine port for Haiku-family systems draws through Wayland, which on RenkuOS is an in-process server that turns the protocol back into BWindows. This driver uses the Be API directly: each shown top-level window gets a BWindow (titled for `WS_CAPTION` windows, so RenkuOS draws the tab and frame; borderless otherwise), Wine's window surface is copied into a `B_RGB32` BBitmap, and the screen is reported from `BScreen`. The BApplication starts on its own thread the first time it is needed, and every Be thread starts with Wine's signals blocked (without that, the sigprobe test shows a SIGINT killing a window's thread). configure builds it on Haiku and fails if the Be headers are missing; `--without-renku` turns it off. Verified: notepad opens in one native window and draws correctly (title, menu bar, edit area, caret). **Not done yet:** keyboard and mouse input, focus, moving/resizing/closing, the Deskbar-free work area, window shapes and layering, OpenGL. A crash on a Be thread freezes that thread silently. |
-| 17 | explorer: try the RenkuOS driver first | local | explorer loads the first driver in `default_driver` that exists; `renku` now comes first. explorer is Windows (PE) code and cannot test `__HAIKU__`, but it does not need to: where `winerenku.drv` is not built the load fails and the next name is tried, as `mac` already is everywhere but macOS. |
-| 18 | winerenku.drv: keyboard and mouse input, activation, and the decorator | local | **Work in progress, stage 2 of the plan.** Be threads cannot call Wine, so they queue events and one Wine thread passes them to win32u. Mouse input flushes the moves win32u holds back (without that, a drag reached the program only on release). Keys are sent as scancodes, from a table generated from RenkuOS's own scancode map, and are taken before BWindow's shortcuts (Command+Q, Control+Tab, Print Screen), so programs get them all. RenkuOS activations become Wine's foreground window and the other way round, without the two undoing each other; menus and tooltips, including JUCE's unowned ones, never take the focus. The decorator's close, minimize, zoom and resize follow the window style and become Wine's system commands, and moves and resizes are read back from the window. Also: a resized window keeps its picture until Wine has painted the new one, and click-through layered windows (drop shadows) are not shown, since RenkuOS cannot blend windows. Verified on notepad and Amped - Roots. The pointer stays RenkuOS's own arrow; programs' cursor shapes are not used, by choice. **Not done yet** (keyboard layouts: patch 19): showing a normal window without activating it, a work area that leaves out the Deskbar, Deskbar "Quit". |
-| 19 | winerenku.drv: keyboard layout from the RenkuOS keymap | local | **Work in progress, stage 2 of the plan.** Without it win32u typed with its US tables whatever the RenkuOS keymap was: on German the Z key typed y and there was no AltGr. The driver now builds Wine's layout tables from the keymap in Keymap preferences, as winewayland does from xkb. Letters, digits and the + , - . keys get the virtual key of their character (so Ctrl+Z is the key marked Z), other keys keep their US one where free. Characters come from the keymap's normal, Shift, Caps Lock and Option tables. When the keymap makes Right Alt an Option key (German, French, US-International), Right Alt is sent as Windows sends AltGr, Left Ctrl + Right Alt. Verified with [docs/probes/kbdprobe.c](docs/probes/kbdprobe.c) on the US, US-International, German and French keymaps, and by typing in notepad on US-International (AltGr characters, Alt+F, Ctrl shortcuts). **Not done yet:** accent (dead) keys type the accent at once, since win32u's tables have no dead keys; a keymap change applies to programs started after it. |
-| 20 | winerenku.drv: text clipboard, both ways | local | **Work in progress, stage 2 of the plan.** Wine's clipboard and RenkuOS's were separate. The driver now gives explorer's clipboard manager window its window procedure, as winemac does: a looper watches RenkuOS's clipboard and puts new text on Wine's as `CF_UNICODETEXT`, and text a Windows program copies goes to RenkuOS's as `text/plain` UTF-8 (a copy of anything else empties it, as on Windows). Line ends become CR LF and LF. Verified in the build VM between notepad and StyledEdit, both ways, from the menus and with Alt+C / Ctrl+C / Ctrl+V. **Not done yet:** images and other formats; non-ASCII text and line ends not checked yet. |
+| 1 | 11.8 patches | X512 | upstream — the bulk of the port. Rebased onto 11.19 and then 11.21; the rebase notes are in the commit body. Its hunks for drivers this port does not build (winewayland, winex11, and configure's winewayland check) were dropped in REVISION 8, as was the patch that only supplied a header to them; see *Dropped in the 11.21 rebase*.
+| 2 | Opensound support | Ken Mays | upstream — audio |
+| 3 | Run static initializers in Winelib modules | local | Winelib modules never ran their C++ static constructors. vstbridge's Wine host is a C++ Winelib module, so without this it starts with uninitialised globals. **This is the essential one.** |
+| 4 | Do not block in the SIGSEGV handler | local | The port's handler ended in a blocking `fgetc(stdin)` so a developer could inspect the fault. Anything without a usable stdin — a DAW, any GUI app, anything from the Deskbar — hung there instead of letting Wine's handler recover. |
+| 5 | loader: find the loader path via `find_path()` | local | RenkuOS has no `/proc`, so `get_self_exe()` returned NULL and the loader resolved `argv[0]` relative to the current directory — a bare `wine` from `PATH` failed with `could not load ntdll.so`. Fixed with `find_path(B_FIND_PATH_IMAGE_PATH)`. |
+| 6 | dxgi: wait for a refresh interval in `IDXGIOutput::WaitForVBlank()` | local | `WaitForVBlank()` was a stub printing a FIXME and returning `E_NOTIMPL` immediately. JUCE 8's Direct2D renderer drives all repainting from a dedicated thread that calls it in a loop, so with no wait that thread spun — measured at 62,024 calls in ~25 s, saturating a core — and the editor rendered one frame then never responded to input again. Now sleeps to the next refresh-interval boundary. Not specific to RenkuOS: the same gap is why these plug-ins are reported as needing DXVK on Linux, DXVK shipping its own DXGI with a real vblank wait. |
+| 7 | sechost: report no failure actions in `QueryServiceConfig2W` | local | `services.exe` keeps no failure actions, and `QueryServiceConfig2W` failed with `ERROR_INVALID_LEVEL` for them. WiX's ServiceConfig custom action (used by iLok's PACE License Support installer) reads them before setting them and aborts the whole install when the query fails. Now reports what Windows reports for a service with none: the structure, zeroed. Not specific to RenkuOS; carried from the user's ARM64 Wine build. |
+| 8 | msiexec, rundll32: declare Windows 10 compatibility in their manifests | local | Without a `supportedOS` list, Wine reports Windows 8 to the process an MSI custom action runs in, as Windows does. Installers that check for Windows 10 there (iLok's PACE License Support) refuse to install. Adds the same list Windows' own `msiexec.exe`/`rundll32.exe` carry. Not specific to RenkuOS; carried from the user's ARM64 Wine build. On a kernel without LDT support these two only help 64-bit installers, since 32-bit Windows programs need patch 12 and a kernel with LDT support. |
+| 9 | server: detach asyncs from a queue before terminating them in `free_async_queue()` | local | wineserver aborted (`release_object: obj->refcount`) every time a prefix shut down, so registry changes since the last 30-second periodic save were lost — `wine regedit file.reg` never persisted, which broke licences kept in the registry (MachineGuid, per-plugin IDs) — and each crash orphaned the prefix's `services.exe`. When an APC cannot be delivered, `async_terminate()` completes the async through `async_set_result()`, which unlinked it and dropped the queue's reference while `free_async_queue()` still held it, and `free_async_queue()` then dropped it again. On RenkuOS delivery always failed (before patch 10) for a thread not already waiting, because the client reports no Unix thread id (`get_unix_tid()` returns -1) and wineserver cannot signal it; `services.exe` closing its listening `svcctl` pipe at shutdown hits this every time. Not specific to RenkuOS in itself. |
+| 10 | ntdll, server: deliver signals to specific threads | local | `get_unix_tid()` had no branch for this OS and returned -1, so wineserver could never signal one thread: an APC queued to a thread that was not already waiting was destroyed and the pending I/O completed with `STATUS_ALERTED`. Named-pipe readers saw `ERROR_ALERTED` — WiX Burn's engine and UI lost their pipe (`0x800702e3`). Reports `find_thread(NULL)` and signals with `send_signal()`. Also removes the trigger of patch 9's crash. |
+| 11 | winegcc: do not link with `-ldl` | local | RenkuOS has no `libdl` (`dlopen` is in libroot), so every Winelib link failed unless a hand-made empty `libdl.a` stub was installed. |
+| 12 | ntdll: support WoW64 (32-bit code) | local | 32-bit Windows code needs a 32-bit code selector and a per-thread `%fs` segment for its TEB; every 32-bit program exited with "No LDT support on this platform". Uses new `arch_thread_control()` calls (`THREAD_SET_LDT_ENTRY`, `THREAD_SET/GET_FS_BASE`, `THREAD_GET_GS_BASE`) that **only a locally built kernel provides** (per-team LDT, FS/DS/ES kept per thread, FS saved across signals); FreeBSD's model. On a stock kernel 32-bit programs exit with Wine's "No LDT support" error and 64-bit ones are unaffected. Enables the iLok PACE installer's 32-bit parts (Bonjour, custom actions) and 32-bit installers in general. |
+| 13 | ntdll, server: use the xattr functions from libgnu | local | Patch 1 disabled `HAVE_SYS_XATTR_H`, so reparse points (Windows symbolic links) failed with `ENOSYS`. Wine Mono's installer creates symlinks (`CREATELINKS64`, error 1603), so Mono never installed and every .NET custom action failed — iLok's License Support MSI with `0x80070643`. configure now finds `fgetxattr` in libgnu, which maps xattrs to BFS attributes. |
+| 14 | ntdll, server: support hardware breakpoints | local | Copy protection (PACE/iLok: Neural DSP, Toontrack and others) points Dr0–Dr3 at a probe with `SetThreadContext` and expects `EXCEPTION_SINGLE_STEP` when it runs; a probe that does not trap marks the process as tampered and the licence check fails later ("no activation", or `LoadLibraryW` "DLL initialization failed" for a plug-in). The server cannot set debug registers on RenkuOS (no ptrace), so each thread loads its own through `THREAD_SET_DEBUG_REGISTERS`, which **only the locally built kernel provides**; `trap_handler` reports DR6 with the reserved bits set, as Windows does, which PACE checks. On a stock kernel the breakpoints are ignored with a warning. (Developed as "patch 18" in the 11.19 numbering; an SMBIOS patch numbered 17 there was dropped because it changed the hardware IDs licences are bound to.) |
+| 15 | winerenku.drv: add a native RenkuOS (Be API) graphics driver | local | **Work in progress, stage 1 of the plan.** Every other Wine port for Haiku-family systems draws through Wayland, which on RenkuOS is an in-process server that turns the protocol back into BWindows. This driver uses the Be API directly: each shown top-level window gets a BWindow (titled for `WS_CAPTION` windows, so RenkuOS draws the tab and frame; borderless otherwise), Wine's window surface is copied into a `B_RGB32` BBitmap, and the screen is reported from `BScreen`. The BApplication starts on its own thread the first time it is needed, and every Be thread starts with Wine's signals blocked (without that, the sigprobe test shows a SIGINT killing a window's thread). configure builds it on Haiku and fails if the Be headers are missing; `--without-renku` turns it off. Verified: notepad opens in one native window and draws correctly (title, menu bar, edit area, caret). **Not done yet:** keyboard and mouse input, focus, moving/resizing/closing, the Deskbar-free work area, window shapes and layering, OpenGL (patch 20). A crash on a Be thread freezes that thread silently. |
+| 16 | explorer: try the RenkuOS driver first | local | explorer loads the first driver in `default_driver` that exists; `renku` now comes first. explorer is Windows (PE) code and cannot test `__HAIKU__`, but it does not need to: where `winerenku.drv` is not built the load fails and the next name is tried, as `mac` already is everywhere but macOS. The RenkuOS port builds no other driver, so there `renku` is the only one; the rest of the list is upstream's, left as it is. |
+| 17 | winerenku.drv: keyboard and mouse input, activation, and the decorator | local | **Work in progress, stage 2 of the plan.** Be threads cannot call Wine, so they queue events and one Wine thread passes them to win32u. Mouse input flushes the moves win32u holds back (without that, a drag reached the program only on release). Keys are sent as scancodes, from a table generated from RenkuOS's own scancode map, and are taken before BWindow's shortcuts (Command+Q, Control+Tab, Print Screen), so programs get them all. RenkuOS activations become Wine's foreground window and the other way round, without the two undoing each other; menus and tooltips, including JUCE's unowned ones, never take the focus. The decorator's close, minimize, zoom and resize follow the window style and become Wine's system commands, and moves and resizes are read back from the window. Also: a resized window keeps its picture until Wine has painted the new one, and click-through layered windows (drop shadows) are not shown, since RenkuOS cannot blend windows. Verified on notepad and Amped - Roots. The pointer stays RenkuOS's own arrow; programs' cursor shapes are not used, by choice. **Not done yet** (keyboard layouts: patch 18): showing a normal window without activating it, a work area that leaves out the Deskbar, Deskbar "Quit". |
+| 18 | winerenku.drv: keyboard layout from the RenkuOS keymap | local | **Work in progress, stage 2 of the plan.** Without it win32u typed with its US tables whatever the RenkuOS keymap was: on German the Z key typed y and there was no AltGr. The driver now builds Wine's layout tables from the keymap in Keymap preferences, as winewayland does from xkb. Letters, digits and the + , - . keys get the virtual key of their character (so Ctrl+Z is the key marked Z), other keys keep their US one where free. Characters come from the keymap's normal, Shift, Caps Lock and Option tables. When the keymap makes Right Alt an Option key (German, French, US-International), Right Alt is sent as Windows sends AltGr, Left Ctrl + Right Alt. Verified with [docs/probes/kbdprobe.c](docs/probes/kbdprobe.c) on the US, US-International, German and French keymaps, and by typing in notepad on US-International (AltGr characters, Alt+F, Ctrl shortcuts). **Not done yet:** accent (dead) keys type the accent at once, since win32u's tables have no dead keys; a keymap change applies to programs started after it. |
+| 19 | winerenku.drv: text clipboard, both ways | local | **Work in progress, stage 2 of the plan.** Wine's clipboard and RenkuOS's were separate. The driver now gives explorer's clipboard manager window its window procedure, as winemac does: a looper watches RenkuOS's clipboard and puts new text on Wine's as `CF_UNICODETEXT`, and text a Windows program copies goes to RenkuOS's as `text/plain` UTF-8 (a copy of anything else empties it, as on Windows). Line ends become CR LF and LF. Verified in the build VM between notepad and StyledEdit, both ways, from the menus and with Alt+C / Ctrl+C / Ctrl+V. **Not done yet:** images and other formats; non-ASCII text and line ends not checked yet. |
+| 20 | winerenku.drv: OpenGL through OSMesa | local | **Work in progress, phase 6 of the plan.** Mesa on RenkuOS has no EGL platform Wine can use, so there was no GL, and wined3d could create no Direct3D device: GL- and D3D-drawn plug-in editors stayed blank. The driver now renders GL with OSMesa (llvmpipe, desktop GL 4.5 compatibility or core) into memory. A GL window that nothing clips shows its frames in a view of its own in its top-level's BWindow, which app_server draws at once, so a plug-in editor's GL child window draws straight into its native window; one that something clips (an overlapping window, DPI scaling) has its frames drawn into it with GDI, which clips them and reaches the screen with the window's next flush, up to 50 ms later. The GL half is the backend of 11.19's patch 8, moved out of winewayland.drv. configure looks for OSMesa separately from `--with-opengl` and fails without it (`--without-osmesa` turns it off); the recipe declares `devel:libosmesa` and `lib:libosmesa`. Verified in the build VM with [docs/probes/glprobe.c](docs/probes/glprobe.c) and [docs/probes/d3dprobe.c](docs/probes/d3dprobe.c), checked on the screen by [docs/probes/screencheck.cpp](docs/probes/screencheck.cpp): GL contexts, the test pattern the right way up and the right colours, a GL child window in place, the GDI fallback under an overlapping window (which stays on top), the last frame of a burst left on screen, a resize, D3D9 and D3D11 devices presenting the right colours. **Not done yet:** a real plug-in editor (needs vstbridge rebuilt), the mouse over a GL view (same code as elsewhere, untested by hand), bare metal. |
 
-On RenkuOS, patches 13 and 15 do nothing: its kernel has neither the LDT calls nor
+On RenkuOS, patches 12 and 14 do nothing: its kernel has neither the LDT calls nor
 `THREAD_SET_DEBUG_REGISTERS`, so 32-bit programs exit and
 hardware breakpoints are ignored. Only 64-bit Windows programs run. The kernel side is
 maintained separately, to be submitted to RenkuOS.
 
-Patch 6 removes the need for the `export WINELOADER=/boot/system/bin/wine` workaround earlier
+Patch 5 removes the need for the `export WINELOADER=/boot/system/bin/wine` workaround earlier
 Wine builds required in `~/config/settings/profile`: winegcc's generated `.exe` wrapper
 scripts fall back to invoking a bare `wine`, which now works from any directory.
 
@@ -101,19 +103,26 @@ scripts fall back to invoking a bare `wine`, which now works from any directory.
 
 This branch drops what only served the Wayland path, or does nothing on RenkuOS:
 
-- **winewayland: add OSMesa software OpenGL backend** (local, was patch 8). It lives inside
-  `winewayland.drv`, which this branch no longer builds. The OSMesa approach, and everything
-  [docs/OSMESA-GL-PLAN.md](docs/OSMESA-GL-PLAN.md) established for it, returns inside the
-  native driver (NATIVE-DRIVER-PLAN.md, phase 6). Until then **D3D/GL-drawn plug-in editors
-  have no software GL on this branch.** The patch is preserved on the dev tree's
-  `renku-11.21-wayland` branch, rebased onto 11.21 unchanged.
+- **winewayland: add OSMesa software OpenGL backend** (local, was patch 8). It lived inside
+  `winewayland.drv`, which this branch does not build. Its backend returned inside the native
+  driver as patch 20, with a new presentation; everything
+  [docs/OSMESA-GL-PLAN.md](docs/OSMESA-GL-PLAN.md) established for it still holds.
 - **Disable Bluetooth on Beta 5** (Peppersawce, was patch 3). It only acts when
   `B_HAIKU_VERSION <= B_HAIKU_VERSION_1_BETA_5`; RenkuOS defines
   `B_HAIKU_VERSION_1_PRE_BETA_7` (`headers/config/HaikuVersion.h`), so it compiled to nothing.
+- **Add Wayland input header** (X512, was patch 1; dropped in REVISION 8). It only supplied
+  `input-event-codes.h` to the winewayland hunks of "11.8 patches", which were dropped with
+  that patch's other hunks for drivers this port does not build: winewayland.drv's
+  `wayland_keyboard.c` and `wayland_pointer.c`, winex11.drv's `Makefile.in`, `bitblt.c` and
+  `keyboard.c` (for xlibe), and configure's `linux/input.h` check for winewayland. Upstream's
+  `#include <linux/input.h>` is a system include, which makedep skips when it cannot find it
+  (`tools/makedep.c`), so nothing needs the header now. "11.8 patches" keeps X512's authorship
+  and records the trim in its commit body; both remain in HaikuPorts' own port.
 
 Two upstream changes needed conflict resolution, both in `configure.ac` and recorded in the
-commit bodies: patch 2 (upstream split the Wayland dependency check into one check per
-library) and patch 3 (upstream now uses `AC_CHECK_MEMBER` for the OSS check).
+commit bodies: patch 1 (upstream split the Wayland dependency check into one check per
+library; that hunk was later dropped, above) and patch 2 (upstream now uses
+`AC_CHECK_MEMBER` for the OSS check).
 
 ### Dropped in the 11.19 rebase
 
@@ -136,7 +145,7 @@ cd ~/haikuports
 haikuporter -y -j8 wine-11.21
 ```
 
-The package lands in `~/haikuports/packages/wine-11.21-6-x86_64.hpkg`.
+The package lands in `~/haikuports/packages/wine-11.21-8-x86_64.hpkg`.
 
 That plain `haikuporter` build is right for a first build. **Do not rebuild a changed port
 that way:** without `-c`, haikuporter does not re-apply a changed patchset, and the revision is
@@ -180,8 +189,9 @@ was built for the same `REVISION`, `haikuporter -y -j12 wine-11.21` without `-c`
 Build dependencies are declared in the recipe (`BUILD_REQUIRES`/`BUILD_PREREQUIRES`) and include
 llvm21 + clang + lld for the PE cross-build; `haikuporter` will tell you what is missing.
 When installing them by hand with `pkgman`, `devel:libSDL2_2.0` is not found by name on
-RenkuOS: install `libsdl2_devel`. This branch declares no Wayland, xkb, EGL or OSMesa
-dependencies: nothing built here uses them.
+RenkuOS: install `libsdl2_devel`. This branch declares no Wayland, xkb or EGL dependencies:
+nothing built here uses them. It declares OSMesa (`devel:libosmesa`, from `mesa_devel`), which
+the driver's OpenGL needs; configure fails without it.
 
 ### Iterating without rebuilding everything
 
@@ -224,7 +234,7 @@ directory, so an installed builtin always wins.)
 ### Installing
 
 ```sh
-pkgman install ./wine-11.21-6-x86_64.hpkg
+pkgman install ./wine-11.21-8-x86_64.hpkg
 ```
 
 - **On RenkuOS, build it there.** A package built on RenkuOS requires the build machine's
@@ -243,11 +253,13 @@ pkgman install ./wine-11.21-6-x86_64.hpkg
   | always | `lib:libvulkan` | `vulkan` |
   | 11.19 REVISION 4 | `lib:libgnutls` | `gnutls` |
   | 11.8 REVISION 10 | `lib:libusb_1.0` | `libusb` |
+  | 11.21 REVISION 3 | `lib:libstdc++` | `gcc_syslibs` |
+  | 11.21 REVISION 7 | `lib:libosmesa` | `mesa` |
 
-  On `master` (11.19) the package also requires `lib:libOSMesa` (`mesa`) and the Wayland
-  libraries (`wayland`, `wayland_server`, `libxkbcommon`). This branch builds neither
-  `winewayland.drv` nor the OSMesa backend, so it requires none of them. The native driver
-  will add its own dependencies, each read off the package that provides it.
+  `lib:libosmesa` is what the driver's OpenGL dlopen()s, so haikuporter cannot see it, as with
+  gnutls. On `master` (11.19) the package also requires the Wayland libraries (`wayland`,
+  `wayland_server`, `libxkbcommon`). This branch does not build `winewayland.drv`, so it
+  requires none of them.
 
   The last row was `lib:libusb` through REVISION 8, which resolves to `libusb_compat` — the
   libusb-0.1 API. `wineusb.so` links `libusb-1.0.so.0`, provided by the `libusb` package as
@@ -329,16 +341,17 @@ needs `haikuporter -c`), test, update the patch table and revision history here,
 
 ## Graphics driver
 
-**On this branch the driver is `winerenku.drv` (patches 16 and 18), and it is unfinished.**
-Patch 17 puts it first in explorer's default list (`renku,mac,x11,wayland`,
+**On this branch the driver is `winerenku.drv` (patches 15 and 17–20), and it is unfinished.**
+Patch 16 puts it first in explorer's default list (`renku,mac,x11,wayland`,
 `programs/explorer/desktop.c:46`), so a prefix with no `Graphics` setting uses it. Windows
 programs open in native RenkuOS windows, take keyboard and mouse input, and are moved, resized,
-minimized, zoomed and closed with the RenkuOS decorator. What is still missing is listed under
-patch 18 above; the stages are in [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md).
+minimized, zoomed and closed with the RenkuOS decorator, and OpenGL and Direct3D render in
+software through OSMesa. What is still missing is listed under
+patch 17 above; the stages are in [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md).
 
 Like every builtin DLL outside prefix creation, the driver loads only if the prefix's
 `system32` has a placeholder file for it, which `wineboot` writes when it creates or updates a
-prefix. A prefix created before patch 16 has none until it is updated. Wine updates a prefix
+prefix. A prefix created before the driver patch (11.21 REVISION 3) has none until it is updated. Wine updates a prefix
 by itself on the first run after `wine.inf` changes (`programs/wineboot/wineboot.c:1697`), so
 installing a new package should be enough. This hasn't been tried with an older prefix yet.
 The exception is a prefix whose `.update-timestamp` reads `disable`: it is never updated, so
@@ -402,8 +415,13 @@ WINEDEBUG=+winediag wine notepad 2>&1 | head       # the ERR above, if any
 
 ### wine-11.21 (branch `renku-driver`, not released)
 
+Patch numbers in each row are those of its revision. REVISION 8 dropped patch 1, so from it on
+every patch is one lower than in the rows below it.
+
 | REVISION | Notes |
 |---|---|
+| 8 | Patch 20 (`winerenku.drv` OpenGL through OSMesa: frames in a view of their own in the BWindow when nothing clips the GL window, otherwise drawn into it with GDI), `devel:libosmesa` in BUILD_REQUIRES and `lib:libosmesa` in REQUIRES. X512's "Add Wayland input header" dropped and "11.8 patches" trimmed of its hunks for drivers this port does not build, so the patches are one lower from here on (patch 16 is now explorer's). Patch 16's commit message corrected (winewayland.drv is no fallback: it is not built), its code unchanged. The patchset applies to pristine 11.21 and gives tree `a4f42429`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM (the REVISION 7 build plus the driver changes, so not yet with the trimmed patch 1): [OSMESA-GL-PLAN](docs/OSMESA-GL-PLAN.md) gates 1–4: osprobe; glprobe 29/29 and d3dprobe 8/8, three runs each, checked on the screen by screencheck. Gate 5 (an NA VST3 editor in jackDAW) not run: it needs vstbridge rebuilt on this Wine. Package built clean 2026-11-11 on the VM: configure found `libOSMesa.so.8` and makedep ran without the dropped header, `checkpkg` OK (only `/packages/wine-11.21-8/`, requires include `lib:libosmesa>=8.0.0`); glprobe 29/29 and d3dprobe 8/8 again, twice each, from the clean tree. **Installed** 2026-11-11 on the RenkuOS test laptop (bare metal, hrev60072+518, upgrading wine 11.19-4): the user ran winecfg on an existing prefix, and Amped - Roots (JUCE, 64-bit): its window, menus, drop-downs, dials, moving and resizing work. Found there: (1) the prefix update hung on its 32-bit steps (Wine Mono's `installinf-x86.exe`, `syswow64\rundll32.exe`): on a kernel without LDT support, patch 12's check never fires (the kernel answers `B_NAME_NOT_FOUND`, not `B_BAD_HANDLER`), the `%fs` load faults, and patch 1's SIGSEGV dump faults on the not yet set `Peb->Ldr`, a loop that pins a core. Fixed in REVISION 9. (2) No Wine audio driver loads without OSS devices (`opensound` is not installed there), so standalone programs get no sound, and some (ToneLib BigPuff) exit on mmdevapi's `assert(!status)`. Plug-ins in a DAW do not use Wine audio. |
+| 7 | Built 2026-11-11, never released or committed: patch 21 (OpenGL through OSMesa) presenting only with GDI, which could reach the screen up to 50 ms late. REVISION 8 replaced it. |
 | 6 | Patch 20 (`winerenku.drv` text clipboard, both ways). The patchset applies to pristine 11.21 and gives tree `99051cfc`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM, by the user: text copied in StyledEdit pastes into notepad and text copied in notepad pastes into StyledEdit, from the menus and with Alt+C / Ctrl+C / Ctrl+V (Alt+V was taken by QEMU's own window). **Built** 2026-11-11 on that VM, clean (`haikuporter -y -c` then `-y -j12`): all 20 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `99051cfc`; `tools/winework.sh checkpkg` finds `/packages/wine-11.21-6/` 27 times, as text and as UTF-16, and no other revision's path; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged (the recipe changed only REVISION). **Not installed or run as a package yet.** |
 | 5 | Patch 19 (`winerenku.drv` keyboard layout from the RenkuOS keymap). The patchset applies to pristine 11.21 and gives tree `2aa3600d`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM: kbdprobe matches the US, US-International, German and French keymaps; the user typed in notepad on US-International, AltGr characters included. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12` (the first build of this revision was lost: the VM was stopped uncleanly and the fresh hpkg came back zero-filled, so it was rebuilt): all 19 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `2aa3600d`; the extracted package holds `/packages/wine-11.21-5/` in 7 files and no other revision's path; it contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged from REVISION 4. Clean compile 10 min, package creation 9 min. **Not installed or run as a package yet.** |
 | 4 | Patch 18 (`winerenku.drv` input, activation and the decorator). The patchset applies to pristine 11.21 and gives tree `21a34855`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM, by the user: notepad and Amped - Roots (JUCE 6.1.5) take typing, mouse, menus and dialogs, and are moved, resized, zoomed, minimized and closed with the decorator. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12`: all 18 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `21a34855`; `bin/wine` and `ntdll.so` carry `/packages/wine-11.21-4`; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged from REVISION 3. **Not installed or run as a package yet.** |
@@ -441,5 +459,8 @@ Removed, and still in this repo's history: X512's original Wine 7.1 port (`wine-
 ## Licensing and credit
 
 Wine is **LGPL v2.1**; these patches are derived work under the same licence. The first patches
-(1–3 on 11.21) are upstream work from the HaikuPorts project (including X512's original port),
-with authorship preserved in each `From:` line. The recipe is derived from the haikuports `app-emulation/wine` recipe.
+(1–2 on 11.21) are upstream work from the HaikuPorts project (including X512's original port),
+with authorship preserved in each `From:` line. Where this port trims or drops one of them,
+because it serves only something this port does not build, the patch keeps its author and its
+commit body says what was removed; the README's *Dropped* sections list it. X512's "Add Wayland
+input header" was used through 11.21 REVISION 7. The recipe is derived from the haikuports `app-emulation/wine` recipe.
