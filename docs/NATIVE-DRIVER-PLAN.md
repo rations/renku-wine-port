@@ -13,7 +13,7 @@ anywhere.
 The driver is maintained as RenkuOS-only patches, rebased onto each Wine release. Upstream
 Wine is not expected to carry it.
 
-This is a fresh design. An earlier native driver for Wine 11.8 (`attic/winehaiku.drv-11.8-abandoned.patch`)
+This is a fresh design. An earlier native driver for Wine 11.8 (`attic/winehaiku.drv-11.8-abandoned.patch`, removed from the repo, in commit `64ff11f`)
 did not work, and why was never recorded. Nothing here is based on it. This time every gate's
 result is written down, below.
 
@@ -135,7 +135,7 @@ What P3 established. First, from the sources:
   (`Looper.cpp:480`), so that call needs the block as well as the app thread's creation.
 - **Not blockable.** Synchronous faults (SIGSEGV) on a Be thread still run Wine's handler.
 
-Then from the three runs (prefix `~/probes/drvprefix`, a copy of the one described below):
+Then from the three runs (prefix `drvprefix`, a copy of the one described below):
 
 - **Rule 3 applied (default mode): 15/15.** Both loopers start with ALRM, IO, INT, HUP, QUIT,
   USR1, USR2 and CHLD blocked, and the Win32 thread's own mask is restored afterwards. A
@@ -176,8 +176,8 @@ no-driver base, all on the build VM:
    Patch 17 replaces this with `renku` first in `default_driver`.
 3. **Wine Mono's install prompt waits for a click**, with 11.19 as well. Mono and Gecko are
    wanted, so prefixes are created with the prompt answered by hand, not skipped. The one
-   unattended prefix, `~/probes/p3prefix`, was made with `WINEDLLOVERRIDES=mscoree,mshtml=`
-   and has neither. P3 ran in a copy of it, `~/probes/drvprefix`, which is a test prefix only:
+   unattended prefix, `p3prefix`, was made with `WINEDLLOVERRIDES=mscoree,mshtml=`
+   and has neither. P3 ran in a copy of it, `drvprefix`, which is a test prefix only:
    automatic updates are off (`.update-timestamp` = `disable`) and `winerenku.drv` was copied
    into its `system32` by hand, because the prefix predates the driver. Outside prefix creation,
    ntdll finds a builtin DLL without a file in `system32` only for 16-bit names
@@ -185,7 +185,7 @@ no-driver base, all on the build VM:
    wineboot.
 
 With all three worked around, `wineboot -i` on 11.21 finished: exit 0, about 5 minutes, at
-`~/probes/p3prefix` on the VM. 32-bit code there logs `THREAD_SET_LDT_ENTRY … failed`, as
+`p3prefix` on the VM. 32-bit code there logs `THREAD_SET_LDT_ENTRY … failed`, as
 expected without the WoW64 kernel work.
 
 What P4 established:

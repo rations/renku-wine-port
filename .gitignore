@@ -4,8 +4,15 @@ download/
 packages/
 *.hpkg
 
+# This machine's settings for tools/ (copy tools/local.conf.example)
+tools/local.conf
+
 # Local-only agent instructions and tooling (not part of the port)
 CLAUDE.md
+CLAUDE.local.md
 RULES.md
-.claude/
+# .claude/: the hooks and their settings are shared (they run tools/); the rest is personal
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 NOTE.md

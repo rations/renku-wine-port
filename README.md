@@ -9,6 +9,9 @@ Patches for **Wine 11.21** on RenkuOS, built as a port with `haikuporter`. They 
 plug-ins** inside [Kasen](https://github.com/rations/kasen) — the stock Wine package is
 missing the fixes the bridge depends on.
 
+To change the port, read [AGENTS.md](AGENTS.md) first: the rules and the workflow, for people
+and coding agents alike. `tools/` has the scripts it describes.
+
 > **This is the `renku-driver` branch: work in progress, not released.** It is the base for
 > `winerenku.drv`, a native graphics driver that gives Windows programs real RenkuOS windows
 > with no Wayland in between. The plan, its probes and its gates are in
@@ -33,20 +36,27 @@ downloads the upstream tarball (checksum pinned in the recipe) and applies the p
 
 ```
 app-emulation/wine/            drop-in replacement for the haikuports port directory
-  wine-11.21.recipe            REVISION=4
+  wine-11.21.recipe            REVISION=5
   patches/
     wine-11.21.patchset        the 19 patches below (this is the deliverable)
-    wine-11.8-home.patchset    optional, not applied by the recipe (see Optional patches)
   additional-files/
     wine.rdef.in               Deskbar icon/version resource template
+tools/                         scripts for maintaining the port (settings: tools/local.conf.example)
+  devtree.sh                   make the dev tree: the tarball + the patchset, as git commits
+  winework.sh                  the build-machine loop: push, build, test, sync, package, check
+  rebase.sh                    move the port to a new Wine release
+  check.sh                     the checks: REVISION, patchset vs dev tree, authors, leftovers
+  status.sh                    where things stand: port, dev tree, sources, build machine
+  git-hooks/pre-commit         runs check.sh --staged (git config core.hooksPath tools/git-hooks)
+  common.sh                    shared settings, sourced by both
 docs/
   NATIVE-DRIVER-PLAN.md        design, probes and gates for the native driver (winerenku.drv)
   OSMESA-GL-PLAN.md            design + test plan for the software-GL work
   probes/                      standalone programs establishing both plans' facts
 attic/                         kept for reference, not built
-  winehaiku.drv-11.8-abandoned.patch
-  wine-7.1.recipe
-  wine-7.1.patchset
+  winerenku-cursor-shapes.diff Windows cursor shapes for winerenku.drv, not applied
+.claude/                       Claude Code hooks that run tools/status.sh and tools/check.sh
+AGENTS.md                      the rules and workflow, for people and coding agents
 ```
 
 ## The patchset
@@ -110,12 +120,6 @@ library) and patch 3 (upstream now uses `AC_CHECK_MEMBER` for the OSS check).
 - **ntdll: debug — name the faulting caller by scanning the stack** — development
   instrumentation from the 11.8 GL work, never a fix. It printed to stdout on every fault.
 
-### Optional patches
-
-`patches/wine-11.8-home.patchset` (Peppersawce, "Move wine dir to `/config/settings`") is
-**not** listed in the recipe's `PATCHES` and is not applied. It is upstream's and marked buggy;
-kept only so it is not lost.
-
 ## Building
 
 On the target RenkuOS machine, with a [haikuports](https://github.com/haikuports/haikuports)
@@ -132,31 +136,41 @@ haikuporter -y -j8 wine-11.21
 
 The package lands in `~/haikuports/packages/wine-11.21-5-x86_64.hpkg`.
 
-> **Always `haikuporter -y -c wine-11.21` first when `REVISION` changed.** Not just when the
-> patchset changed — **the revision is compiled into the binaries.** `configure` records
-> `prefix = /packages/wine-<version>-<revision>/.self`, and Wine bakes that into `bindir`/
-> `libdir`; the loader then resolves `ntdll.so` through it. Skipping `-c` after only a recipe
-> edit re-runs `configure` (so the `Makefile` says the new revision) but recompiles nothing,
-> because no source changed — and the package ships binaries still pointing at the **previous**
-> revision's package directory.
->
-> That package works perfectly on any machine where the old revision is still installed, and
-> fails on every machine where it is not, with:
->
-> ```
-> wine: could not load ntdll.so: No such file or directory
-> runtime_loader: Cannot open file /packages/wine-11.8-8/.self/lib/wine/x86_64-unix/ntdll.so
-> ```
->
-> Diagnose it directly — the shipped binary disagrees with the recipe:
->
-> ```sh
-> strings -a /boot/system/bin/wine | grep packages/wine   # must match the installed revision
-> ```
->
-> A tell-tale sign is a suspiciously fast rebuild and binaries whose hashes are *identical* to
-> the previous revision's. That is not reassurance that the payload is unchanged; it is the
-> symptom.
+That plain `haikuporter` build is right for a first build. **Do not rebuild a changed port
+that way:** without `-c`, haikuporter does not re-apply a changed patchset, and the revision is
+compiled into the binaries. `configure` records `prefix = /packages/wine-<version>-<revision>/.self`,
+and Wine bakes that into `bindir`/`libdir`; the loader then resolves `ntdll.so` through it.
+Re-running haikuporter after a `REVISION` bump re-runs `configure` (so the `Makefile` says the
+new revision) but recompiles nothing, because no source changed, and the package ships
+binaries still pointing at the **previous** revision's package directory. That package works on
+any machine where the old revision is still installed, and fails everywhere else with:
+
+```
+wine: could not load ntdll.so: No such file or directory
+runtime_loader: Cannot open file /packages/wine-11.8-8/.self/lib/wine/x86_64-unix/ntdll.so
+```
+
+There are two correct ways to build a changed port:
+
+- `tools/winework.sh package` (see below), which rebuilds only what changed. Minutes.
+- A clean build, `haikuporter -y -c wine-11.21` then `haikuporter -y -j12 wine-11.21`, which
+  recompiles everything (19 minutes in the RenkuOS build VM, 10 of them compiling). Needed only
+  for a new Wine version or a damaged work tree.
+
+Either way, check the package before shipping it: `tools/winework.sh checkpkg` extracts it and
+fails if a path of any other revision is compiled in. On an installed system:
+
+```sh
+strings -a /boot/system/bin/wine | grep packages/wine   # must match the installed revision
+```
+
+Binaries whose hashes are *identical* to the previous revision's are not reassurance that the
+payload is unchanged; they are the symptom.
+
+**Stop the build VM cleanly.** A hard stop loses recently written file data on BFS (a fresh
+hpkg came back zero-filled: `package list` reported "Invalid magic"), but not the older build
+tree. After one, check the recent outputs and run `tools/winework.sh package` again; no clean
+build is needed.
 
 Build dependencies are declared in the recipe (`BUILD_REQUIRES`/`BUILD_PREREQUIRES`) and include
 llvm21 + clang + lld for the PE cross-build; `haikuporter` will tell you what is missing.
@@ -164,31 +178,47 @@ When installing them by hand with `pkgman`, `devel:libSDL2_2.0` is not found by 
 RenkuOS: install `libsdl2_devel`. This branch declares no Wayland, xkb, EGL or OSMesa
 dependencies: nothing built here uses them.
 
-### Iterating without an hour-long rebuild
+### Iterating without rebuilding everything
 
-A clean rebuild takes about 20 minutes on the build VM (19 for 11.21 with `-j12`) and was about 55 on the old, slower build laptop. Either way it is not a per-edit cycle. Two things make a fast loop
-possible:
+`haikuporter` applies `.patchset` files **with git**, so `work-11.21/sources/wine-wine-11.21`
+on the build machine is a git repo whose `HEAD^{tree}` is the patchset's tree, and every change
+made in it since is visible to git. `tools/winework.sh` builds the loop on that. Set it up once:
+copy `tools/local.conf.example` to `tools/local.conf` and fill in your dev tree (see
+*Changing a patch*), the build machine's ssh host, and its haikuports path.
 
-- `haikuporter` applies `.patchset` files **with git**, so `work-11.21/sources/wine-wine-11.21`
-  is a git repo whose `HEAD` is the pristine tarball plus these patches. Editing it and
-  rebuilding one target inside the chroot (`haikuporter -E wine-11.21`, then
-  `make -j8 dlls/dxgi/dxgi.dll`) takes minutes, and `git diff` there is exactly your change.
-- Nothing needs to be installed to test it. Wine sets its internal `build_dir` when its
-  `ntdll.so` sits under `<tree>/dlls/ntdll`, and then omits the installed `/boot/system/lib/wine`
-  from the DLL search path entirely — so the build tree wins outright:
+```sh
+tools/winework.sh push dlls/winerenku.drv/window.c   # dev tree -> build machine
+tools/winework.sh build dlls/winerenku.drv/all       # incremental make there (seconds)
+tools/winework.sh howto                              # test without installing (below)
+tools/winework.sh status    # edits that exist only on the build machine (exit 1 if any)
+tools/winework.sh pull      # copy those into the dev tree
+tools/winework.sh sync      # make the build machine's tree equal the dev tree's HEAD
+tools/winework.sh verify    # check that it does
+tools/winework.sh package   # package the dev tree's HEAD without a clean build
+tools/winework.sh checkpkg  # check the built package of the recipe's REVISION
+```
 
-  ```sh
-  export WINELOADER=<work tree>/loader/wine
-  ```
+`package` copies the port over, `sync`s the tree to the dev tree's HEAD (refusing to overwrite
+edits that exist only there), deletes exactly the objects that hold another revision's
+`/packages/wine-<ver>-N/` path (found by searching the objects), removes `flag.build` so
+haikuporter re-runs the recipe's `BUILD()` (`autoreconf`, `configure`, `make`), runs haikuporter
+without `-c`, flushes the build machine's disk and runs `checkpkg`.
 
-  (`WINEDLLPATH` does *not* work for this: its entries are appended *after* the installed
-  directory, so an installed builtin always wins.)
+Nothing needs to be installed to test a change. Wine sets its internal `build_dir` when its
+`ntdll.so` sits under `<tree>/dlls/ntdll`, and then omits the installed `/boot/system/lib/wine`
+from the DLL search path entirely, so the build tree wins outright:
 
-> **The catch: `haikuporter -c` deletes `work-11.21/sources/` without warning.** An edit that
-> exists only there is one command from being lost — that has happened twice here. Replay every
-> such edit into the patchset (`git diff` in the work tree, apply it to the tree the patchset is
-> generated from) *before* any clean rebuild. Every source change ultimately belongs in the
-> patchset — see below.
+```sh
+export WINELOADER=<work tree>/loader/wine
+```
+
+(`WINEDLLPATH` does *not* work for this: its entries are appended *after* the installed
+directory, so an installed builtin always wins.)
+
+> **`haikuporter -c` deletes `work-11.21/sources/` without warning.** An edit that exists only
+> there is one command from being lost; that has happened twice here. `tools/winework.sh
+> status` lists such edits and `pull` copies them into the dev tree. Every source change
+> ultimately belongs in the patchset (see below).
 
 ### Installing
 
@@ -239,14 +269,13 @@ Do not edit the patchset by hand. Rebuild it from a git tree, which is how the c
 produced:
 
 ```sh
-# One-time: reconstruct the working tree from this repo
-tar xf wine-wine-11.21.tar.gz && cd wine-wine-11.21
-git init -q && git add -A && git commit -qm "wine-11.21 pristine"
-git rev-parse 'HEAD^{tree}'   # db03e4c9..., the same tree as upstream's wine-11.21 tag
-git am /path/to/renku-wine-port/app-emulation/wine/patches/wine-11.21.patchset
+# One-time: make the dev tree from this repo: the recipe's tarball (SHA256 checked), committed
+# and tagged pristine-11.21 (tree db03e4c9..., the same as upstream's wine-11.21 tag), then the
+# patchset applied as one commit per patch on branch renku-11.21
+tools/devtree.sh ~/src/wine-renku-dev
 
 # Then, for every change: edit, commit, regenerate, commit the patchset here
-git format-patch --stdout <pristine-sha>..HEAD \
+git format-patch --stdout pristine-11.21..HEAD \
   > /path/to/renku-wine-port/app-emulation/wine/patches/wine-11.21.patchset
 ```
 
@@ -256,19 +285,46 @@ recipe changes — never reuse a published revision.
 To verify a regenerated patchset reproduces the tree it came from:
 
 ```sh
-git worktree add --detach /tmp/verify <pristine-sha>
+git worktree add --detach /tmp/verify pristine-11.21
 cd /tmp/verify && git am /path/to/patches/wine-11.21.patchset
 git rev-parse HEAD^{tree}   # must equal the dev tree's HEAD^{tree}
 ```
+
+## Moving to a new Wine release
+
+```sh
+tools/rebase.sh             # or: tools/rebase.sh <version>
+```
+
+With no version it takes the newest release tag of the repository the recipe downloads from,
+and does nothing if the port is already on it. Otherwise it downloads that release's tarball,
+commits it into the dev tree as a new root tagged `pristine-<version>` (the dev tree's checkout
+and uncommitted work are not touched), and applies the current patchset with `git am -3` on a
+new branch `renku-<version>`, in a worktree beside the dev tree. It prints the driver interface
+versions (`WINE_GDI_DRIVER_VERSION` and the others) of both releases, and what changed between
+them in the interfaces and in the reference drivers (win32u, winemac.drv, winewayland.drv,
+explorer): `winerenku.drv` has to follow those changes.
+
+When a patch does not apply, it stops and names the patch and the files. Resolve them in the
+worktree, `git add`, `git am --continue`; a patch upstream made unnecessary is dropped with
+`git am --skip` and the README says so. Then:
+
+```sh
+tools/rebase.sh --finish <version>
+```
+
+It regenerates the patchset, checks that it applies to `pristine-<version>` and reproduces the
+branch's tree, renames the recipe to `wine-<version>.recipe` with the new `CHECKSUM_SHA256` and
+`REVISION="1"`, and replaces the patchset. Nothing is committed: build it cleanly (a new tarball
+needs `haikuporter -c`), test, update the patch table and revision history here, and commit.
 
 ## Where things live
 
 | | Role |
 |---|---|
 | **this repo** | **Authoritative.** The recipe and patchsets, in git. If it is not committed here, it is not kept. |
-| `third_party/wine-renku-dev` | Scratch working tree for editing source and regenerating the patchset (the `git am` tree above). One branch per Wine base, each on a tagged pristine import: `master` (11.19, tag `pristine-11.19`), `renku-11.21` (this branch's patchset, tag `pristine-11.21`), and `renku-11.21-wayland` (all 17 of the 11.19 patches rebased onto 11.21, kept for reference). Regenerable; safe to delete and recreate. |
-| `third_party/wine-osmesa-dev` | The 11.8 tree the 11.19 rebase cherry-picked from. History only. Tag `pre-consolidate-backup-20260726` marks its pre-cleanup history. |
-| build VM `~/haikuports/app-emulation/wine/` | Build machine only (a QEMU VM running the RenkuOS build the package is built for). Copy the port in, build, copy the `.hpkg` out. Has no git history of its own — anything edited only there is one `haikuporter -c` from gone. |
+| the dev tree (`WINE_DEV_TREE`) | Working tree for editing source and regenerating the patchset, made by `tools/devtree.sh`: the pristine tarball tagged `pristine-<version>`, and the patches as commits on branch `renku-<version>`. Regenerable; safe to delete and recreate. |
+| the build machine's `<haikuports>/app-emulation/wine/` | Build machine only: a RenkuOS install (a VM is fine) of the release the package is built for. `tools/winework.sh package` copies the port in and builds it. Has no git history of its own: anything edited only there is one `haikuporter -c` from gone (`tools/winework.sh status`). |
 
 ## Graphics driver
 
@@ -370,14 +426,18 @@ needs a clean build) and *Installing* (the Wayland libraries must be declared).
 
 ## Attic
 
-- `winehaiku.drv-11.8-abandoned.patch` — an in-tree native graphics driver tried during
-  development and **abandoned**; it did not work. Deliberately not part of the port. The
-  arrangement that does work is *Graphics driver* above.
-- `wine-7.1.recipe`, `wine-7.1.patchset` — X512's original Wine 7.1 port (13 patches),
-  the ancestor of this work. Reference only.
+- `winerenku-cursor-shapes.diff`: `winerenku.drv` drawing Windows cursor shapes (I-beam,
+  resize arrows) instead of keeping RenkuOS's pointer. Left out on purpose, so the pointer stays
+  RenkuOS's; kept in case a program turns out to need its own cursors.
+
+Removed, and still in this repo's history: X512's original Wine 7.1 port (`wine-7.1.recipe` and
+`.patchset`) and upstream's optional `wine-11.8-home.patchset`, both also in
+[haikuports](https://github.com/haikuports/haikuports) under `app-emulation/wine/`; and
+`winehaiku.drv-11.8-abandoned.patch`, an in-tree native driver for 11.8 that did not work
+(commit `64ff11f`). `winerenku.drv` is a fresh design and does not build on it.
 
 ## Licensing and credit
 
-Wine is **LGPL v2.1**; these patches are derived work under the same licence. Patches 1–4 are
-upstream work from the HaikuPorts project (including X512's original port), with authorship
-preserved in each `From:` line. The recipe is derived from the haikuports `app-emulation/wine` recipe.
+Wine is **LGPL v2.1**; these patches are derived work under the same licence. The first patches
+(1–3 on 11.21) are upstream work from the HaikuPorts project (including X512's original port),
+with authorship preserved in each `From:` line. The recipe is derived from the haikuports `app-emulation/wine` recipe.

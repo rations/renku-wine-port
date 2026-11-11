@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
+            "timeout": 20,
+            "statusMessage": "tools/status.sh: port, dev tree, sources of truth"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-patchset-edit.sh\"",
+            "timeout": 15,
+            "statusMessage": "AGENTS.md §2: patchset guard"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-worktree.sh\"",
+            "timeout": 15,
+            "statusMessage": "AGENTS.md §3: work-tree guard"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-revision.sh\"",
+            "timeout": 30,
+            "statusMessage": "tools/check.sh: REVISION, patchset, authors"
+          }
+        ]
+      }
+    ]
+  }
+}
