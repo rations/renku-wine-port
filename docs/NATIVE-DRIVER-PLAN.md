@@ -225,6 +225,28 @@ What the first driver stage (patch 16) found on the build VM:
   same as a 32bpp DIB, so the surface is copied without conversion. Notepad is black and white,
   so a coloured window still has to confirm it.
 
+What the second stage (patch 18) found:
+
+- **win32u holds back mouse moves.** Pure moves sent with `NtUserSendHardwareInput` reach the
+  server only with the next button or wheel input, a move for another window, or an empty
+  input for no window (`accum_mouse_motion`, `dlls/win32u/input.c`). Without that flush a drag
+  arrived only on release: no selection while dragging, no highlight in menus. Found by
+  counting: hundreds of moves sent, 8 `WM_MOUSEMOVE`s received.
+- **app_server activates every window it shows**, unless it has `B_AVOID_FOCUS`. JUCE's menus
+  are unowned tool-window popups; activated on show, they closed at once. `B_AVOID_FOCUS`
+  windows are still brought to the front (`Desktop::ActivateWindow`).
+- **Minimizing is the client's job.** app_server sends `B_MINIMIZE` to the window, from the
+  decorator and from the Deskbar alike (`ServerWindow::NotifyMinimize`), and the
+  `Minimize()` hook does the rest, so Wine can decide first.
+- **`MoveTo`/`ResizeTo` update `Frame()` at once**, on the looper; app_server's own changes
+  arrive as `B_WINDOW_MOVED`/`B_WINDOW_RESIZED`. A frame read from the looper therefore
+  includes every change posted to it before.
+- **BWindow takes some keys** before any view sees them (`_HandleKeyDown`): Command+Q quits
+  the application, Control+Tab opens the Switcher, Print Screen takes a screenshot. The driver
+  takes keys in `DispatchMessage`, ahead of it.
+- **Layered windows cannot be shown.** JUCE draws four click-through layered windows as a drop
+  shadow; shown opaque they were black edges. Click-through layered windows get no BWindow.
+
 ## 4. Gates
 
 Checked by the user on bare-metal RenkuOS. The build VM is for building and the probes.
@@ -232,8 +254,8 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
 | Gate | What has to work | Status |
 |---|---|---|
 | G1 | notepad and winecfg appear in native windows | **partly**: notepad passed in the build VM on 2026-11-11 (patch 16): one titled native window with its title, menu bar, a white edit area and a blinking caret, nothing garbled. winecfg not tried yet, and not checked on bare metal yet. |
-| G2 | typing, clicking, menus, dialogs | not started |
-| G3 | moving, resizing, minimizing and closing from the system decorator | not started |
+| G2 | typing, clicking, menus, dialogs | **passed in the build VM**, 2026-11-11 (patch 18): notepad (typing, drag selection, menus by mouse and Alt+F, the save dialog) and Amped - Roots, a JUCE 6.1.5 program (knobs, its own menus, settings dialogs). Not checked on bare metal yet. |
+| G3 | moving, resizing, minimizing and closing from the system decorator | **passed in the build VM**, 2026-11-11 (patch 18): both programs; minimize goes to the Deskbar and restores from it. Not checked on bare metal yet. |
 | G4 | clipboard, both ways | not started |
 | G5 | OSMesa GL gates 1–5 of [OSMESA-GL-PLAN.md](OSMESA-GL-PLAN.md) §5, under the new driver | not started |
 | G6 | a VST editor through vstbridge rebuilt on this Wine | not started |
@@ -246,6 +268,8 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
    G1. **Done as patches 16 and 17** (G1 partly checked, see §4).
 3. Input and focus: event queue, keyboard (raw key code → scancode table read from RenkuOS's
    keyboard sources, then KBDTABLES from `get_key_map()`), mouse, capture, cursors → G2, G3.
+   **Mostly done as patch 18** (G2 and G3 passed in the VM). Still open: cursors, and
+   KBDTABLES from `get_key_map()` (the US tables are used).
 4. Window management: menus and tooltips, owned and modal windows, layered windows and regions
    as far as P4 allows.
 5. Desktop: clipboard → G4; then keyboard layouts, IME, systray, as separate patches.

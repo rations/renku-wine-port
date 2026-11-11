@@ -12,9 +12,10 @@ missing the fixes the bridge depends on.
 > **This is the `renku-driver` branch: work in progress, not released.** It is the base for
 > `winerenku.drv`, a native graphics driver that gives Windows programs real RenkuOS windows
 > with no Wayland in between. The plan, its probes and its gates are in
-> [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md). **The driver is at its first
-> stage (patch 16):** Windows programs open in native RenkuOS windows and draw, but take no
-> keyboard or mouse input yet, and the windows cannot be moved, resized or closed. configure
+> [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md). **The driver works but is not
+> finished (patches 16-18):** Windows programs open in native RenkuOS windows and take
+> keyboard and mouse input, and the windows can be moved, resized, minimized, zoomed and
+> closed. Not yet: cursor shapes, keyboard layouts other than US, clipboard, OpenGL. configure
 > runs `--without-wayland --without-x --without-opengl`. OpenGL is off because win32u's EGL
 > path hangs explorer on RenkuOS; it comes back through the driver. The released package
 > (Wine 11.19, Wayland) is on `master`.
@@ -31,9 +32,9 @@ downloads the upstream tarball (checksum pinned in the recipe) and applies the p
 
 ```
 app-emulation/wine/            drop-in replacement for the haikuports port directory
-  wine-11.21.recipe            REVISION=3
+  wine-11.21.recipe            REVISION=4
   patches/
-    wine-11.21.patchset        the 17 patches below (this is the deliverable)
+    wine-11.21.patchset        the 18 patches below (this is the deliverable)
     wine-11.8-home.patchset    optional, not applied by the recipe (see Optional patches)
   additional-files/
     wine.rdef.in               Deskbar icon/version resource template
@@ -49,8 +50,8 @@ attic/                         kept for reference, not built
 
 ## The patchset
 
-Seventeen patches. **1–3 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
-`From:` line. **4–17 are local.**
+Eighteen patches. **1–3 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
+`From:` line. **4–18 are local.**
 
 | # | Patch | Author | Why |
 |---|---|---|---|
@@ -71,6 +72,7 @@ Seventeen patches. **1–3 are from the upstream port** (see *Licensing and cred
 | 15 | ntdll, server: support hardware breakpoints | local | Copy protection (PACE/iLok: Neural DSP, Toontrack and others) points Dr0–Dr3 at a probe with `SetThreadContext` and expects `EXCEPTION_SINGLE_STEP` when it runs; a probe that does not trap marks the process as tampered and the licence check fails later ("no activation", or `LoadLibraryW` "DLL initialization failed" for a plug-in). The server cannot set debug registers on RenkuOS (no ptrace), so each thread loads its own through `THREAD_SET_DEBUG_REGISTERS`, which **only the locally built kernel provides**; `trap_handler` reports DR6 with the reserved bits set, as Windows does, which PACE checks. On a stock kernel the breakpoints are ignored with a warning. (Developed as "patch 18" in the 11.19 numbering; an SMBIOS patch numbered 17 there was dropped because it changed the hardware IDs licences are bound to.) |
 | 16 | winerenku.drv: add a native RenkuOS (Be API) graphics driver | local | **Work in progress, stage 1 of the plan.** Every other Wine port for Haiku-family systems draws through Wayland, which on RenkuOS is an in-process server that turns the protocol back into BWindows. This driver uses the Be API directly: each shown top-level window gets a BWindow (titled for `WS_CAPTION` windows, so RenkuOS draws the tab and frame; borderless otherwise), Wine's window surface is copied into a `B_RGB32` BBitmap, and the screen is reported from `BScreen`. The BApplication starts on its own thread the first time it is needed, and every Be thread starts with Wine's signals blocked (without that, the sigprobe test shows a SIGINT killing a window's thread). configure builds it on Haiku and fails if the Be headers are missing; `--without-renku` turns it off. Verified: notepad opens in one native window and draws correctly (title, menu bar, edit area, caret). **Not done yet:** keyboard and mouse input, focus, moving/resizing/closing, the Deskbar-free work area, window shapes and layering, OpenGL. A crash on a Be thread freezes that thread silently. |
 | 17 | explorer: try the RenkuOS driver first | local | explorer loads the first driver in `default_driver` that exists; `renku` now comes first. explorer is Windows (PE) code and cannot test `__HAIKU__`, but it does not need to: where `winerenku.drv` is not built the load fails and the next name is tried, as `mac` already is everywhere but macOS. |
+| 18 | winerenku.drv: keyboard and mouse input, activation, and the decorator | local | **Work in progress, stage 2 of the plan.** Be threads cannot call Wine, so they queue events and one Wine thread passes them to win32u. Mouse input flushes the moves win32u holds back (without that, a drag reached the program only on release). Keys are sent as scancodes, from a table generated from RenkuOS's own scancode map, and are taken before BWindow's shortcuts (Command+Q, Control+Tab, Print Screen), so programs get them all. RenkuOS activations become Wine's foreground window and the other way round, without the two undoing each other; menus and tooltips, including JUCE's unowned ones, never take the focus. The decorator's close, minimize, zoom and resize follow the window style and become Wine's system commands, and moves and resizes are read back from the window. Also: a resized window keeps its picture until Wine has painted the new one, and click-through layered windows (drop shadows) are not shown, since RenkuOS cannot blend windows. Verified on notepad and Amped - Roots. **Not done yet:** cursor shapes, keyboard layouts other than US, showing a normal window without activating it, a work area that leaves out the Deskbar, Deskbar "Quit". |
 
 On RenkuOS, patches 13 and 15 do nothing: its kernel has neither the LDT calls nor
 `THREAD_SET_DEBUG_REGISTERS`, so 32-bit programs exit and
@@ -126,7 +128,7 @@ cd ~/haikuports
 haikuporter -y -j8 wine-11.21
 ```
 
-The package lands in `~/haikuports/packages/wine-11.21-3-x86_64.hpkg`.
+The package lands in `~/haikuports/packages/wine-11.21-4-x86_64.hpkg`.
 
 > **Always `haikuporter -y -c wine-11.21` first when `REVISION` changed.** Not just when the
 > patchset changed — **the revision is compiled into the binaries.** `configure` records
@@ -189,7 +191,7 @@ possible:
 ### Installing
 
 ```sh
-pkgman install ./wine-11.21-3-x86_64.hpkg
+pkgman install ./wine-11.21-4-x86_64.hpkg
 ```
 
 - **On RenkuOS, build it there.** A package built on RenkuOS requires the build machine's
@@ -268,11 +270,12 @@ git rev-parse HEAD^{tree}   # must equal the dev tree's HEAD^{tree}
 
 ## Graphics driver
 
-**On this branch the driver is `winerenku.drv` (patch 16), and it is unfinished.** Patch 17 puts
-it first in explorer's default list (`renku,mac,x11,wayland`, `programs/explorer/desktop.c:46`),
-so a prefix with no `Graphics` setting uses it. Windows programs open in native RenkuOS windows
-and draw, but cannot be typed into, clicked, moved, resized or closed yet; end them with
-`wineserver -k`. See [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md) for the stages.
+**On this branch the driver is `winerenku.drv` (patches 16 and 18), and it is unfinished.**
+Patch 17 puts it first in explorer's default list (`renku,mac,x11,wayland`,
+`programs/explorer/desktop.c:46`), so a prefix with no `Graphics` setting uses it. Windows
+programs open in native RenkuOS windows, take keyboard and mouse input, and are moved, resized,
+minimized, zoomed and closed with the RenkuOS decorator. What is still missing is listed under
+patch 18 above; the stages are in [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md).
 
 Like every builtin DLL outside prefix creation, the driver loads only if the prefix's
 `system32` has a placeholder file for it, which `wineboot` writes when it creates or updates a
@@ -290,7 +293,7 @@ plug-ins:
 | Setting | Result |
 |---|---|
 | `null` | vstbridge captures the plug-in's window and repaints it inside the host's FX window (Kasen's). The `null` driver declines to create a driver window surface, which sends win32u down its offscreen path: the window still draws and still receives `WM_PAINT`, but never reaches a display. Not yet tested on this branch. |
-| (unset) | `winerenku.drv`: native windows, no input yet. |
+| (unset) | `winerenku.drv`: native windows. |
 
 ```sh
 wine reg add 'HKCU\Software\Wine\Drivers' /v Graphics /d null /f
@@ -342,6 +345,7 @@ WINEDEBUG=+winediag wine notepad 2>&1 | head       # the ERR above, if any
 
 | REVISION | Notes |
 |---|---|
+| 4 | Patch 18 (`winerenku.drv` input, activation and the decorator). The patchset applies to pristine 11.21 and gives tree `21a34855`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM, by the user: notepad and Amped - Roots (JUCE 6.1.5) take typing, mouse, menus and dialogs, and are moved, resized, zoomed, minimized and closed with the decorator. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12`: all 18 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `21a34855`; `bin/wine` and `ntdll.so` carry `/packages/wine-11.21-4`; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged from REVISION 3. **Not installed or run as a package yet.** |
 | 3 | Patches 16 (`winerenku.drv`, first stage: native windows that draw, no input) and 17 (explorer tries `renku` first), and `lib:libstdc++` in REQUIRES, because the driver is C++. The patchset applies to pristine 11.21 and gives tree `b811720b`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM (hrev60072+518): notepad opens in one native window with its title, menu bar, edit area and caret drawn correctly, and the sigprobe test passes 15/15. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12`: all 17 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `b811720b`; the Makefile has `RENKU_LIBS = -lbe -lstdc++` and `config.h` leaves `SONAME_LIBEGL` undefined; `bin/wine` and `ntdll.so` carry `/packages/wine-11.21-3`; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and requires `haiku>=r1~beta6_hrev60072_518-1`, `lib:libfreetype`, `lib:libgnutls`, `lib:libstdc++`, `lib:libusb_1.0`, `lib:libvulkan`. **Not installed or run as a package yet.** |
 | 2 | `--without-opengl`: with `SONAME_LIBEGL` defined, explorer hung for good in win32u's EGL setup, so no prefix could be created. **Built** 2026-11-10 on the RenkuOS build VM. It was used only from the work tree, for the sigprobe test and the driver work, and was never installed. Its recipe change was committed together with REVISION 3. |
 | 1 | Rebase onto Wine 11.21 (tarball SHA256 `046cb051…cfb8029`, tree `db03e4c9`, the same as upstream's `wine-11.21` tag) as the base for the native driver. Fifteen patches: the 11.19 set minus the winewayland OSMesa backend and "Disable Bluetooth on Beta 5". configure runs `--without-wayland --without-x`, and the Wayland, xkb, EGL and OSMesa dependencies are gone from the recipe. Two `configure.ac` conflicts resolved (patches 2 and 3; notes in the commit bodies). The patchset applies to pristine 11.21 and gives tree `ff313c87`, the dev tree's. A first build attempt without HaikuPorts' Wayland input header failed in configure (makedep, see patch 1), so it is kept. Driver interface versions unchanged from 11.19 (gdi 110, opengl 41, vulkan 48). **Built** 2026-11-10 on the RenkuOS build VM (hrev60072+518) with `haikuporter -c` then `-y -j12`, 19 minutes: the work tree's `HEAD^{tree}` is `ff313c87`; `config.h` has `HAVE_SYS_XATTR_H 1`, the Makefile `XATTR_LIBS = -lgnu`, empty `WAYLAND_CLIENT_LIBS`/`XKBCOMMON_LIBS`; the package contains `wineoss.so` and no `winewayland.so`; `ntdll.so` and the `bin/wine` launcher carry `/packages/wine-11.21-1`; it requires `haiku>=r1~beta6_hrev60072_518-1`, `lib:libfreetype`, `lib:libgnutls`, `lib:libusb_1.0`, `lib:libvulkan`. configure still found `libEGL` in the build chroot (`SONAME_LIBEGL` is defined) although `devel:libEGL` is no longer declared, so win32u will try to `dlopen` it and carry on without it if it is missing. **Not installed or run anywhere.** |

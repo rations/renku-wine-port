@@ -1,7 +1,7 @@
 From 9794aa43c5296cda799020d712961ddef6ce4367 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Thu, 23 Apr 2026 02:37:32 +0200
-Subject: [PATCH 01/17] Add Wayland input header
+Subject: [PATCH 01/18] Add Wayland input header
 
 ---
  dlls/winewayland.drv/input-event-codes.h | 980 +++++++++++++++++++++++
@@ -1001,7 +1001,7 @@ index 00000000..a4206723
 From 54edd959ff8bc6a4d39da1d1fdfb739d3b02f010 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 02/17] 11.8 patches
+Subject: [PATCH 02/18] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -1936,7 +1936,7 @@ index f800c0f7..ad509c18 100644
 From 352d50b4e95f0fb797d4cebc18a99a2c0460035e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 03/17] Opensound support
+Subject: [PATCH 03/18] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -2009,7 +2009,7 @@ index f5844912..1aee2585 100644
 From f5d50f5cdf38fa53c60eadd89c86a060bf47063f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 04/17] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 04/18] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -2126,7 +2126,7 @@ index 88d00d1f..f4ab87b1 100644
 From 8a38b157fdfebeb3415dce2dd0d00bb5aa95092d Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 05/17] Do not block in the SIGSEGV handler on Haiku
+Subject: [PATCH 05/18] Do not block in the SIGSEGV handler on Haiku
 
 The Haiku port left an interactive debug hook in segv_handler: after
 printing the fault it called fgetc(stdin) and waited for a keypress, with
@@ -2173,7 +2173,7 @@ index 50a7990f..51159fcb 100644
 From d35ff24f3e83023b4415c6a2491bce2fbf6f24f2 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 06/17] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 06/18] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -2222,7 +2222,7 @@ index 71ba308c..e959a762 100644
 From 2bdb8f0a7d1ae692ffd2dc5941678c63dfb6cacc Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 07/17] dxgi: Wait for a refresh interval in
+Subject: [PATCH 07/18] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -2305,7 +2305,7 @@ index e828ed0d..9690dee6 100644
 From fe774e7377aed353a4e5659ed8bf6150250020a9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 08/17] sechost: Report no failure actions in
+Subject: [PATCH 08/18] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -2370,7 +2370,7 @@ index f05fd2d7..20a7fb17 100644
 From d0189450fae6138ad3a08e6a4c6eb5831eb41dd1 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 09/17] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 09/18] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -2481,7 +2481,7 @@ index 00000000..07b215a1
 From bc41ff7fcdf81723835367a90ceeb37f2252e204 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 10/17] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 10/18] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -2548,7 +2548,7 @@ index ae51b2f7..691b7984 100644
 From 095354e8ab2b425a21dfacca11ed186403718e15 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 11/17] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 11/18] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -2628,7 +2628,7 @@ index 2e6d93b7..bda79d71 100644
 From c9fb2b6bbe6696036cc0a92053f4ad0cabf5a395 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 12/17] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 12/18] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -2659,7 +2659,7 @@ index ad509c18..eb83446b 100644
 From 5cb922bb1d177b1cbc4a6068c224960d359b4a23 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 13/17] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 13/18] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -2985,7 +2985,7 @@ index 7ecb8b4c..6fc66d4a 100644
 From 48b4dfdad9513bee675271ee2c9508c0dae377c8 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 14/17] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 14/18] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -3081,7 +3081,7 @@ index fa51e21f..4e275a5c 100644
 From 440cdc4b66a2023cdded462937a7f57eb3cedfd7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 15/17] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 15/18] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -3361,7 +3361,7 @@ index bb9728f6..4522128d 100644
 From 1f790f5b24947fbcde26aa9ffe5a5a9c4350cc81 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 16/17] winerenku.drv: Add a native RenkuOS (Be API) graphics
+Subject: [PATCH 16/18] winerenku.drv: Add a native RenkuOS (Be API) graphics
  driver.
 
 Every Wine port for Haiku-family systems draws through winewayland.drv,
@@ -5046,7 +5046,7 @@ index 00000000..8e499aee
 From 6673a9cd8c7d665cb1334ffd7a9f1f2f1c48f5a7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 17/17] explorer: Try the RenkuOS driver first.
+Subject: [PATCH 17/18] explorer: Try the RenkuOS driver first.
 
 explorer picks the graphics driver from default_driver when the prefix
 sets none. Put "renku" (winerenku.drv) at its head.
@@ -5076,6 +5076,1513 @@ index ce70c5dd..f0956929 100644
  
  static BOOL using_root = TRUE;
  
+-- 
+2.47.3
+
+
+From eb52b1647008fd6b699e9949f8e441d7fcd734eb Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Wed, 11 Nov 2026 11:21:19 +1000
+Subject: [PATCH 18/18] winerenku.drv: Keyboard and mouse input, activation,
+ and the decorator.
+
+The first stage drew windows but took no input, and its windows could
+not be moved, resized or closed. This adds both halves.
+
+Input. Be loopers have no Wine thread data and cannot call win32u, so
+they put what happened in a queue (be_event.cpp) and one Wine thread,
+created by DllMain, takes it out and calls win32u (event.c), as
+winewayland's event thread does. Neither side does more than copy an
+event under the queue's mutex, so a looper never waits for Wine.
+
+- Mouse: screen coordinates, as hardware input uses them (server/queue.c,
+  queue_mouse_message). A button press sets B_POINTER_EVENTS so moves
+  and the release keep coming outside the window, as SetCapture
+  expects. Consecutive moves are merged in the queue, and the event
+  thread flushes win32u's held-back motion (accum_mouse_motion in
+  dlls/win32u/input.c) when no other event is waiting. Without that a
+  drag reached the program only on release: no selection while dragging
+  in notepad, no highlight under the pointer in menus.
+- Wheel: one Haiku notch is one WHEEL_DELTA, sign flipped vertically.
+- Keyboard: scancodes, which win32u maps through the layout's tables.
+  The Haiku key code -> scancode table is generated from kATKeycodeMap
+  (headers/private/input/ATKeymap.h), which both the PS/2 and virtio
+  drivers use; USB HID produces the same codes. Pause is given its
+  Windows code (E1 1D), as the PS/2 driver reports E0 46, which win32u
+  reads as Ctrl+Break. Keys are taken in DispatchMessage, before
+  BWindow's own shortcuts (Command+Q, Control+Tab, Print Screen,
+  Command+Escape, Option+Tab), so programs get all of them. Haiku's
+  repeats are passed on; wineserver's own repeat is off unless a driver
+  turns it on.
+
+Activation. app_server's activations become Wine's foreground window on
+the window's own thread; a disabled window behind a modal dialog gives
+way to that dialog, as on Windows. When focus goes to another program,
+Wine's foreground goes to the desktop window, as in winex11's focus_out.
+Wine's activations (ActivateWindow) activate the BWindow, except while
+Wine is following app_server, so the two never undo each other. Menus,
+tooltips and drop-downs (owned popups, and unowned tool-window popups,
+which is how JUCE makes its menus) get B_AVOID_FOCUS: app_server brings
+them forward without focusing them (Desktop::ActivateWindow). Before,
+app_server activated a JUCE menu on Show() and JUCE closed it.
+
+The decorator. Its buttons follow the window style: resize border for
+WS_THICKFRAME, minimize and zoom for their boxes, close for WS_SYSMENU
+without CS_NOCLOSE.
+- Close, minimize, restore and zoom become WM_SYSCOMMAND, so the program
+  decides, as with a Windows title bar. app_server leaves minimizing to
+  the client (ServerWindow::NotifyMinimize), from the decorator and the
+  Deskbar alike; Wine's decision is then applied with
+  BWindow::Minimize, so a minimized window stays in the Deskbar.
+- Moves and resizes: one event per batch; the window's thread asks the
+  looper for the current frame, which reflects every frame Wine posted
+  before, so a stale position cannot undo a newer one. The window rect
+  is rebuilt from it with the last window_rects. Frames that came from
+  the BWindow are not sent back to it, so a drag is not fought.
+
+Two display fixes found with these:
+- A new surface (each resize step makes one) is put in the view on its
+  first flush, not at once: the view showed it blank, so the whole
+  window flashed white on every resize step.
+- Layered windows that let clicks through (WS_EX_LAYERED |
+  WS_EX_TRANSPARENT) get no BWindow. RenkuOS has no translucent or shaped
+  windows (probe P4), and JUCE's drop shadows, four such windows around
+  each of its windows, showed as solid black edges. win32u gives them
+  an offscreen surface instead. Lost with this: a click-through overlay
+  meant to be seen.
+
+Verified in the RenkuOS build VM (hrev60072+518) by the user: notepad
+(typing, selecting by dragging, menus by mouse and Alt+F, the save
+dialog, moving, resizing, zoom, minimize and restore from the Deskbar,
+close) and ML Sound Lab's Amped - Roots, a JUCE 6.1.5 program (its own
+title bar, knobs, menus, settings dialogs, resizing).
+
+Not done yet: cursor shapes (the pointer is always the arrow), keyboard
+layouts other than US (win32u's default tables are used), showing a
+normal window without activating it (SWP_NOACTIVATE) unless it avoids
+focus, WM_ENTERSIZEMOVE/WM_EXITSIZEMOVE around a decorator drag, a work
+area that leaves out the Deskbar, and Deskbar "Quit", which is still
+refused. Newly uncovered area is white until Wine paints it.
+---
+ dlls/winerenku.drv/Makefile.in   |   2 +
+ dlls/winerenku.drv/be_event.cpp  |  83 +++++++++
+ dlls/winerenku.drv/be_private.h  |   4 +
+ dlls/winerenku.drv/be_window.cpp | 264 +++++++++++++++++++++++++--
+ dlls/winerenku.drv/dllmain.c     |  19 +-
+ dlls/winerenku.drv/event.c       | 301 +++++++++++++++++++++++++++++++
+ dlls/winerenku.drv/renku.h       |  14 ++
+ dlls/winerenku.drv/renku_be.h    |  74 +++++++-
+ dlls/winerenku.drv/renku_main.c  |   9 +-
+ dlls/winerenku.drv/surface.c     |  26 ++-
+ dlls/winerenku.drv/unixlib.h     |   1 +
+ dlls/winerenku.drv/window.c      | 225 +++++++++++++++++++++--
+ 12 files changed, 979 insertions(+), 43 deletions(-)
+ create mode 100644 dlls/winerenku.drv/be_event.cpp
+ create mode 100644 dlls/winerenku.drv/event.c
+
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+index 8750a8f5..746e265b 100644
+--- a/dlls/winerenku.drv/Makefile.in
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -6,9 +6,11 @@ VER_FILEDESCRIPTION_STR = "Wine RenkuOS driver"
+ 
+ SOURCES = \
+ 	be_app.cpp \
++	be_event.cpp \
+ 	be_window.cpp \
+ 	display.c \
+ 	dllmain.c \
++	event.c \
+ 	renku_main.c \
+ 	surface.c \
+ 	window.c
+diff --git a/dlls/winerenku.drv/be_event.cpp b/dlls/winerenku.drv/be_event.cpp
+new file mode 100644
+index 00000000..17bbb62a
+--- /dev/null
++++ b/dlls/winerenku.drv/be_event.cpp
+@@ -0,0 +1,83 @@
++/*
++ * RenkuOS driver: the queue of events from Be threads to Wine
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++
++#include <SupportDefs.h>
++
++#include <deque>
++#include <pthread.h>
++
++/* Be threads (window loopers) cannot call Wine: they have no Wine thread data. They queue
++ * what happened here, and one Wine thread, the driver's event thread, takes it out and calls
++ * win32u (event.c). Neither side does anything but copy an event while holding the mutex, so
++ * a looper never waits for more than that copy. */
++
++namespace {
++
++pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
++pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
++std::deque<struct be_event> queue;
++
++int32 active_windows;
++
++}  /* namespace */
++
++void be_event_post(const struct be_event *event)
++{
++    pthread_mutex_lock(&queue_mutex);
++    /* Only the latest position matters; merging moves keeps a busy pointer from piling up. */
++    if (event->type == BE_EVENT_MOUSE_MOVE && !queue.empty() &&
++        queue.back().type == BE_EVENT_MOUSE_MOVE && queue.back().cookie == event->cookie)
++        queue.back() = *event;
++    else
++        queue.push_back(*event);
++    if (event->type == BE_EVENT_ACTIVATE) atomic_add(&active_windows, event->down ? 1 : -1);
++    pthread_cond_signal(&queue_cond);
++    pthread_mutex_unlock(&queue_mutex);
++}
++
++extern "C" void be_event_wait(struct be_event *event)
++{
++    pthread_mutex_lock(&queue_mutex);
++    while (queue.empty()) pthread_cond_wait(&queue_cond, &queue_mutex);
++    *event = queue.front();
++    queue.pop_front();
++    pthread_mutex_unlock(&queue_mutex);
++}
++
++extern "C" int be_event_pending(void)
++{
++    int pending;
++
++    pthread_mutex_lock(&queue_mutex);
++    pending = !queue.empty();
++    pthread_mutex_unlock(&queue_mutex);
++    return pending;
++}
++
++extern "C" int be_any_window_active(void)
++{
++    return atomic_get(&active_windows) > 0;
++}
+diff --git a/dlls/winerenku.drv/be_private.h b/dlls/winerenku.drv/be_private.h
+index 4e365d37..5ee7c494 100644
+--- a/dlls/winerenku.drv/be_private.h
++++ b/dlls/winerenku.drv/be_private.h
+@@ -45,4 +45,8 @@ private:
+     sigset_t old_mask;
+ };
+ 
++/* Queues an event for be_event_wait(). Called on Be threads; it takes a mutex that the Wine
++ * side holds only while copying an event out, never while calling Wine or the Be API. */
++void be_event_post(const struct be_event *event);
++
+ #endif /* __WINE_RENKU_BE_PRIVATE_H */
+diff --git a/dlls/winerenku.drv/be_window.cpp b/dlls/winerenku.drv/be_window.cpp
+index d5950ed0..b26d307c 100644
+--- a/dlls/winerenku.drv/be_window.cpp
++++ b/dlls/winerenku.drv/be_window.cpp
+@@ -25,12 +25,15 @@
+ #include "be_private.h"
+ 
+ #include <Bitmap.h>
++#include <InterfaceDefs.h>
+ #include <Message.h>
+ #include <Messenger.h>
+ #include <Region.h>
+ #include <View.h>
+ #include <Window.h>
+ 
++#include <math.h>
++
+ /* Win32 threads never lock a BWindow: they post a message to it through a BMessenger, which
+  * stays safe to use after the window has gone (the send just fails). Every change below is
+  * applied on the window's own looper thread. */
+@@ -54,6 +57,9 @@ enum
+     MSG_SET_FRAME   = 'rFrm',
+     MSG_SET_VISIBLE = 'rVis',
+     MSG_SET_STYLE   = 'rSty',
++    MSG_ACTIVATE    = 'rAct',
++    MSG_MINIMIZE    = 'rMin',
++    MSG_GET_FRAME   = 'rGFr',
+     MSG_SET_TITLE   = 'rTtl',
+     MSG_SET_BITMAP  = 'rBmp',
+     MSG_INVALIDATE  = 'rInv',
+@@ -71,12 +77,29 @@ window_look look_for(enum be_window_style style)
+     return style == BE_WINDOW_TITLED ? B_TITLED_WINDOW_LOOK : B_NO_BORDER_WINDOW_LOOK;
+ }
+ 
+-/* Until Wine hears about it, a window the user moves, resizes, closes, zooms or minimizes
+- * with the decorator would no longer be where Wine thinks it is. Those events reach Wine with
+- * the input work (FrameMoved, FrameResized, QuitRequested -> SC_CLOSE, ...); until then the
+- * decorator offers none of them. */
+-const uint32 kFixedWindowFlags = B_NOT_MOVABLE | B_NOT_RESIZABLE | B_NOT_CLOSABLE |
+-                                 B_NOT_ZOOMABLE | B_NOT_MINIMIZABLE;
++uint32 flags_for(unsigned int flags)
++{
++    uint32 be_flags = 0;
++
++    if (flags & BE_WINDOW_AVOID_FOCUS) be_flags |= B_AVOID_FOCUS;
++    if (!(flags & BE_WINDOW_RESIZABLE)) be_flags |= B_NOT_RESIZABLE;
++    if (!(flags & BE_WINDOW_MINIMIZABLE)) be_flags |= B_NOT_MINIMIZABLE;
++    if (!(flags & BE_WINDOW_ZOOMABLE)) be_flags |= B_NOT_ZOOMABLE;
++    if (!(flags & BE_WINDOW_CLOSABLE)) be_flags |= B_NOT_CLOSABLE;
++    return be_flags;
++}
++
++void post_event(enum be_event_type type, uint64 cookie, struct be_event *event)
++{
++    event->type = type;
++    event->cookie = cookie;
++    be_event_post(event);
++}
++
++/* Haiku's buttons, B_MOUSE_BUTTON(1) to (5) (View.h), after the input server's remapping
++ * (left-handed mice included). */
++const uint32 kButtons[] = { B_PRIMARY_MOUSE_BUTTON, B_SECONDARY_MOUSE_BUTTON,
++                            B_TERTIARY_MOUSE_BUTTON, B_MOUSE_BUTTON(4), B_MOUSE_BUTTON(5) };
+ 
+ void bitmap_release(struct be_bitmap *bitmap)
+ {
+@@ -93,8 +116,9 @@ void bitmap_release(struct be_bitmap *bitmap)
+ class RenkuView : public BView
+ {
+ public:
+-    RenkuView(BRect frame)
+-        : BView(frame, "wine", B_FOLLOW_ALL, B_WILL_DRAW), fBitmap(NULL), fOrigin(0, 0)
++    RenkuView(BRect frame, uint64 cookie)
++        : BView(frame, "wine", B_FOLLOW_ALL, B_WILL_DRAW), fBitmap(NULL), fOrigin(0, 0),
++          fCookie(cookie), fButtons(0)
+     {
+         /* app_server must not clear the update area first: Draw() covers it. */
+         SetViewColor(B_TRANSPARENT_COLOR);
+@@ -132,28 +156,164 @@ public:
+         if (rest.CountRects()) FillRegion(&rest, B_SOLID_LOW);
+     }
+ 
++    /* Mouse events go to Wine in screen coordinates: the BWindow's frame is the window's
++     * visible rect, so they need no other conversion. win32u finds the window under the
++     * pointer, and makes double clicks, itself. */
++    void MouseDown(BPoint where) override
++    {
++        /* Keeps the moves and the release coming while the button is held outside the
++         * window, as a Win32 program's SetCapture expects. app_server ends it on release. */
++        SetMouseEventMask(B_POINTER_EVENTS, B_NO_POINTER_HISTORY);
++        UpdateButtons(where);
++    }
++
++    void MouseUp(BPoint where) override
++    {
++        UpdateButtons(where);
++    }
++
++    void MouseMoved(BPoint where, uint32 transit, const BMessage *drag) override
++    {
++        struct be_event event = {};
++        BPoint screen = ConvertToScreen(where);
++
++        event.x = (int32)floorf(screen.x);
++        event.y = (int32)floorf(screen.y);
++        post_event(BE_EVENT_MOUSE_MOVE, fCookie, &event);
++    }
++
++    void MessageReceived(BMessage *msg) override
++    {
++        if (msg->what == B_MOUSE_WHEEL_CHANGED)
++        {
++            struct be_event event = {};
++            event.wheel_x = msg->GetFloat("be:wheel_delta_x", 0);
++            event.wheel_y = msg->GetFloat("be:wheel_delta_y", 0);
++            post_event(BE_EVENT_MOUSE_WHEEL, fCookie, &event);
++            return;
++        }
++        BView::MessageReceived(msg);
++    }
++
+ private:
++    /* B_MOUSE_DOWN and B_MOUSE_UP carry the buttons held after the change. */
++    void UpdateButtons(BPoint where)
++    {
++        BMessage *msg = Window()->CurrentMessage();
++        uint32 buttons = msg ? (uint32)msg->GetInt32("buttons", 0) : 0;
++        uint32 changed = buttons ^ fButtons;
++        BPoint screen = ConvertToScreen(where);
++
++        for (size_t i = 0; i < sizeof(kButtons) / sizeof(kButtons[0]); i++)
++        {
++            struct be_event event = {};
++            if (!(changed & kButtons[i])) continue;
++            event.x = (int32)floorf(screen.x);
++            event.y = (int32)floorf(screen.y);
++            event.button = (int32)i;
++            event.down = (buttons & kButtons[i]) != 0;
++            post_event(BE_EVENT_MOUSE_BUTTON, fCookie, &event);
++        }
++        fButtons = buttons;
++    }
++
+     struct be_bitmap *fBitmap;
+     BPoint fOrigin;
++    uint64 fCookie;
++    uint32 fButtons;
+ };
+ 
+ class RenkuWindow : public BWindow
+ {
+ public:
+-    RenkuWindow(BRect frame, const char *title, enum be_window_style style)
++    RenkuWindow(BRect frame, const char *title, enum be_window_style style, unsigned int flags,
++                uint64 cookie)
+         : BWindow(frame, title ? title : "", look_for(style), B_NORMAL_WINDOW_FEEL,
+-                  kFixedWindowFlags)
++                  flags_for(flags)),
++          fCookie(cookie), fActive(false), fFramePending(false)
+     {
+-        fView = new RenkuView(Bounds());
++        fView = new RenkuView(Bounds(), cookie);
+         AddChild(fView);
++        /* Keys go to the view whatever is under the pointer. */
++        fView->MakeFocus(true);
+     }
+ 
+-    /* Closing is Wine's decision (WM_CLOSE); not yet wired, see kFixedWindowFlags. */
++    /* The close button. Closing is the program's decision: Wine gets SC_CLOSE, as from a
++     * Windows title bar, and the BWindow goes when Wine destroys the window. */
+     bool QuitRequested() override
+     {
++        struct be_event event = {};
++        post_event(BE_EVENT_CLOSE, fCookie, &event);
+         return false;
+     }
+ 
++    /* Moved or resized, by the user or by Wine's own MoveTo/ResizeTo: Wine asks where the
++     * window is when it gets to it (MSG_GET_FRAME), so one event stands for any number of
++     * changes until then. */
++    void FrameMoved(BPoint origin) override
++    {
++        FrameChanged();
++    }
++
++    void FrameResized(float width, float height) override
++    {
++        FrameChanged();
++    }
++
++    /* app_server leaves minimizing to the client (ServerWindow::NotifyMinimize, in
++     * src/servers/app/ServerWindow.cpp), for the decorator's button and the Deskbar alike.
++     * Wine decides, as for a Windows title bar button; MSG_MINIMIZE then applies it. */
++    void Minimize(bool minimize) override
++    {
++        struct be_event event = {};
++        event.down = minimize;
++        post_event(BE_EVENT_MINIMIZE, fCookie, &event);
++    }
++
++    /* The zoom button. Wine maximizes or restores the window, which moves the BWindow. */
++    void Zoom(BPoint origin, float width, float height) override
++    {
++        struct be_event event = {};
++        post_event(BE_EVENT_ZOOM, fCookie, &event);
++    }
++
++    void WindowActivated(bool active) override
++    {
++        struct be_event event = {};
++        if (active == fActive) return;
++        fActive = active;
++        event.down = active;
++        post_event(BE_EVENT_ACTIVATE, fCookie, &event);
++    }
++
++    /* Every key goes to Wine, before BWindow's own handling (_HandleKeyDown in
++     * src/kits/interface/Window.cpp), which would otherwise take Command+Q (quit the
++     * application), Control+Tab (the Switcher), Print Screen (a screenshot), Command+Escape
++     * (the menu bar) and Option+Tab (view navigation) away from the program. Modifier keys
++     * arrive as B_UNMAPPED_KEY_DOWN/UP like any key with no character, so B_MODIFIERS_CHANGED
++     * is not needed. A held key repeats as more B_KEY_DOWNs, and wineserver's own key repeat
++     * is off unless a driver turns it on, so the repeats are passed on as they come. */
++    void DispatchMessage(BMessage *msg, BHandler *target) override
++    {
++        switch (msg->what)
++        {
++        case B_KEY_DOWN:
++        case B_KEY_UP:
++        case B_UNMAPPED_KEY_DOWN:
++        case B_UNMAPPED_KEY_UP:
++        {
++            struct be_event event = {};
++            int32 key;
++            if (msg->FindInt32("key", &key) != B_OK) return;
++            event.keycode = key;
++            event.down = msg->what == B_KEY_DOWN || msg->what == B_UNMAPPED_KEY_DOWN;
++            post_event(BE_EVENT_KEY, fCookie, &event);
++            return;
++        }
++        }
++        BWindow::DispatchMessage(msg, target);
++    }
++
+     void MessageReceived(BMessage *msg) override
+     {
+         switch (msg->what)
+@@ -177,11 +337,31 @@ public:
+         }
+         case MSG_SET_STYLE:
+         {
+-            int32 style;
+-            if (msg->FindInt32("style", &style) != B_OK) break;
++            int32 style, flags;
++            if (msg->FindInt32("style", &style) != B_OK ||
++                msg->FindInt32("flags", &flags) != B_OK) break;
+             SetLook(look_for((enum be_window_style)style));
++            SetFlags(flags_for(flags));
++            return;
++        }
++        case MSG_MINIMIZE:
++        {
++            bool minimized;
++            if (msg->FindBool("minimized", &minimized) != B_OK) break;
++            BWindow::Minimize(minimized);
+             return;
+         }
++        case MSG_GET_FRAME:
++        {
++            BMessage reply(B_REPLY);
++            fFramePending = false;
++            reply.AddRect("frame", Frame());
++            msg->SendReply(&reply);
++            return;
++        }
++        case MSG_ACTIVATE:
++            if (!IsActive()) Activate(true);
++            return;
+         case MSG_SET_TITLE:
+         {
+             const char *title;
+@@ -207,7 +387,9 @@ public:
+         }
+         case MSG_DESTROY:
+             /* On the looper thread, with the window locked: Quit() deletes the window, and
+-             * the view's destructor drops its bitmap. Wine posts nothing after this. */
++             * the view's destructor drops its bitmap. Wine posts nothing after this. The
++             * window may go while active, so it counts itself out of the active ones. */
++            WindowActivated(false);
+             Quit();
+             return;
+         }
+@@ -215,7 +397,18 @@ public:
+     }
+ 
+ private:
++    void FrameChanged()
++    {
++        struct be_event event = {};
++        if (fFramePending) return;
++        fFramePending = true;
++        post_event(BE_EVENT_FRAME, fCookie, &event);
++    }
++
+     RenkuView *fView;
++    uint64 fCookie;
++    bool fActive;
++    bool fFramePending;  /* a BE_EVENT_FRAME is queued and Wine has not asked yet */
+ };
+ 
+ /* SendMessage() waits only while the window's port is full. That is a wait for the looper,
+@@ -256,15 +449,16 @@ extern "C" void be_bitmap_release(struct be_bitmap *bitmap)
+     bitmap_release(bitmap);
+ }
+ 
+-extern "C" struct be_window *be_window_create(enum be_window_style style, const struct be_rect *frame,
+-                                              const char *title_utf8)
++extern "C" struct be_window *be_window_create(enum be_window_style style, unsigned int flags,
++                                              const struct be_rect *frame, const char *title_utf8,
++                                              uint64_t cookie)
+ {
+     struct be_window *handle;
+     RenkuWindow *window;
+ 
+     if (be_app_start()) return NULL;
+ 
+-    window = new RenkuWindow(to_brect(frame), title_utf8, style);
++    window = new RenkuWindow(to_brect(frame), title_utf8, style, flags, cookie);
+     handle = new struct be_window;
+     handle->messenger = BMessenger(window);
+     handle->refs = 1;
+@@ -308,10 +502,42 @@ extern "C" void be_window_set_visible(struct be_window *window, int visible)
+     post(window, &msg);
+ }
+ 
+-extern "C" void be_window_set_style(struct be_window *window, enum be_window_style style)
++extern "C" void be_window_set_style(struct be_window *window, enum be_window_style style, unsigned int flags)
+ {
+     BMessage msg(MSG_SET_STYLE);
+     msg.AddInt32("style", style);
++    msg.AddInt32("flags", flags);
++    post(window, &msg);
++}
++
++extern "C" void be_window_set_minimized(struct be_window *window, int minimized)
++{
++    BMessage msg(MSG_MINIMIZE);
++    msg.AddBool("minimized", minimized != 0);
++    post(window, &msg);
++}
++
++/* A Win32 thread waiting for a looper, which is allowed: loopers never wait for Win32
++ * threads. The timeout only guards against a looper that is gone or stuck. */
++extern "C" int be_window_get_frame(struct be_window *window, struct be_rect *frame)
++{
++    BMessage msg(MSG_GET_FRAME), reply;
++    BRect rect;
++
++    if (!window || window->messenger.SendMessage(&msg, &reply, B_INFINITE_TIMEOUT, 1000000) != B_OK ||
++        reply.FindRect("frame", &rect) != B_OK)
++        return -1;
++    /* BRect includes right and bottom, Win32 rectangles do not. */
++    frame->left = (int32_t)rect.left;
++    frame->top = (int32_t)rect.top;
++    frame->right = (int32_t)rect.right + 1;
++    frame->bottom = (int32_t)rect.bottom + 1;
++    return 0;
++}
++
++extern "C" void be_window_activate(struct be_window *window)
++{
++    BMessage msg(MSG_ACTIVATE);
+     post(window, &msg);
+ }
+ 
+diff --git a/dlls/winerenku.drv/dllmain.c b/dlls/winerenku.drv/dllmain.c
+index 917622b3..768e2fad 100644
+--- a/dlls/winerenku.drv/dllmain.c
++++ b/dlls/winerenku.drv/dllmain.c
+@@ -24,8 +24,19 @@
+ #include "winbase.h"
+ #include "unixlib.h"
+ 
++/* Passes the Be side's events (input, activation, close requests) to win32u. It has to be a
++ * Wine thread to call win32u, so it is created here and runs the unix side's loop, which
++ * does not return. */
++static DWORD WINAPI event_thread(void *arg)
++{
++    WINE_UNIX_CALL(renku_unix_func_event_loop, NULL);
++    return 0;
++}
++
+ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
+ {
++    HANDLE thread;
++
+     if (reason != DLL_PROCESS_ATTACH) return TRUE;
+ 
+     DisableThreadLibraryCalls(instance);
+@@ -33,5 +44,11 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
+ 
+     /* Registers the driver with win32u. It does not contact app_server: the BApplication is
+      * started by the first thing that needs it (a window, a bitmap or a screen query). */
+-    return !WINE_UNIX_CALL(renku_unix_func_init, NULL);
++    if (WINE_UNIX_CALL(renku_unix_func_init, NULL)) return FALSE;
++
++    /* The thread starts running once the loader lock is released. */
++    if (!(thread = CreateThread(NULL, 0, event_thread, NULL, 0, NULL))) return FALSE;
++    SetThreadDescription(thread, L"wine_renku_events");
++    CloseHandle(thread);
++    return TRUE;
+ }
+diff --git a/dlls/winerenku.drv/event.c b/dlls/winerenku.drv/event.c
+new file mode 100644
+index 00000000..97169bfa
+--- /dev/null
++++ b/dlls/winerenku.drv/event.c
+@@ -0,0 +1,301 @@
++/*
++ * RenkuOS driver: events from the Be side, on the driver's event thread
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <math.h>
++
++#include "renku.h"
++#include "wine/server.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
++WINE_DECLARE_DEBUG_CHANNEL(key);
++
++/* Haiku raw key code -> PC scancode, in the encoding win32u's keyboard tables use: 0x0nn is
++ * a plain set 1 scancode, 0x1nn has the E0 prefix (KEYEVENTF_EXTENDEDKEY), 0x2nn the E1
++ * prefix (only Pause). Haiku numbers keys by position, and both its PS/2 driver
++ * (src/add-ons/kernel/bus_managers/ps2/ps2_keyboard.cpp) and its virtio input device get the
++ * code from kATKeycodeMap (headers/private/input/ATKeymap.h), indexed by set 1 scancode - 1,
++ * with 0x80 added for an E0 key. This table is that one inverted, generated from it, not
++ * typed. One exception: the PS/2 driver reports Pause as E0 46, which win32u's tables read as
++ * Ctrl+Break (X46, VK_CANCEL), so Pause is given its Windows code, E1 1D (Y1D, VK_PAUSE).
++ * USB keyboards produce the same codes through their own table (kKeyTable in
++ * src/add-ons/kernel/drivers/input/hid_shared/KeyboardProtocolHandler.cpp; A is 0x3c in both). */
++static const WORD keycode_to_scan[0x80] =
++{
++    [0x01] = 0x001, /* Esc */
++    [0x02] = 0x03b, /* F1 */
++    [0x03] = 0x03c, /* F2 */
++    [0x04] = 0x03d, /* F3 */
++    [0x05] = 0x03e, /* F4 */
++    [0x06] = 0x03f, /* F5 */
++    [0x07] = 0x040, /* F6 */
++    [0x08] = 0x041, /* F7 */
++    [0x09] = 0x042, /* F8 */
++    [0x0a] = 0x043, /* F9 */
++    [0x0b] = 0x044, /* F10 */
++    [0x0c] = 0x057, /* F11 */
++    [0x0d] = 0x058, /* F12 */
++    [0x0e] = 0x137, /* Print Screen */
++    [0x0f] = 0x046, /* Scroll */
++    [0x10] = 0x21d, /* Pause (E1 1D, not the E0 46 the PS/2 driver reports) */
++    [0x11] = 0x029, /* ` */
++    [0x12] = 0x002, /* 1 */
++    [0x13] = 0x003, /* 2 */
++    [0x14] = 0x004, /* 3 */
++    [0x15] = 0x005, /* 4 */
++    [0x16] = 0x006, /* 5 */
++    [0x17] = 0x007, /* 6 */
++    [0x18] = 0x008, /* 7 */
++    [0x19] = 0x009, /* 8 */
++    [0x1a] = 0x00a, /* 9 */
++    [0x1b] = 0x00b, /* 0 */
++    [0x1c] = 0x00c, /* - */
++    [0x1d] = 0x00d, /* = */
++    [0x1e] = 0x00e, /* BACKSPACE */
++    [0x1f] = 0x152, /* Insert */
++    [0x20] = 0x147, /* Home */
++    [0x21] = 0x149, /* Page Up */
++    [0x22] = 0x045, /* Num */
++    [0x23] = 0x135, /* KP / */
++    [0x24] = 0x037, /* * */
++    [0x25] = 0x04a, /* KP - */
++    [0x26] = 0x00f, /* TAB */
++    [0x27] = 0x010, /* Q */
++    [0x28] = 0x011, /* W */
++    [0x29] = 0x012, /* E */
++    [0x2a] = 0x013, /* R */
++    [0x2b] = 0x014, /* T */
++    [0x2c] = 0x015, /* Y */
++    [0x2d] = 0x016, /* U */
++    [0x2e] = 0x017, /* I */
++    [0x2f] = 0x018, /* O */
++    [0x30] = 0x019, /* P */
++    [0x31] = 0x01a, /* [ */
++    [0x32] = 0x01b, /* ] */
++    [0x33] = 0x02b, /* backslash */
++    [0x34] = 0x153, /* Delete */
++    [0x35] = 0x14f, /* End */
++    [0x36] = 0x151, /* Page Down */
++    [0x37] = 0x047, /* KP 7 */
++    [0x38] = 0x048, /* KP 8 */
++    [0x39] = 0x049, /* KP 9 */
++    [0x3a] = 0x04e, /* KP + */
++    [0x3b] = 0x03a, /* Caps */
++    [0x3c] = 0x01e, /* A */
++    [0x3d] = 0x01f, /* S */
++    [0x3e] = 0x020, /* D */
++    [0x3f] = 0x021, /* F */
++    [0x40] = 0x022, /* G */
++    [0x41] = 0x023, /* H */
++    [0x42] = 0x024, /* J */
++    [0x43] = 0x025, /* K */
++    [0x44] = 0x026, /* L */
++    [0x45] = 0x027, /* ; */
++    [0x46] = 0x028, /* ' */
++    [0x47] = 0x01c, /* ENTER */
++    [0x48] = 0x04b, /* KP 4 */
++    [0x49] = 0x04c, /* KP 5 */
++    [0x4a] = 0x04d, /* KP 6 */
++    [0x4b] = 0x02a, /* Left Shift */
++    [0x4c] = 0x02c, /* Z */
++    [0x4d] = 0x02d, /* X */
++    [0x4e] = 0x02e, /* C */
++    [0x4f] = 0x02f, /* V */
++    [0x50] = 0x030, /* B */
++    [0x51] = 0x031, /* N */
++    [0x52] = 0x032, /* M */
++    [0x53] = 0x033, /* , */
++    [0x54] = 0x034, /* . */
++    [0x55] = 0x035, /* / */
++    [0x56] = 0x036, /* Right Shift */
++    [0x57] = 0x148, /* Up Arrow */
++    [0x58] = 0x04f, /* KP 1 */
++    [0x59] = 0x050, /* KP 2 */
++    [0x5a] = 0x051, /* KP 3 */
++    [0x5b] = 0x11c, /* KP Enter */
++    [0x5c] = 0x01d, /* Left Control */
++    [0x5d] = 0x038, /* Left Alt */
++    [0x5e] = 0x039, /* Space */
++    [0x5f] = 0x138, /* Right Alt */
++    [0x60] = 0x11d, /* Right Control */
++    [0x61] = 0x14b, /* Left Arrow */
++    [0x62] = 0x150, /* Down Arrow */
++    [0x63] = 0x14d, /* Right Arrow */
++    [0x64] = 0x052, /* KP 0 */
++    [0x65] = 0x053, /* KP . */
++    [0x66] = 0x15b, /* Left Gui */
++    [0x67] = 0x15c, /* Right Gui */
++    [0x68] = 0x15d, /* Menu */
++    [0x69] = 0x056, /* < */
++    [0x6a] = 0x07d, /* Yen (macron key, japanese) */
++    [0x6b] = 0x073, /* Ro (\\ key, japanese) */
++    [0x6c] = 0x07b, /* Muhenkan, key left to spacebar, japanese */
++    [0x6d] = 0x079, /* Henkan, first key right to spacebar, japanese */
++    [0x6e] = 0x070, /* Katakana/Hiragana, second key right to spacebar, japanese */
++    [0x70] = 0x07e, /* Keypad . on Brazilian ABNT2 */
++    [0x7e] = 0x054, /* SystReq */
++};
++
++static HWND hwnd_from_cookie(uint64_t cookie)
++{
++    return (HWND)(UINT_PTR)cookie;
++}
++
++static void send_mouse(HWND hwnd, DWORD flags, int x, int y, DWORD data)
++{
++    INPUT input = {0};
++
++    input.type = INPUT_MOUSE;
++    input.mi.dx = x;
++    input.mi.dy = y;
++    input.mi.mouseData = data;
++    input.mi.dwFlags = flags;
++    /* Hardware input uses screen coordinates for MOUSEEVENTF_ABSOLUTE, not the 0-65535 range
++     * of SendInput (server/queue.c, queue_mouse_message). */
++    NtUserSendHardwareInput(hwnd, SEND_HWMSG_RAWINPUT, &input, 0);
++}
++
++/* win32u holds back pure moves sent through NtUserSendHardwareInput and sends them to the
++ * server only with the next button or wheel input, a move for another window, or an empty
++ * input for no window (dlls/win32u/input.c, accum_mouse_motion; winewayland sends that at the
++ * end of each batch of pointer events). Without it, a drag reaches the program only when the
++ * button is released: no selection while dragging, no highlight under the pointer in menus. */
++static void flush_mouse_motion(void)
++{
++    INPUT input = {0};
++
++    input.type = INPUT_MOUSE;
++    NtUserSendHardwareInput(NULL, SEND_HWMSG_RAWINPUT, &input, 0);
++}
++
++static void mouse_button(HWND hwnd, const struct be_event *event)
++{
++    static const DWORD down_flags[] = { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_RIGHTDOWN,
++                                        MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_XDOWN, MOUSEEVENTF_XDOWN };
++    static const DWORD up_flags[] = { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTUP,
++                                      MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_XUP, MOUSEEVENTF_XUP };
++    DWORD data = 0;
++
++    if (event->button < 0 || event->button >= ARRAY_SIZE(down_flags)) return;
++    if (event->button == BE_BUTTON_X1) data = XBUTTON1;
++    if (event->button == BE_BUTTON_X2) data = XBUTTON2;
++    /* With the position, so that the click lands where the pointer is now. */
++    send_mouse(hwnd, (event->down ? down_flags : up_flags)[event->button] | MOUSEEVENTF_MOVE |
++               MOUSEEVENTF_ABSOLUTE, event->x, event->y, data);
++}
++
++static void mouse_wheel(HWND hwnd, const struct be_event *event)
++{
++    /* One Haiku notch is one WHEEL_DELTA. Haiku's vertical delta is positive downwards,
++     * Windows' upwards; both horizontal ones are positive to the right. */
++    int y = (int)lroundf(-event->wheel_y * WHEEL_DELTA);
++    int x = (int)lroundf(event->wheel_x * WHEEL_DELTA);
++
++    if (y) send_mouse(hwnd, MOUSEEVENTF_WHEEL, 0, 0, y);
++    if (x) send_mouse(hwnd, MOUSEEVENTF_HWHEEL, 0, 0, x);
++}
++
++static void key(HWND hwnd, const struct be_event *event)
++{
++    INPUT input = {0};
++    WORD scan = 0;
++
++    if (event->keycode >= 0 && event->keycode < ARRAY_SIZE(keycode_to_scan))
++        scan = keycode_to_scan[event->keycode];
++    TRACE_(key)("hwnd %p keycode %#x scan %#x %s\n", hwnd, event->keycode, scan, event->down ? "down" : "up");
++    if (!scan) return;
++
++    /* win32u turns the scancode into a virtual key with the keyboard layout's tables
++     * (dlls/win32u/message.c, send_hardware_message). */
++    input.type = INPUT_KEYBOARD;
++    input.ki.wScan = (scan & 0x300) ? scan + 0xdf00 : scan;
++    input.ki.dwFlags = KEYEVENTF_SCANCODE;
++    if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
++    if (!event->down) input.ki.dwFlags |= KEYEVENTF_KEYUP;
++    NtUserSendHardwareInput(hwnd, 0, &input, 0);
++}
++
++static void handle_event(const struct be_event *event)
++{
++    HWND hwnd = hwnd_from_cookie(event->cookie);
++
++    switch (event->type)
++    {
++    case BE_EVENT_MOUSE_MOVE:
++        send_mouse(hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, event->x, event->y, 0);
++        /* Consecutive moves are already merged in the queue; send this one now unless more
++         * events are waiting, which flush it themselves or come back here. */
++        if (!be_event_pending()) flush_mouse_motion();
++        break;
++    case BE_EVENT_MOUSE_BUTTON:
++        mouse_button(hwnd, event);
++        break;
++    case BE_EVENT_MOUSE_WHEEL:
++        mouse_wheel(hwnd, event);
++        break;
++    case BE_EVENT_KEY:
++        key(hwnd, event);
++        break;
++    case BE_EVENT_ACTIVATE:
++        /* Foreground changes happen on the window's own thread (WindowMessage). */
++        TRACE("hwnd %p %s\n", hwnd, event->down ? "activated" : "deactivated");
++        NtUserPostMessage(hwnd, WM_RENKU_ACTIVATE, event->down, 0);
++        break;
++    case BE_EVENT_CLOSE:
++        TRACE("hwnd %p close\n", hwnd);
++        NtUserPostMessage(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
++        break;
++    case BE_EVENT_FRAME:
++        NtUserPostMessage(hwnd, WM_RENKU_FRAME_CHANGED, 0, 0);
++        break;
++    case BE_EVENT_MINIMIZE:
++        /* As from a Windows title bar or taskbar; the program may refuse. */
++        TRACE("hwnd %p %s\n", hwnd, event->down ? "minimize" : "restore");
++        NtUserPostMessage(hwnd, WM_SYSCOMMAND, event->down ? SC_MINIMIZE : SC_RESTORE, 0);
++        break;
++    case BE_EVENT_ZOOM:
++        TRACE("hwnd %p zoom\n", hwnd);
++        NtUserPostMessage(hwnd, WM_SYSCOMMAND,
++                          (NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_MAXIMIZE) ? SC_RESTORE : SC_MAXIMIZE, 0);
++        break;
++    }
++}
++
++/* The driver's event thread, started by DllMain on the PE side so that it is a Wine thread
++ * and may call win32u. It never returns. Everything it does is a server request that queues
++ * input or posts a message, so a program that stops reading its messages does not hold it
++ * up. */
++NTSTATUS renku_unix_event_loop(void *arg)
++{
++    struct be_event event;
++
++    for (;;)
++    {
++        be_event_wait(&event);
++        handle_event(&event);
++    }
++    return STATUS_SUCCESS;
++}
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+index 7eeb6d13..5af305e6 100644
+--- a/dlls/winerenku.drv/renku.h
++++ b/dlls/winerenku.drv/renku.h
+@@ -38,6 +38,13 @@
+ #include "unixlib.h"
+ #include "renku_be.h"
+ 
++/* Messages the event thread posts to a window, handled by WindowMessage on its thread. */
++enum renku_window_message
++{
++    WM_RENKU_ACTIVATE = WM_WINE_FIRST_DRIVER_MSG,  /* wp: activated (1) or deactivated (0) */
++    WM_RENKU_FRAME_CHANGED,                        /* the BWindow moved or was resized */
++};
++
+ /* display.c */
+ extern UINT RENKU_UpdateDisplayDevices(const struct gdi_device_manager *manager, void *param);
+ 
+@@ -54,10 +61,17 @@ extern void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint
+ extern BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped,
+                                     const struct window_rects *rects);
+ 
++extern void RENKU_ActivateWindow(HWND hwnd, HWND previous);
++extern LRESULT RENKU_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
++
++/* event.c */
++extern NTSTATUS renku_unix_event_loop(void *arg);
++
+ /* surface.c */
+ extern struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+                                                    const RECT *rect);
+ extern struct be_bitmap *renku_surface_bitmap(struct window_surface *surface);
++extern void renku_surface_retire(struct window_surface *surface);
+ 
+ /* UTF-8 copy of a Win32 string, malloc()ed; NULL on failure. */
+ extern char *renku_utf8_from_wstr(const WCHAR *str);
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+index 6f36bdc0..db616b9c 100644
+--- a/dlls/winerenku.drv/renku_be.h
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -25,8 +25,10 @@
+  * Threading rules (see the commit message of the driver patch for the evidence):
+  *   - every function here may be called from any Win32 thread;
+  *   - none of them waits for a Be looper thread, except be_app_start() and be_screen_*(),
+- *     which wait for the BApplication and app_server, never for a Win32 thread;
+- *   - Be threads never call into Wine. */
++ *     which wait for the BApplication and app_server, never for a Win32 thread, and
++ *     be_event_wait(), which waits for the next event;
++ *   - Be threads never call into Wine. What Wine has to hear about (input, activation,
++ *     close requests) they put in the event queue, which one Wine thread drains. */
+ 
+ #ifndef __WINE_RENKU_BE_H
+ #define __WINE_RENKU_BE_H
+@@ -67,17 +69,36 @@ enum be_window_style
+     BE_WINDOW_BORDERLESS,  /* Wine draws everything */
+ };
+ 
++/* What the decorator offers, and how app_server treats the window. */
++enum be_window_flags
++{
++    BE_WINDOW_AVOID_FOCUS = 0x01,  /* never activated, not even by a click (B_AVOID_FOCUS) */
++    BE_WINDOW_RESIZABLE   = 0x02,
++    BE_WINDOW_MINIMIZABLE = 0x04,
++    BE_WINDOW_ZOOMABLE    = 0x08,
++    BE_WINDOW_CLOSABLE    = 0x10,
++};
++
+ /* Created hidden, its looper already running. frame is the area Wine draws, which becomes the
+- * BWindow's Frame(); the decorator, if any, is drawn around it. */
+-struct be_window *be_window_create(enum be_window_style style, const struct be_rect *frame,
+-                                   const char *title_utf8);
++ * BWindow's Frame(); the decorator, if any, is drawn around it. flags is a set of
++ * be_window_flags. cookie comes back in every event the window sends. */
++struct be_window *be_window_create(enum be_window_style style, unsigned int flags,
++                                   const struct be_rect *frame, const char *title_utf8,
++                                   uint64_t cookie);
+ void be_window_add_ref(struct be_window *window);
+ /* Drops a reference. The last one also closes the BWindow. */
+ void be_window_release(struct be_window *window);
+ 
+ void be_window_set_frame(struct be_window *window, const struct be_rect *frame);
+ void be_window_set_visible(struct be_window *window, int visible);
+-void be_window_set_style(struct be_window *window, enum be_window_style style);
++void be_window_set_style(struct be_window *window, enum be_window_style style, unsigned int flags);
++/* Minimized windows are listed in the Deskbar, hidden ones are not. */
++void be_window_set_minimized(struct be_window *window, int minimized);
++/* The BWindow's frame now, after every change posted to it before this call. Waits for the
++ * window's looper. Returns 0 on success. */
++int be_window_get_frame(struct be_window *window, struct be_rect *frame);
++/* Make it the active window, unless it already is. */
++void be_window_activate(struct be_window *window);
+ void be_window_set_title(struct be_window *window, const char *title_utf8);
+ /* Draw bitmap (or nothing, if NULL) with its top-left pixel at (x, y) in window coordinates.
+  * The window takes its own reference. */
+@@ -85,6 +106,47 @@ void be_window_set_bitmap(struct be_window *window, struct be_bitmap *bitmap, in
+ /* Redraw rect, in window coordinates. */
+ void be_window_invalidate(struct be_window *window, const struct be_rect *rect);
+ 
++/* Events from the Be side, in the order they happened. */
++enum be_event_type
++{
++    BE_EVENT_MOUSE_MOVE,    /* x, y */
++    BE_EVENT_MOUSE_BUTTON,  /* x, y, button, down */
++    BE_EVENT_MOUSE_WHEEL,   /* wheel_x, wheel_y: notches, positive is down and right */
++    BE_EVENT_KEY,           /* keycode, down */
++    BE_EVENT_ACTIVATE,      /* down: activated (1) or deactivated (0) */
++    BE_EVENT_CLOSE,         /* the decorator's close button */
++    BE_EVENT_FRAME,         /* moved or resized; be_window_get_frame() says where it is now */
++    BE_EVENT_MINIMIZE,      /* down: minimize (1) or restore (0), from the decorator or the Deskbar */
++    BE_EVENT_ZOOM,          /* the decorator's zoom button */
++};
++
++enum be_mouse_button
++{
++    BE_BUTTON_LEFT,
++    BE_BUTTON_RIGHT,
++    BE_BUTTON_MIDDLE,
++    BE_BUTTON_X1,
++    BE_BUTTON_X2,
++};
++
++struct be_event
++{
++    enum be_event_type type;
++    uint64_t cookie;          /* the window's, from be_window_create() */
++    int32_t x, y;             /* pointer position, screen coordinates */
++    int32_t button;           /* enum be_mouse_button */
++    int32_t down;
++    int32_t keycode;          /* a Haiku raw key code (the "key" field of B_KEY_DOWN) */
++    float wheel_x, wheel_y;
++};
++
++/* Waits for the next event. Meant for one thread only. */
++void be_event_wait(struct be_event *event);
++/* Whether another event is already waiting. */
++int be_event_pending(void);
++/* Whether app_server reports one of this process's windows as active. */
++int be_any_window_active(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/dlls/winerenku.drv/renku_main.c b/dlls/winerenku.drv/renku_main.c
+index 7efa4b3b..665f3048 100644
+--- a/dlls/winerenku.drv/renku_main.c
++++ b/dlls/winerenku.drv/renku_main.c
+@@ -49,15 +49,18 @@ char *renku_utf8_from_wstr(const WCHAR *str)
+ }
+ 
+ /* Only what win32u cannot do without a window system is here; everything else is win32u's
+- * own default (dlls/win32u/driver.c). Input, focus, cursors, clipboard and the other entries
+- * come in later patches. */
++ * own default (dlls/win32u/driver.c). Keyboard and mouse input do not go through this table:
++ * the event thread (event.c) sends them. Cursors, clipboard and the other entries come in
++ * later patches. */
+ static const struct user_driver_funcs renku_funcs =
+ {
++    .pActivateWindow = RENKU_ActivateWindow,
+     .pCreateWindowSurface = RENKU_CreateWindowSurface,
+     .pDestroyWindow = RENKU_DestroyWindow,
+     .pGetWindowStyleMasks = RENKU_GetWindowStyleMasks,
+     .pSetWindowText = RENKU_SetWindowText,
+     .pUpdateDisplayDevices = RENKU_UpdateDisplayDevices,
++    .pWindowMessage = RENKU_WindowMessage,
+     .pWindowPosChanged = RENKU_WindowPosChanged,
+     .pWindowPosChanging = RENKU_WindowPosChanging,
+ };
+@@ -72,6 +75,7 @@ static NTSTATUS renku_unix_init(void *arg)
+ const unixlib_entry_t __wine_unix_call_funcs[] =
+ {
+     renku_unix_init,
++    renku_unix_event_loop,
+ };
+ 
+ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == renku_unix_func_count);
+@@ -81,6 +85,7 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == renku_unix_func_count);
+ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+ {
+     renku_unix_init,
++    renku_unix_event_loop,
+ };
+ 
+ C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == renku_unix_func_count);
+diff --git a/dlls/winerenku.drv/surface.c b/dlls/winerenku.drv/surface.c
+index 818ed679..ce8efe09 100644
+--- a/dlls/winerenku.drv/surface.c
++++ b/dlls/winerenku.drv/surface.c
+@@ -43,6 +43,17 @@ struct renku_surface
+     struct window_surface header;
+     struct be_bitmap     *bitmap;   /* owned */
+     struct be_window     *window;   /* referenced; safe to use after the BWindow has gone */
++    LONG                  state;    /* enum surface_state */
++};
++
++/* A new surface (a resize makes one) is blank until win32u has drawn into it and flushed.
++ * The view keeps showing the previous bitmap until then: swapping at once showed the whole
++ * window white for a moment on every step of a resize. */
++enum surface_state
++{
++    SURFACE_NEW,      /* not flushed yet; the view still shows the previous one */
++    SURFACE_SHOWN,    /* the view shows it */
++    SURFACE_RETIRED,  /* replaced by another surface; it must never be shown again */
+ };
+ 
+ static const struct window_surface_funcs renku_surface_funcs;
+@@ -81,6 +92,10 @@ static BOOL renku_surface_flush(struct window_surface *window_surface, const REC
+     area.top = rect->top + dirty->top;
+     area.right = rect->left + dirty->right;
+     area.bottom = rect->top + dirty->bottom;
++    /* rect places the surface in the visible rect, which is the BWindow's frame. Posted before
++     * the invalidation, so the view draws the new bitmap. */
++    if (InterlockedCompareExchange(&surface->state, SURFACE_SHOWN, SURFACE_NEW) == SURFACE_NEW)
++        be_window_set_bitmap(surface->window, surface->bitmap, rect->left, rect->top);
+     be_window_invalidate(surface->window, &area);
+ 
+     /* Not yet done: window shapes (SetWindowRgn) and layered windows; see the plan, phase 4. */
+@@ -121,7 +136,8 @@ struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+         ERR("no BBitmap for %p, %dx%d\n", hwnd, width, height);
+         return NULL;
+     }
+-    /* The view may draw it before the first flush; win32u starts its own bits white too. */
++    /* Shown from the first flush on, which may cover only part of it: the rest starts white,
++     * as win32u's own bits do. */
+     bits = be_bitmap_bits(bitmap, &stride);
+     memset(bits, 0xff, (size_t)stride * height);
+ 
+@@ -153,3 +169,11 @@ struct be_bitmap *renku_surface_bitmap(struct window_surface *window_surface)
+     struct renku_surface *surface = get_renku_surface(window_surface);
+     return surface ? surface->bitmap : NULL;
+ }
++
++/* window_surface replaced by another one, or the window has none any more: a late first
++ * flush of it must not put its bitmap back in the view. */
++void renku_surface_retire(struct window_surface *window_surface)
++{
++    struct renku_surface *surface = get_renku_surface(window_surface);
++    if (surface) InterlockedExchange(&surface->state, SURFACE_RETIRED);
++}
+diff --git a/dlls/winerenku.drv/unixlib.h b/dlls/winerenku.drv/unixlib.h
+index 15fea273..f45d2959 100644
+--- a/dlls/winerenku.drv/unixlib.h
++++ b/dlls/winerenku.drv/unixlib.h
+@@ -26,6 +26,7 @@
+ enum renku_unix_func
+ {
+     renku_unix_func_init,
++    renku_unix_func_event_loop,
+     renku_unix_func_count,
+ };
+ 
+diff --git a/dlls/winerenku.drv/window.c b/dlls/winerenku.drv/window.c
+index 8e499aee..e7305319 100644
+--- a/dlls/winerenku.drv/window.c
++++ b/dlls/winerenku.drv/window.c
+@@ -48,9 +48,14 @@ struct renku_win_data
+     HWND                   hwnd;
+     struct be_window      *window;
+     enum be_window_style   style;
+-    struct be_rect         frame;     /* the BWindow's frame as last set */
++    struct be_rect         frame;     /* where the BWindow is, or will be once its looper gets
++                                         to the change already posted */
++    struct window_rects    rects;     /* the window's, from the last WindowPosChanged */
+     struct window_surface *surface;   /* the surface the BWindow draws, referenced */
+     BOOL                   visible;
++    BOOL                   minimized;
++    unsigned int           flags;     /* be_window_flags */
++    BOOL                   be_activating; /* app_server activated it; Wine is catching up */
+ };
+ 
+ static int win_data_cmp(const void *key, const struct rb_entry *entry)
+@@ -97,6 +102,48 @@ static enum be_window_style style_for(UINT style)
+     return (style & WS_CAPTION) == WS_CAPTION ? BE_WINDOW_TITLED : BE_WINDOW_BORDERLESS;
+ }
+ 
++/* Menus, tooltips and drop-down lists are popups that Windows shows without activating them.
++ * app_server would activate them on Show() and on a click, taking the focus from the window
++ * they belong to, which closes a menu. With B_AVOID_FOCUS app_server still brings such a
++ * window to the front but never focuses it (Desktop::ActivateWindow, src/servers/app); P4
++ * (docs/probes in the port repo) showed the same. Win32's own menus are owned; toolkits that
++ * draw their own (JUCE) make them unowned tool windows. Any other unowned popup is left
++ * alone: it may be a program's main window (a game, a splash screen). Keys are not lost
++ * either way: wineserver sends them to Wine's focus window, whichever BWindow app_server
++ * has active (server/queue.c, find_hardware_message_window). */
++static BOOL avoid_focus_for(HWND hwnd, UINT style, UINT ex_style)
++{
++    if (ex_style & WS_EX_NOACTIVATE) return TRUE;
++    if (style_for(style) != BE_WINDOW_BORDERLESS || !(style & WS_POPUP)) return FALSE;
++    if (ex_style & WS_EX_TOOLWINDOW) return TRUE;
++    return NtUserGetWindowRelative(hwnd, GW_OWNER) != 0;
++}
++
++/* The decorator offers what the window's title bar would on Windows. */
++static unsigned int window_flags_for(HWND hwnd, UINT style, UINT ex_style)
++{
++    unsigned int flags = 0;
++
++    if (avoid_focus_for(hwnd, style, ex_style)) flags |= BE_WINDOW_AVOID_FOCUS;
++    if (style & WS_THICKFRAME) flags |= BE_WINDOW_RESIZABLE;
++    if (style & WS_MINIMIZEBOX) flags |= BE_WINDOW_MINIMIZABLE;
++    if (style & WS_MAXIMIZEBOX) flags |= BE_WINDOW_ZOOMABLE;
++    if ((style & WS_SYSMENU) && !(NtUserGetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE))
++        flags |= BE_WINDOW_CLOSABLE;
++    return flags;
++}
++
++/* A layered window that lets clicks through (WS_EX_TRANSPARENT) exists only to be blended
++ * over what is behind it: drop shadows (JUCE draws four around its windows), glows, fades.
++ * RenkuOS has no translucent or shaped windows (P4), so it would show as a solid block,
++ * black where it is meant to be clear. It gets no BWindow; win32u then gives it an offscreen
++ * surface (dlls/win32u/dce.c, create_window_surface), so the program still draws into it.
++ * Lost with it: a click-through overlay meant to be seen, such as an on-screen display. */
++static BOOL is_blend_only(UINT ex_style)
++{
++    return (ex_style & (WS_EX_LAYERED | WS_EX_TRANSPARENT)) == (WS_EX_LAYERED | WS_EX_TRANSPARENT);
++}
++
+ static struct be_rect be_rect_from(const RECT *r)
+ {
+     struct be_rect rect = { r->left, r->top, r->right, r->bottom };
+@@ -123,6 +170,7 @@ BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struc
+     enum be_window_style style;
+     struct be_rect frame;
+     UINT win_style;
++    unsigned int flags;
+     char *title;
+ 
+     TRACE("hwnd %p, swp_flags %04x, shaped %u, rects %s\n", hwnd, swp_flags, shaped, debugstr_window_rects(rects));
+@@ -139,8 +187,10 @@ BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struc
+      * waits until the window is visible or being shown. */
+     win_style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+     if (!(win_style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)) return FALSE;
++    if (is_blend_only(NtUserGetWindowLongW(hwnd, GWL_EXSTYLE))) return FALSE;
+ 
+     style = style_for(win_style);
++    flags = window_flags_for(hwnd, win_style, NtUserGetWindowLongW(hwnd, GWL_EXSTYLE));
+     title = get_window_title(hwnd);
+     /* rects->visible is not final yet; WindowPosChanged sets the real frame. */
+     frame = be_rect_from(&rects->window);
+@@ -152,8 +202,10 @@ BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struc
+     }
+     created->hwnd = hwnd;
+     created->style = style;
++    created->flags = flags;
+     created->frame = frame;
+-    if (!(created->window = be_window_create(style, &frame, title)))
++    created->rects = *rects;
++    if (!(created->window = be_window_create(style, flags, &frame, title, (UINT_PTR)hwnd)))
+     {
+         ERR("no BWindow for %p\n", hwnd);
+         free(created);
+@@ -174,7 +226,9 @@ BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struc
+     rb_put(&win_data_tree, hwnd, &created->entry);
+     pthread_mutex_unlock(&win_data_mutex);
+ 
+-    TRACE("hwnd %p: BWindow %p, %s\n", hwnd, created->window, style == BE_WINDOW_TITLED ? "titled" : "borderless");
++    TRACE("hwnd %p: BWindow %p, %s, style %08x ex_style %08x, flags %#x\n", hwnd, created->window,
++          style == BE_WINDOW_TITLED ? "titled" : "borderless", win_style,
++          (UINT)NtUserGetWindowLongW(hwnd, GWL_EXSTYLE), flags);
+     return TRUE;
+ }
+ 
+@@ -228,26 +282,33 @@ BOOL RENKU_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect
+ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags,
+                             const struct window_rects *new_rects, struct window_surface *surface)
+ {
+-    UINT style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
++    UINT style = NtUserGetWindowLongW(hwnd, GWL_STYLE), ex_style = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
++    unsigned int flags = window_flags_for(hwnd, style, ex_style);
+     struct be_rect frame = be_rect_from(&new_rects->visible);
+     struct renku_win_data *data;
+     struct window_surface *old_surface = NULL;
+     enum be_window_style be_style = style_for(style);
+     struct be_bitmap *bitmap = renku_surface_bitmap(surface);
+-    /* Minimizing comes with the decorator's input; until then a minimized window is hidden. */
+-    BOOL visible = (style & WS_VISIBLE) && !(style & WS_MINIMIZE) && !(swp_flags & SWP_HIDEWINDOW);
++    /* A window that became blend-only after its BWindow was made is hidden instead. */
++    BOOL visible = (style & WS_VISIBLE) && !(swp_flags & SWP_HIDEWINDOW) && !is_blend_only(ex_style);
++    BOOL minimized = (style & WS_MINIMIZE) != 0;
+ 
+     TRACE("hwnd %p new_rects %s after %p flags %08x surface %p\n", hwnd, debugstr_window_rects(new_rects),
+           insert_after, swp_flags, surface);
+ 
+     if (!(data = get_win_data(hwnd))) return;
+ 
+-    if (be_style != data->style)
++    data->rects = *new_rects;
++    if (be_style != data->style || flags != data->flags)
+     {
+-        be_window_set_style(data->window, be_style);
++        be_window_set_style(data->window, be_style, flags);
+         data->style = be_style;
++        data->flags = flags;
+     }
+-    if (memcmp(&frame, &data->frame, sizeof(frame)))
++    /* Wine parks a minimized window far off screen; the BWindow stays where it was, so that
++     * the Deskbar restores it in place. A frame that came from the BWindow (frame_changed)
++     * is already in data->frame, so it is not sent back while the user is still dragging. */
++    if (!minimized && memcmp(&frame, &data->frame, sizeof(frame)))
+     {
+         be_window_set_frame(data->window, &frame);
+         data->frame = frame;
+@@ -255,11 +316,10 @@ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
+     if (!bitmap) surface = NULL;  /* win32u's dummy surface, or none */
+     if (surface != data->surface)
+     {
+-        /* surface->rect places the surface in the visible rect, which is the BWindow's frame. */
+-        be_window_set_bitmap(data->window, bitmap, surface ? surface->rect.left : 0,
+-                             surface ? surface->rect.top : 0);
+-        if (surface) window_surface_add_ref(surface);
+-        old_surface = data->surface;
++        /* A new surface puts its bitmap in the view on its first flush (surface.c). */
++        if (!surface) be_window_set_bitmap(data->window, NULL, 0, 0);
++        else window_surface_add_ref(surface);
++        if ((old_surface = data->surface)) renku_surface_retire(old_surface);
+         data->surface = surface;
+     }
+     if (visible != data->visible)
+@@ -267,11 +327,148 @@ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
+         be_window_set_visible(data->window, visible);
+         data->visible = visible;
+     }
++    /* After showing it: BWindow::Minimize does nothing to a hidden window. */
++    if (minimized != data->minimized)
++    {
++        be_window_set_minimized(data->window, minimized);
++        data->minimized = minimized;
++    }
+ 
+     release_win_data(data);
+     if (old_surface) window_surface_release(old_surface);
+ }
+ 
++/* Whether Wine can make hwnd the foreground window: the same test as winex11's
++ * can_activate_window (dlls/winex11.drv/event.c), less the X11 state. */
++static BOOL can_activate_window(HWND hwnd)
++{
++    UINT style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
++
++    if (!(style & WS_VISIBLE) || (style & (WS_MINIMIZE | WS_DISABLED))) return FALSE;
++    if ((style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return FALSE;
++    if (NtUserGetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOACTIVATE) return FALSE;
++    return hwnd != NtUserGetDesktopWindow();
++}
++
++/* app_server activated hwnd's BWindow (a click, the Deskbar, a Show()). */
++static void be_window_activated(HWND hwnd)
++{
++    struct renku_win_data *data;
++    HWND popup;
++
++    if (!can_activate_window(hwnd))
++    {
++        /* Clicking a window behind its modal dialog activates the dialog, as on Windows.
++         * Wine activates it, and ActivateWindow brings its BWindow forward. */
++        popup = NtUserGetLastActivePopup(hwnd);
++        if (popup && popup != hwnd && can_activate_window(popup))
++            NtUserSetForegroundWindowInternal(popup);
++        return;
++    }
++
++    /* win32u calls ActivateWindow while this runs (dlls/win32u/input.c, set_active_window);
++     * the flag tells it that app_server already has this window active, so that the two do
++     * not keep activating each other's last choice. */
++    if (!(data = get_win_data(hwnd))) return;
++    data->be_activating = TRUE;
++    release_win_data(data);
++
++    NtUserSetForegroundWindowInternal(hwnd);
++
++    if (!(data = get_win_data(hwnd))) return;
++    data->be_activating = FALSE;
++    release_win_data(data);
++}
++
++/* The BWindow moved or was resized: by the user with the decorator, or by app_server
++ * enforcing a size limit on Wine's own request. Wine is told the frame the BWindow has now,
++ * read from its looper; that reply comes after every change this thread posted before, so a
++ * stale position can never undo a newer one. */
++static void be_frame_changed(HWND hwnd)
++{
++    UINT swp_flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER;
++    struct renku_win_data *data;
++    struct be_window *window;
++    struct be_rect frame;
++    RECT visible, rect;
++    int ret;
++
++    if (!(data = get_win_data(hwnd))) return;
++    window = data->window;
++    be_window_add_ref(window);
++    release_win_data(data);
++
++    ret = be_window_get_frame(window, &frame);
++    be_window_release(window);
++    if (ret) return;
++
++    if (!(data = get_win_data(hwnd))) return;
++    if (data->minimized || !data->visible || !memcmp(&frame, &data->frame, sizeof(frame)))
++    {
++        release_win_data(data);
++        return;
++    }
++    visible.left = frame.left;
++    visible.top = frame.top;
++    visible.right = frame.right;
++    visible.bottom = frame.bottom;
++    rect = window_rect_from_visible(&data->rects, visible);
++    if (rect.left == data->rects.window.left && rect.top == data->rects.window.top)
++        swp_flags |= SWP_NOMOVE;
++    if (rect.right - rect.left == data->rects.window.right - data->rects.window.left &&
++        rect.bottom - rect.top == data->rects.window.bottom - data->rects.window.top)
++        swp_flags |= SWP_NOSIZE;
++    /* The BWindow is there already; WindowPosChanged moves it only if Wine settles on
++     * something else (a program's minimum size, say). */
++    data->frame = frame;
++    release_win_data(data);
++
++    TRACE("hwnd %p, BWindow frame %d,%d-%d,%d -> window rect %s\n", hwnd, frame.left, frame.top,
++          frame.right, frame.bottom, wine_dbgstr_rect(&rect));
++    NtUserSetRawWindowPos(hwnd, rect, swp_flags, FALSE);
++}
++
++/***********************************************************************
++ *      WindowMessage (RENKU.@)
++ *
++ * Messages the event thread posts, handled on the window's own thread.
++ */
++LRESULT RENKU_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
++{
++    switch (msg)
++    {
++    case WM_RENKU_ACTIVATE:
++        if (wp) be_window_activated(hwnd);
++        /* The user went to another program's window: Wine's foreground goes to the desktop
++         * window, as in winex11's focus_out. Not if another of our windows took over. */
++        else if (!be_any_window_active() && hwnd == NtUserGetForegroundWindow())
++            NtUserSetForegroundWindowInternal(NtUserGetDesktopWindow());
++        return 0;
++    case WM_RENKU_FRAME_CHANGED:
++        be_frame_changed(hwnd);
++        return 0;
++    }
++    FIXME("hwnd %p, unexpected message %#x, wp %lx, lp %lx\n", hwnd, msg, (long)wp, (long)lp);
++    return 0;
++}
++
++/***********************************************************************
++ *      ActivateWindow (RENKU.@)
++ *
++ * Wine made hwnd the active foreground window: a program asked for it, or a window it
++ * showed took the activation. app_server follows.
++ */
++void RENKU_ActivateWindow(HWND hwnd, HWND previous)
++{
++    struct renku_win_data *data;
++
++    TRACE("%p, previous %p\n", hwnd, previous);
++
++    if (!(data = get_win_data(hwnd))) return;
++    if (!data->be_activating && !(data->flags & BE_WINDOW_AVOID_FOCUS)) be_window_activate(data->window);
++    release_win_data(data);
++}
++
+ /***********************************************************************
+  *      SetWindowText (RENKU.@)
+  */
 -- 
 2.47.3
 
