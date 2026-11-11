@@ -1,7 +1,7 @@
 From 9794aa43c5296cda799020d712961ddef6ce4367 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Thu, 23 Apr 2026 02:37:32 +0200
-Subject: [PATCH 01/18] Add Wayland input header
+Subject: [PATCH 01/19] Add Wayland input header
 
 ---
  dlls/winewayland.drv/input-event-codes.h | 980 +++++++++++++++++++++++
@@ -1001,7 +1001,7 @@ index 00000000..a4206723
 From 54edd959ff8bc6a4d39da1d1fdfb739d3b02f010 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 02/18] 11.8 patches
+Subject: [PATCH 02/19] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -1936,7 +1936,7 @@ index f800c0f7..ad509c18 100644
 From 352d50b4e95f0fb797d4cebc18a99a2c0460035e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 03/18] Opensound support
+Subject: [PATCH 03/19] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -2009,7 +2009,7 @@ index f5844912..1aee2585 100644
 From f5d50f5cdf38fa53c60eadd89c86a060bf47063f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 04/18] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 04/19] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -2126,7 +2126,7 @@ index 88d00d1f..f4ab87b1 100644
 From 8a38b157fdfebeb3415dce2dd0d00bb5aa95092d Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 05/18] Do not block in the SIGSEGV handler on Haiku
+Subject: [PATCH 05/19] Do not block in the SIGSEGV handler on Haiku
 
 The Haiku port left an interactive debug hook in segv_handler: after
 printing the fault it called fgetc(stdin) and waited for a keypress, with
@@ -2173,7 +2173,7 @@ index 50a7990f..51159fcb 100644
 From d35ff24f3e83023b4415c6a2491bce2fbf6f24f2 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 06/18] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 06/19] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -2222,7 +2222,7 @@ index 71ba308c..e959a762 100644
 From 2bdb8f0a7d1ae692ffd2dc5941678c63dfb6cacc Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 07/18] dxgi: Wait for a refresh interval in
+Subject: [PATCH 07/19] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -2305,7 +2305,7 @@ index e828ed0d..9690dee6 100644
 From fe774e7377aed353a4e5659ed8bf6150250020a9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 08/18] sechost: Report no failure actions in
+Subject: [PATCH 08/19] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -2370,7 +2370,7 @@ index f05fd2d7..20a7fb17 100644
 From d0189450fae6138ad3a08e6a4c6eb5831eb41dd1 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 09/18] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 09/19] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -2481,7 +2481,7 @@ index 00000000..07b215a1
 From bc41ff7fcdf81723835367a90ceeb37f2252e204 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 10/18] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 10/19] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -2548,7 +2548,7 @@ index ae51b2f7..691b7984 100644
 From 095354e8ab2b425a21dfacca11ed186403718e15 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 11/18] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 11/19] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -2628,7 +2628,7 @@ index 2e6d93b7..bda79d71 100644
 From c9fb2b6bbe6696036cc0a92053f4ad0cabf5a395 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 12/18] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 12/19] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -2659,7 +2659,7 @@ index ad509c18..eb83446b 100644
 From 5cb922bb1d177b1cbc4a6068c224960d359b4a23 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 13/18] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 13/19] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -2985,7 +2985,7 @@ index 7ecb8b4c..6fc66d4a 100644
 From 48b4dfdad9513bee675271ee2c9508c0dae377c8 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 14/18] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 14/19] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -3081,7 +3081,7 @@ index fa51e21f..4e275a5c 100644
 From 440cdc4b66a2023cdded462937a7f57eb3cedfd7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 15/18] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 15/19] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -3361,7 +3361,7 @@ index bb9728f6..4522128d 100644
 From 1f790f5b24947fbcde26aa9ffe5a5a9c4350cc81 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 16/18] winerenku.drv: Add a native RenkuOS (Be API) graphics
+Subject: [PATCH 16/19] winerenku.drv: Add a native RenkuOS (Be API) graphics
  driver.
 
 Every Wine port for Haiku-family systems draws through winewayland.drv,
@@ -5046,7 +5046,7 @@ index 00000000..8e499aee
 From 6673a9cd8c7d665cb1334ffd7a9f1f2f1c48f5a7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 17/18] explorer: Try the RenkuOS driver first.
+Subject: [PATCH 17/19] explorer: Try the RenkuOS driver first.
 
 explorer picks the graphics driver from default_driver when the prefix
 sets none. Put "renku" (winerenku.drv) at its head.
@@ -5083,7 +5083,7 @@ index ce70c5dd..f0956929 100644
 From eb52b1647008fd6b699e9949f8e441d7fcd734eb Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 11:21:19 +1000
-Subject: [PATCH 18/18] winerenku.drv: Keyboard and mouse input, activation,
+Subject: [PATCH 18/19] winerenku.drv: Keyboard and mouse input, activation,
  and the decorator.
 
 The first stage drew windows but took no input, and its windows could
@@ -6583,6 +6583,733 @@ index 8e499aee..e7305319 100644
  /***********************************************************************
   *      SetWindowText (RENKU.@)
   */
+-- 
+2.47.3
+
+
+From dc9c973bf8fc152a508b404711a7fb6886ec9249 Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Wed, 11 Nov 2026 12:48:32 +1000
+Subject: [PATCH 19/19] winerenku.drv: Keyboard layout from the RenkuOS keymap.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Keys reach win32u as scancodes, and win32u turns them into virtual keys
+and characters with the layout's KBDTABLES. The driver gave none, so
+win32u used its US tables whatever keymap RenkuOS had: on a German
+keymap the key marked Z typed y, the umlaut keys typed [ ; ', and AltGr
+characters such as @ did not exist. winewayland builds these tables
+from the xkb keymap and winemac asks macOS for each key's character;
+this builds them from the keymap chosen in RenkuOS's Keymap
+preferences, read once per process with get_key_map() (be_keymap.cpp).
+That asks the input server and needs no BApplication.
+
+- Virtual keys. Letters, digits and the four keys Microsoft's
+  Virtual-Key Codes reference names the same "for any country/region"
+  (VK_OEM_PLUS, _COMMA, _MINUS, _PERIOD) get the virtual key of the
+  character on the key, so Ctrl+Z is the key marked Z. A key with a
+  digit only on Shift (French top row) gets that digit, as on Windows.
+  Other keys keep their US virtual key while it is free, else the next
+  free VK_OEM_*: those "vary by keyboard". Their exact Windows values
+  per language are not reproduced (German ß is VK_OEM_1 here, VK_OEM_4
+  on Windows).
+- Characters from the keymap's normal, Shift, Caps Lock and Option
+  tables. Caps Lock becomes CAPLOK or, when it does something else on
+  the plain or Shift level, an SGCAPS entry; AltGr-level Caps Lock
+  differences are left out, or VkKeyScan would report the Caps Lock
+  combination first for every character of the key. Keys that type
+  nothing (Enter, Tab, Backspace, Esc, Space, keypad operators) keep
+  win32u's US characters; the keypad decimal key types the keymap's
+  separator. Control codes and characters beyond the BMP are skipped.
+- AltGr. Windows types the third level with Right Alt, sent as Left
+  Control + Right Alt (KLLF_ALTGR), and win32u picks the Ctrl+Alt
+  column. RenkuOS types it with Option, and its keymaps for AltGr
+  keyboards (German, French, US-International) make Right Alt, raw key
+  0x5f, the right Option key. When the keymap does, Right Alt is sent
+  as Windows sends AltGr and the Option tables fill the Ctrl+Alt
+  columns; when it does not (US: 0x5f is Command), there is no AltGr,
+  as with Windows' US layout. RenkuOS keymaps fill unused Option
+  entries with a space, which is dropped: Ctrl+Alt shortcuts would
+  otherwise type spaces into text fields. Alt alone types the plain
+  character, which menus look up, as with win32u's US table.
+- Key names: win32u's English names for keys that type nothing;
+  GetKeyNameText names the others by their character.
+
+The scancode table is shared with event.c (renku_keycode_to_scan).
+
+Verified on the RenkuOS build VM: docs/probes/kbdprobe.c in the port
+repository, under this driver, reports virtual keys, characters and
+VkKeyScan that match the US, US-International, German and French
+keymaps (German: Z and Y swapped, ö ä ü ß, AltGr+Q @, AltGr+E €;
+French: AZERTY, & é on the top row with digits on Shift). By the user,
+in notepad on US-International: typing, AltGr characters (ä é ¡ €),
+Alt+F and Ctrl shortcuts. Wine's System font, notepad's default, draws
+€ as a placeholder bar; Tahoma shows it.
+
+Not done: dead keys (win32u's KBDTABLES code does not use pDeadKey, so
+an accent key types its accent at once), keymap changes while a program
+runs (they apply when it next starts), and a keyboard layout HKL or
+language that matches the keymap (every HKL gets these tables).
+German and French were checked with the probe only, not typed.
+---
+ dlls/winerenku.drv/Makefile.in   |   2 +
+ dlls/winerenku.drv/be_keymap.cpp |  90 ++++++++
+ dlls/winerenku.drv/event.c       |  35 ++-
+ dlls/winerenku.drv/keyboard.c    | 385 +++++++++++++++++++++++++++++++
+ dlls/winerenku.drv/renku.h       |   6 +
+ dlls/winerenku.drv/renku_be.h    |  25 ++
+ dlls/winerenku.drv/renku_main.c  |   6 +-
+ 7 files changed, 537 insertions(+), 12 deletions(-)
+ create mode 100644 dlls/winerenku.drv/be_keymap.cpp
+ create mode 100644 dlls/winerenku.drv/keyboard.c
+
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+index 746e265b..627baeda 100644
+--- a/dlls/winerenku.drv/Makefile.in
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -7,10 +7,12 @@ VER_FILEDESCRIPTION_STR = "Wine RenkuOS driver"
+ SOURCES = \
+ 	be_app.cpp \
+ 	be_event.cpp \
++	be_keymap.cpp \
+ 	be_window.cpp \
+ 	display.c \
+ 	dllmain.c \
+ 	event.c \
++	keyboard.c \
+ 	renku_main.c \
+ 	surface.c \
+ 	window.c
+diff --git a/dlls/winerenku.drv/be_keymap.cpp b/dlls/winerenku.drv/be_keymap.cpp
+new file mode 100644
+index 00000000..cde789df
+--- /dev/null
++++ b/dlls/winerenku.drv/be_keymap.cpp
+@@ -0,0 +1,90 @@
++/*
++ * RenkuOS driver: the user's keymap
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++
++#include <InterfaceDefs.h>
++
++#include <stdlib.h>
++
++namespace {
++
++/* key_map's tables hold offsets into the key buffer, where each character is a length byte
++ * followed by that many bytes of UTF-8 (BKeymap::GetChars, src/kits/shared/Keymap.cpp). */
++uint32 char_at(const char *buffer, int32 offset)
++{
++    const uint8 *p;
++    uint32 len, c;
++
++    if (offset < 0) return 0;
++    p = (const uint8 *)buffer + offset;
++    len = *p++;
++    if (!len || len > 4) return 0;
++    if (len == 1) return p[0] < 0x80 ? p[0] : 0;
++    if (len == 2 && (p[0] & 0xe0) == 0xc0) c = p[0] & 0x1f;
++    else if (len == 3 && (p[0] & 0xf0) == 0xe0) c = p[0] & 0x0f;
++    else if (len == 4 && (p[0] & 0xf8) == 0xf0) c = p[0] & 0x07;
++    else return 0;
++    for (uint32 i = 1; i < len; i++)
++    {
++        if ((p[i] & 0xc0) != 0x80) return 0;
++        c = (c << 6) | (p[i] & 0x3f);
++    }
++    return c;
++}
++
++}  /* namespace */
++
++/* get_key_map() asks the input server (IS_GET_KEY_MAP, src/kits/interface/InterfaceDefs.cpp)
++ * and needs no BApplication, so a process that never opens a window does not start one for
++ * this. Both buffers are malloc()ed copies. */
++extern "C" int be_keymap_get(struct be_keymap *keymap)
++{
++    key_map *map = NULL;
++    char *buffer = NULL;
++
++    get_key_map(&map, &buffer);
++    if (!map || !buffer)
++    {
++        free(map);
++        free(buffer);
++        return -1;
++    }
++
++    /* In the order of enum be_key_table. */
++    const int32 *tables[BE_KEYS_COUNT] =
++    {
++        map->normal_map, map->shift_map, map->caps_map, map->caps_shift_map,
++        map->option_map, map->option_shift_map, map->option_caps_map, map->option_caps_shift_map,
++    };
++    for (int t = 0; t < BE_KEYS_COUNT; t++)
++        for (int key = 0; key < 128; key++)
++            keymap->chars[t][key] = char_at(buffer, tables[t][key]);
++    keymap->left_option_key = map->left_option_key;
++    keymap->right_option_key = map->right_option_key;
++
++    free(map);
++    free(buffer);
++    return 0;
++}
+diff --git a/dlls/winerenku.drv/event.c b/dlls/winerenku.drv/event.c
+index 97169bfa..ff9b44dc 100644
+--- a/dlls/winerenku.drv/event.c
++++ b/dlls/winerenku.drv/event.c
+@@ -43,7 +43,7 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
+  * Ctrl+Break (X46, VK_CANCEL), so Pause is given its Windows code, E1 1D (Y1D, VK_PAUSE).
+  * USB keyboards produce the same codes through their own table (kKeyTable in
+  * src/add-ons/kernel/drivers/input/hid_shared/KeyboardProtocolHandler.cpp; A is 0x3c in both). */
+-static const WORD keycode_to_scan[0x80] =
++const WORD renku_keycode_to_scan[0x80] =
+ {
+     [0x01] = 0x001, /* Esc */
+     [0x02] = 0x03b, /* F1 */
+@@ -218,26 +218,41 @@ static void mouse_wheel(HWND hwnd, const struct be_event *event)
+     if (x) send_mouse(hwnd, MOUSEEVENTF_HWHEEL, 0, 0, x);
+ }
+ 
+-static void key(HWND hwnd, const struct be_event *event)
++static void send_scan(HWND hwnd, WORD scan, BOOL down)
+ {
+     INPUT input = {0};
+-    WORD scan = 0;
+-
+-    if (event->keycode >= 0 && event->keycode < ARRAY_SIZE(keycode_to_scan))
+-        scan = keycode_to_scan[event->keycode];
+-    TRACE_(key)("hwnd %p keycode %#x scan %#x %s\n", hwnd, event->keycode, scan, event->down ? "down" : "up");
+-    if (!scan) return;
+ 
+     /* win32u turns the scancode into a virtual key with the keyboard layout's tables
+-     * (dlls/win32u/message.c, send_hardware_message). */
++     * (dlls/win32u/message.c, send_hardware_message; keyboard.c builds them). */
+     input.type = INPUT_KEYBOARD;
+     input.ki.wScan = (scan & 0x300) ? scan + 0xdf00 : scan;
+     input.ki.dwFlags = KEYEVENTF_SCANCODE;
+     if (scan & ~0xff) input.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+-    if (!event->down) input.ki.dwFlags |= KEYEVENTF_KEYUP;
++    if (!down) input.ki.dwFlags |= KEYEVENTF_KEYUP;
+     NtUserSendHardwareInput(hwnd, 0, &input, 0);
+ }
+ 
++static void key(HWND hwnd, const struct be_event *event)
++{
++    WORD scan = 0;
++
++    if (event->keycode >= 0 && event->keycode < ARRAY_SIZE(renku_keycode_to_scan))
++        scan = renku_keycode_to_scan[event->keycode];
++    TRACE_(key)("hwnd %p keycode %#x scan %#x %s\n", hwnd, event->keycode, scan, event->down ? "down" : "up");
++    if (!scan) return;
++
++    /* AltGr, as Windows sends it for a layout with KLLF_ALTGR: Left Control goes down before
++     * Right Alt and up after it, so programs see Ctrl+Alt, the AltGr column of the tables. */
++    if (scan == 0x138 && renku_keyboard_has_altgr())
++    {
++        if (event->down) send_scan(hwnd, 0x01d, TRUE);
++        send_scan(hwnd, scan, event->down);
++        if (!event->down) send_scan(hwnd, 0x01d, FALSE);
++        return;
++    }
++    send_scan(hwnd, scan, event->down);
++}
++
+ static void handle_event(const struct be_event *event)
+ {
+     HWND hwnd = hwnd_from_cookie(event->cookie);
+diff --git a/dlls/winerenku.drv/keyboard.c b/dlls/winerenku.drv/keyboard.c
+new file mode 100644
+index 00000000..5f4b9155
+--- /dev/null
++++ b/dlls/winerenku.drv/keyboard.c
+@@ -0,0 +1,385 @@
++/*
++ * RenkuOS driver: keyboard layout
++ *
++ * Copyright 2026 rations
++ * Scancode table adapted from winewayland.drv (wayland_keyboard.c), key names from win32u
++ * (input.c), both Wine code under the same licence.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <pthread.h>
++#include <stddef.h>
++#include <stdlib.h>
++#include <string.h>
++
++#include "renku.h"
++#include "kbd.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
++
++/* Keys reach win32u as scancodes (event.c), and win32u turns them into virtual keys and
++ * characters with the layout's KBDTABLES (dlls/win32u/input.c, message.c). Without a driver's
++ * tables it uses the US ones, whatever keymap RenkuOS has. These tables are built from the
++ * keymap chosen in RenkuOS's Keymap preferences, as winewayland builds its own from the xkb
++ * keymap and winemac asks macOS for each key's character:
++ *
++ *   - Virtual keys. Letters, digits and the four keys Windows names the same "for any
++ *     country/region" (VK_OEM_PLUS, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD, in Microsoft's
++ *     Virtual-Key Codes reference) get the virtual key of the character on the key, so Ctrl+Z
++ *     is the key marked Z on a German keyboard. A key with a digit only on Shift (the top row
++ *     of a French keyboard) gets that digit, as on Windows. Every other key keeps its US
++ *     virtual key where that is still free, else the next free VK_OEM_*: those "vary by
++ *     keyboard", and programs do not rely on them.
++ *   - Characters, from the keymap's normal, Shift, Caps Lock and Option tables.
++ *   - AltGr. Windows types a layout's third level with AltGr, the right Alt key, which it
++ *     sends as Left Control + Right Alt (KLLF_ALTGR); win32u then picks the Ctrl+Alt column.
++ *     RenkuOS types it with Option, and its keymaps for AltGr keyboards (German.keymap,
++ *     French.keymap, ...) make Right Alt, raw key 0x5f, the right Option key. When the keymap
++ *     does that, Right Alt is sent as Windows sends AltGr (event.c) and the Option tables
++ *     fill the Ctrl+Alt column. When it does not (US.keymap: 0x5f is Command), there is no
++ *     AltGr, as with Windows' US layout.
++ *
++ * Not done: dead keys. win32u's KBDTABLES code does not use pDeadKey, so an accent key types
++ * its accent at once. The tables are read once per process: a keymap changed while a program
++ * runs applies the next time it starts. */
++
++#define ALTGR_KEY 0x5f  /* Haiku raw key code of Right Alt */
++
++/* Scancode -> US virtual key, in the encoding of event.c: E0 keys at 0x100, E1 at 0x200.
++ * The same as win32u's own US table. */
++#define EXTRA_SCAN2VK \
++    T36 | KBDEXT, T37 | KBDMULTIVK, \
++    T38, T39, T3A, T3B, T3C, T3D, T3E, T3F, \
++    T40, T41, T42, T43, T44, T45 | KBDEXT | KBDMULTIVK, T46 | KBDMULTIVK, T47 | KBDNUMPAD | KBDSPECIAL, \
++    T48 | KBDNUMPAD | KBDSPECIAL, T49 | KBDNUMPAD | KBDSPECIAL, T4A, T4B | KBDNUMPAD | KBDSPECIAL, \
++    T4C | KBDNUMPAD | KBDSPECIAL, T4D | KBDNUMPAD | KBDSPECIAL, T4E, T4F | KBDNUMPAD | KBDSPECIAL, \
++    T50 | KBDNUMPAD | KBDSPECIAL, T51 | KBDNUMPAD | KBDSPECIAL, T52 | KBDNUMPAD | KBDSPECIAL, \
++    T53 | KBDNUMPAD | KBDSPECIAL, T54, T55, T56, T57, \
++    T58, T59, T5A, T5B, T5C, T5D, T5E, T5F, \
++    T60, T61, T62, T63, T64, T65, T66, T67, \
++    T68, T69, T6A, T6B, T6C, T6D, T6E, T6F, \
++    T70, T71, T72, T73, T74, T75, T76, T77, \
++    T78, T79, T7A, T7B, T7C, T7D, T7E, \
++    [0x110] = X10 | KBDEXT, [0x119] = X19 | KBDEXT, [0x11d] = X1D | KBDEXT, [0x120] = X20 | KBDEXT, \
++    [0x121] = X21 | KBDEXT, [0x122] = X22 | KBDEXT, [0x124] = X24 | KBDEXT, [0x12e] = X2E | KBDEXT, \
++    [0x130] = X30 | KBDEXT, [0x132] = X32 | KBDEXT, [0x135] = X35 | KBDEXT, [0x137] = X37 | KBDEXT, \
++    [0x138] = X38 | KBDEXT, [0x147] = X47 | KBDEXT, [0x148] = X48 | KBDEXT, [0x149] = X49 | KBDEXT, \
++    [0x14b] = X4B | KBDEXT, [0x14d] = X4D | KBDEXT, [0x14f] = X4F | KBDEXT, [0x150] = X50 | KBDEXT, \
++    [0x151] = X51 | KBDEXT, [0x152] = X52 | KBDEXT, [0x153] = X53 | KBDEXT, [0x15b] = X5B | KBDEXT, \
++    [0x15c] = X5C | KBDEXT, [0x15d] = X5D | KBDEXT, [0x15f] = X5F | KBDEXT, [0x165] = X65 | KBDEXT, \
++    [0x166] = X66 | KBDEXT, [0x167] = X67 | KBDEXT, [0x168] = X68 | KBDEXT, [0x169] = X69 | KBDEXT, \
++    [0x16a] = X6A | KBDEXT, [0x16b] = X6B | KBDEXT, [0x16c] = X6C | KBDEXT, [0x16d] = X6D | KBDEXT, \
++    [0x11c] = X1C | KBDEXT, [0x146] = X46 | KBDEXT, [0x21d] = Y1D,
++
++static const USHORT scan2vk_us[0x280] =
++{
++    T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T0A, T0B, T0C, T0D, T0E,
++    T0F, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T1A, T1B, T1C,
++    T1D, T1E, T1F, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29,
++    T2A, T2B, T2C, T2D, T2E, T2F, T30, T31, T32, T33, T34, T35,
++    EXTRA_SCAN2VK
++};
++
++/* The keys that type characters, as Haiku raw key codes (the layout drawn at the top of
++ * src/data/keymaps/US.keymap): the number row, the three letter rows and the ISO key left of
++ * Z. Space, Tab, Enter, Backspace and the keypad keep fixed characters. */
++static const BYTE typing_keys[] =
++{
++    0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
++    0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
++    0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46,
++    0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55,
++    0x69,
++};
++
++static const BYTE oem_vkeys[] =
++{
++    VK_OEM_1, VK_OEM_2, VK_OEM_3, VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7, VK_OEM_8, VK_OEM_102,
++    VK_OEM_PLUS, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD,
++};
++
++/* The names win32u's US table gives keys that type no character. GetKeyNameText names the
++ * others by their character. */
++static const struct { WORD scan; const char *name; } key_names_ascii[] =
++{
++    { 0x001, "Esc" }, { 0x00e, "Backspace" }, { 0x00f, "Tab" }, { 0x01c, "Enter" },
++    { 0x01d, "Ctrl" }, { 0x02a, "Shift" }, { 0x036, "Right Shift" }, { 0x037, "Num *" },
++    { 0x038, "Alt" }, { 0x039, "Space" }, { 0x03a, "Caps Lock" }, { 0x03b, "F1" },
++    { 0x03c, "F2" }, { 0x03d, "F3" }, { 0x03e, "F4" }, { 0x03f, "F5" }, { 0x040, "F6" },
++    { 0x041, "F7" }, { 0x042, "F8" }, { 0x043, "F9" }, { 0x044, "F10" }, { 0x045, "Pause" },
++    { 0x046, "Scroll Lock" }, { 0x047, "Num 7" }, { 0x048, "Num 8" }, { 0x049, "Num 9" },
++    { 0x04a, "Num -" }, { 0x04b, "Num 4" }, { 0x04c, "Num 5" }, { 0x04d, "Num 6" },
++    { 0x04e, "Num +" }, { 0x04f, "Num 1" }, { 0x050, "Num 2" }, { 0x051, "Num 3" },
++    { 0x052, "Num 0" }, { 0x053, "Num Del" }, { 0x054, "Sys Req" }, { 0x057, "F11" },
++    { 0x058, "F12" }, { 0x07c, "F13" }, { 0x07d, "F14" }, { 0x07e, "F15" }, { 0x07f, "F16" },
++    { 0x080, "F17" }, { 0x081, "F18" }, { 0x082, "F19" }, { 0x083, "F20" }, { 0x084, "F21" },
++    { 0x085, "F22" }, { 0x086, "F23" }, { 0x087, "F24" },
++    { 0x11c, "Num Enter" }, { 0x11d, "Right Ctrl" }, { 0x135, "Num /" },
++    { 0x137, "Prnt Scrn" }, { 0x138, "Right Alt" }, { 0x145, "Num Lock" }, { 0x146, "Break" },
++    { 0x147, "Home" }, { 0x148, "Up" }, { 0x149, "Page Up" }, { 0x14b, "Left" },
++    { 0x14d, "Right" }, { 0x14f, "End" }, { 0x150, "Down" }, { 0x151, "Page Down" },
++    { 0x152, "Insert" }, { 0x153, "Delete" }, { 0x154, "<00>" }, { 0x156, "Help" },
++    { 0x15b, "Left Windows" }, { 0x15c, "Right Windows" }, { 0x15d, "Application" },
++};
++
++/* Columns: 0 plain, 1 Shift, 2 Ctrl, 3 AltGr (Ctrl+Alt), 4 Shift+AltGr. win32u takes Ctrl
++ * combinations from its US table and makes Ctrl+letter itself (kbd_tables_vkey_to_wchar), so
++ * column 2 stays empty. Alt alone types the plain character, which is what menus look up
++ * (the US table does the same). */
++#define COLUMNS 5
++
++static KBDTABLES tables;
++static USHORT vsc2vk[0x100];
++static VSC_VK vsc2vk_e0[0x100];
++static VSC_VK vsc2vk_e1[0x10];
++/* Two entries per typing key at most (SGCAPS), the 11 fixed ones, and a zero one to end it. */
++static VK_TO_WCHARS5 vk2wchars[2 * ARRAY_SIZE(typing_keys) + 11 + 1];
++static VK_TO_WCHAR_TABLE vk2wchar_table[2];
++static VK_TO_BIT vk2bit[4];
++static union
++{
++    MODIFIERS modifiers;
++    char buffer[offsetof(MODIFIERS, ModNumber[8])];
++} modifiers;
++static VSC_LPWSTR key_names[ARRAY_SIZE(key_names_ascii) + 1];
++static VSC_LPWSTR key_names_ext[ARRAY_SIZE(key_names_ascii) + 1];
++static WCHAR key_names_str[ARRAY_SIZE(key_names_ascii) * 16];
++
++static pthread_once_t tables_once = PTHREAD_ONCE_INIT;
++static BOOL tables_ok;
++static BOOL has_altgr;
++
++static WCHAR to_wchar(uint32_t c)
++{
++    /* Haiku keymaps give control codes for keys that type nothing (B_FUNCTION_KEY, the
++     * arrows, ...); those stay out. So do characters beyond the BMP, which need two WCHARs. */
++    if (c < 0x20 || c == 0x7f || c > 0xffff || (c >= 0xd800 && c < 0xe000)) return WCH_NONE;
++    return c;
++}
++
++static BYTE vkey_for_char(WCHAR c)
++{
++    if (c >= 'a' && c <= 'z') return c - 'a' + 'A';
++    if ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) return c;
++    switch (c)
++    {
++    case ',': return VK_OEM_COMMA;
++    case '.': return VK_OEM_PERIOD;
++    case '-': return VK_OEM_MINUS;
++    case '+': case '=': return VK_OEM_PLUS;
++    }
++    return 0;
++}
++
++static void add_chars(VK_TO_WCHARS5 **entry, BYTE vkey, BYTE attributes, WCHAR plain, WCHAR shift,
++                      WCHAR altgr, WCHAR shift_altgr)
++{
++    (*entry)->VirtualKey = vkey;
++    (*entry)->Attributes = attributes;
++    (*entry)->wch[0] = plain;
++    (*entry)->wch[1] = shift;
++    (*entry)->wch[2] = WCH_NONE;
++    (*entry)->wch[3] = altgr;
++    (*entry)->wch[4] = shift_altgr;
++    TRACE("vkey %#04x attr %#x -> %s\n", vkey, attributes, debugstr_wn((*entry)->wch, COLUMNS));
++    (*entry)++;
++}
++
++static void build_key_names(void)
++{
++    VSC_LPWSTR *name = key_names, *name_ext = key_names_ext;
++    WCHAR *str = key_names_str;
++    unsigned int i, j;
++
++    for (i = 0; i < ARRAY_SIZE(key_names_ascii); i++)
++    {
++        VSC_LPWSTR *entry = (key_names_ascii[i].scan & 0x100) ? name_ext++ : name++;
++        entry->vsc = key_names_ascii[i].scan & 0xff;
++        entry->pwsz = str;
++        for (j = 0; key_names_ascii[i].name[j]; j++) *str++ = key_names_ascii[i].name[j];
++        *str++ = 0;
++    }
++}
++
++static void build_tables(void)
++{
++    static struct be_keymap keymap;
++    BYTE vkeys[ARRAY_SIZE(typing_keys)] = {0};
++    BOOL used[0x100] = {0};
++    VK_TO_WCHARS5 *entry = vk2wchars;
++    VSC_VK *e0 = vsc2vk_e0, *e1 = vsc2vk_e1;
++    unsigned int i, j, scan, mod;
++    WCHAR decimal;
++
++    if (be_keymap_get(&keymap))
++    {
++        WARN("no keymap from the input server, using the US layout\n");
++        return;
++    }
++    has_altgr = keymap.right_option_key == ALTGR_KEY;
++    TRACE("option keys %#x %#x, altgr %d\n", keymap.left_option_key, keymap.right_option_key, has_altgr);
++
++    for (scan = 0; scan < ARRAY_SIZE(scan2vk_us); scan++)
++    {
++        if (!scan2vk_us[scan] || !(scan & 0xff)) continue;
++        if (scan < 0x100) vsc2vk[scan] = scan2vk_us[scan];
++        else if (scan < 0x200) { e0->Vsc = scan & 0xff; e0->Vk = scan2vk_us[scan]; e0++; }
++        else { e1->Vsc = scan & 0xff; e1->Vk = scan2vk_us[scan]; e1++; }
++    }
++
++    /* Typing keys by their character, then by their US virtual key, then any free one. */
++    for (i = 0; i < ARRAY_SIZE(typing_keys); i++)
++    {
++        WCHAR plain = to_wchar(keymap.chars[BE_KEYS_NORMAL][typing_keys[i]]);
++        WCHAR shift = to_wchar(keymap.chars[BE_KEYS_SHIFT][typing_keys[i]]);
++        BYTE vkey = vkey_for_char(plain);
++        if (!vkey && shift >= '0' && shift <= '9') vkey = shift;
++        if (vkey && !used[vkey]) used[vkeys[i] = vkey] = TRUE;
++    }
++    for (i = 0; i < ARRAY_SIZE(typing_keys); i++)
++    {
++        BYTE vkey = scan2vk_us[renku_keycode_to_scan[typing_keys[i]]] & 0xff;
++        if (vkeys[i]) continue;
++        if (!used[vkey]) used[vkeys[i] = vkey] = TRUE;
++        else
++        {
++            for (j = 0; j < ARRAY_SIZE(oem_vkeys) && used[oem_vkeys[j]]; j++) {}
++            if (j < ARRAY_SIZE(oem_vkeys)) used[vkeys[i] = oem_vkeys[j]] = TRUE;
++        }
++    }
++
++    for (i = 0; i < ARRAY_SIZE(typing_keys); i++)
++    {
++        WCHAR ch[BE_KEYS_COUNT];
++        BOOL any = FALSE;
++        unsigned int t;
++
++        scan = renku_keycode_to_scan[typing_keys[i]];
++        if (!vkeys[i]) continue;
++        vsc2vk[scan] = vkeys[i];
++        TRACE("key %#x scan %#x -> vkey %#x\n", typing_keys[i], scan, vkeys[i]);
++
++        for (t = 0; t < BE_KEYS_COUNT; t++)
++        {
++            ch[t] = to_wchar(keymap.chars[t][typing_keys[i]]);
++            /* RenkuOS keymaps fill unused Option entries with a space (German.keymap:
++             * Key 0x11 = '^' 0xc2b0 '' ' ' ...). On Windows AltGr there types nothing, and
++             * a space would land in text fields with every Ctrl+Alt shortcut. */
++            if (t >= BE_KEYS_OPTION && (!has_altgr || ch[t] == ' ')) ch[t] = WCH_NONE;
++            if (ch[t] != WCH_NONE) any = TRUE;
++        }
++        if (!any) continue;
++
++        /* Caps Lock: no effect, the same as Shift for plain and Shift (CAPLOK), or its own
++         * characters, in an entry of its own that comes first (SGCAPS); see win32u's
++         * kbd_tables_vkey_to_wchar. Only the plain and Shift levels decide: win32u has no
++         * Caps Lock rule for AltGr alone, and an SGCAPS entry comes first, so VkKeyScan
++         * would report its Caps Lock combination for every character on the key. */
++        if (ch[BE_KEYS_CAPS] == ch[BE_KEYS_NORMAL] && ch[BE_KEYS_CAPS_SHIFT] == ch[BE_KEYS_SHIFT])
++            add_chars(&entry, vkeys[i], 0, ch[BE_KEYS_NORMAL], ch[BE_KEYS_SHIFT],
++                      ch[BE_KEYS_OPTION], ch[BE_KEYS_OPTION_SHIFT]);
++        else if (ch[BE_KEYS_CAPS] == ch[BE_KEYS_SHIFT] && ch[BE_KEYS_CAPS_SHIFT] == ch[BE_KEYS_NORMAL])
++            add_chars(&entry, vkeys[i], CAPLOK, ch[BE_KEYS_NORMAL], ch[BE_KEYS_SHIFT],
++                      ch[BE_KEYS_OPTION], ch[BE_KEYS_OPTION_SHIFT]);
++        else
++        {
++            add_chars(&entry, vkeys[i], SGCAPS, ch[BE_KEYS_CAPS], ch[BE_KEYS_CAPS_SHIFT],
++                      ch[BE_KEYS_OPTION_CAPS], ch[BE_KEYS_OPTION_CAPS_SHIFT]);
++            add_chars(&entry, vkeys[i], 0, ch[BE_KEYS_NORMAL], ch[BE_KEYS_SHIFT],
++                      ch[BE_KEYS_OPTION], ch[BE_KEYS_OPTION_SHIFT]);
++        }
++    }
++
++    /* The keys with fixed characters, as in win32u's US table. The keypad's decimal key types
++     * the keymap's decimal separator (Num Lock on: the Shift table, BKeymap::GetChars). */
++    add_chars(&entry, VK_BACK, 0, '\b', '\b', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_ESCAPE, 0, 0x1b, 0x1b, WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_RETURN, 0, '\r', '\r', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_SPACE, 0, ' ', ' ', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_TAB, 0, '\t', '\t', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_CANCEL, 0, 0x03, 0x03, WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_ADD, 0, '+', '+', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_SUBTRACT, 0, '-', '-', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_MULTIPLY, 0, '*', '*', WCH_NONE, WCH_NONE);
++    add_chars(&entry, VK_DIVIDE, 0, '/', '/', WCH_NONE, WCH_NONE);
++    if ((decimal = to_wchar(keymap.chars[BE_KEYS_SHIFT][0x65])) == WCH_NONE) decimal = '.';
++    add_chars(&entry, VK_DECIMAL, 0, decimal, decimal, WCH_NONE, WCH_NONE);
++    /* The rest of vk2wchars stays zero, and the first zero entry ends the table. */
++
++    vk2wchar_table[0].pVkToWchars = (VK_TO_WCHARS1 *)vk2wchars;
++    vk2wchar_table[0].nModifications = COLUMNS;
++    vk2wchar_table[0].cbSize = sizeof(vk2wchars[0]);
++
++    vk2bit[0].Vk = VK_SHIFT;
++    vk2bit[0].ModBits = KBDSHIFT;
++    vk2bit[1].Vk = VK_CONTROL;
++    vk2bit[1].ModBits = KBDCTRL;
++    vk2bit[2].Vk = VK_MENU;
++    vk2bit[2].ModBits = KBDALT;
++    modifiers.modifiers.pVkToBit = vk2bit;
++    modifiers.modifiers.wMaxModBits = KBDSHIFT | KBDCTRL | KBDALT;
++    for (mod = 0; mod <= (KBDSHIFT | KBDCTRL | KBDALT); mod++)
++    {
++        BYTE column;
++        if ((mod & (KBDCTRL | KBDALT)) == (KBDCTRL | KBDALT)) column = (mod & KBDSHIFT) ? 4 : 3;
++        else if (mod & KBDCTRL) column = 2;
++        else column = (mod & KBDSHIFT) ? 1 : 0;
++        modifiers.modifiers.ModNumber[mod] = column;
++    }
++
++    build_key_names();
++
++    tables.pCharModifiers = &modifiers.modifiers;
++    tables.pVkToWcharTable = vk2wchar_table;
++    tables.pKeyNames = key_names;
++    tables.pKeyNamesExt = key_names_ext;
++    tables.pusVSCtoVK = vsc2vk;
++    tables.bMaxVSCtoVK = ARRAY_SIZE(vsc2vk) - 1;
++    tables.pVSCtoVK_E0 = vsc2vk_e0;
++    tables.pVSCtoVK_E1 = vsc2vk_e1;
++    tables.fLocaleFlags = MAKELONG(has_altgr ? KLLF_ALTGR : 0, KBD_VERSION);
++    tables_ok = TRUE;
++}
++
++/* Whether Right Alt types the keymap's Option characters, as AltGr. */
++BOOL renku_keyboard_has_altgr(void)
++{
++    pthread_once(&tables_once, build_tables);
++    return tables_ok && has_altgr;
++}
++
++/***********************************************************************
++ *           RENKU_KbdLayerDescriptor
++ *
++ * The same tables for every HKL: RenkuOS has one keymap at a time.
++ */
++const KBDTABLES *RENKU_KbdLayerDescriptor(HKL layout)
++{
++    pthread_once(&tables_once, build_tables);
++    return tables_ok ? &tables : NULL;
++}
++
++void RENKU_ReleaseKbdTables(const KBDTABLES *ptr)
++{
++    /* Built once, never freed. */
++}
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+index 5af305e6..10a35947 100644
+--- a/dlls/winerenku.drv/renku.h
++++ b/dlls/winerenku.drv/renku.h
+@@ -65,8 +65,14 @@ extern void RENKU_ActivateWindow(HWND hwnd, HWND previous);
+ extern LRESULT RENKU_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+ 
+ /* event.c */
++extern const WORD renku_keycode_to_scan[0x80];
+ extern NTSTATUS renku_unix_event_loop(void *arg);
+ 
++/* keyboard.c */
++extern const KBDTABLES *RENKU_KbdLayerDescriptor(HKL layout);
++extern void RENKU_ReleaseKbdTables(const KBDTABLES *tables);
++extern BOOL renku_keyboard_has_altgr(void);
++
+ /* surface.c */
+ extern struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+                                                    const RECT *rect);
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+index db616b9c..2d4d38b6 100644
+--- a/dlls/winerenku.drv/renku_be.h
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -147,6 +147,31 @@ int be_event_pending(void);
+ /* Whether app_server reports one of this process's windows as active. */
+ int be_any_window_active(void);
+ 
++/* The keymap chosen in RenkuOS's Keymap preferences, as the input server has it. */
++enum be_key_table
++{
++    BE_KEYS_NORMAL,
++    BE_KEYS_SHIFT,
++    BE_KEYS_CAPS,
++    BE_KEYS_CAPS_SHIFT,
++    BE_KEYS_OPTION,
++    BE_KEYS_OPTION_SHIFT,
++    BE_KEYS_OPTION_CAPS,
++    BE_KEYS_OPTION_CAPS_SHIFT,
++    BE_KEYS_COUNT
++};
++
++struct be_keymap
++{
++    /* For each Haiku raw key code, the character each table gives, as UTF-32; 0 for none. */
++    uint32_t chars[BE_KEYS_COUNT][128];
++    /* The raw key codes of the Option keys, which select the BE_KEYS_OPTION* tables. */
++    uint32_t left_option_key, right_option_key;
++};
++
++/* Returns 0 on success. Asks the input server, and waits for its answer. */
++int be_keymap_get(struct be_keymap *keymap);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/dlls/winerenku.drv/renku_main.c b/dlls/winerenku.drv/renku_main.c
+index 665f3048..3176d6b1 100644
+--- a/dlls/winerenku.drv/renku_main.c
++++ b/dlls/winerenku.drv/renku_main.c
+@@ -50,14 +50,16 @@ char *renku_utf8_from_wstr(const WCHAR *str)
+ 
+ /* Only what win32u cannot do without a window system is here; everything else is win32u's
+  * own default (dlls/win32u/driver.c). Keyboard and mouse input do not go through this table:
+- * the event thread (event.c) sends them. Cursors, clipboard and the other entries come in
+- * later patches. */
++ * the event thread (event.c) sends them; only the keyboard layout (keyboard.c) does. The
++ * clipboard and the other entries come in later patches. */
+ static const struct user_driver_funcs renku_funcs =
+ {
+     .pActivateWindow = RENKU_ActivateWindow,
+     .pCreateWindowSurface = RENKU_CreateWindowSurface,
+     .pDestroyWindow = RENKU_DestroyWindow,
+     .pGetWindowStyleMasks = RENKU_GetWindowStyleMasks,
++    .pKbdLayerDescriptor = RENKU_KbdLayerDescriptor,
++    .pReleaseKbdTables = RENKU_ReleaseKbdTables,
+     .pSetWindowText = RENKU_SetWindowText,
+     .pUpdateDisplayDevices = RENKU_UpdateDisplayDevices,
+     .pWindowMessage = RENKU_WindowMessage,
 -- 
 2.47.3
 
