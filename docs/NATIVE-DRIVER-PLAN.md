@@ -268,8 +268,14 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
    G1. **Done as patches 16 and 17** (G1 partly checked, see §4).
 3. Input and focus: event queue, keyboard (raw key code → scancode table read from RenkuOS's
    keyboard sources, then KBDTABLES from `get_key_map()`), mouse, capture, cursors → G2, G3.
-   **Mostly done as patch 18** (G2 and G3 passed in the VM). Still open: cursors, and
-   KBDTABLES from `get_key_map()` (the US tables are used).
+   **Mostly done as patch 18** (G2 and G3 passed in the VM). Still open: KBDTABLES from
+   `get_key_map()` (the US tables are used). Cursor shapes are left out by choice: the pointer
+   stays RenkuOS's own arrow over Wine windows, which is more coherent than one that changes
+   with every program. A `SetCursor` that maps Win32's standard cursors to `BCursorID` and
+   draws the others was written and dropped (in its first test the I-beam did not show,
+   cause not looked into); it is kept as `attic/winerenku-cursor-shapes.diff`. Revisit only
+   if a program needs it, for example a plug-in that hides the pointer while a knob is
+   dragged.
 4. Window management: menus and tooltips, owned and modal windows, layered windows and regions
    as far as P4 allows.
 5. Desktop: clipboard → G4; then keyboard layouts, IME, systray, as separate patches.
