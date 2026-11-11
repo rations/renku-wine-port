@@ -11,7 +11,7 @@ Build on top of this port tree (`haiku-wine-port`, Wine 11.8 from HaikuPorts, al
 running on the laptop). **No changes to win32u / opengl32 are required** — the change is a new
 GL backend inside the Haiku display driver (`winewayland.drv`) plus recipe/build wiring.
 
-> **Now in `winerenku.drv` (11.21, patch 20, 2026-11-11).** The backend described here moved
+> **Now in `winerenku.drv` (11.21, patch 19 since REVISION 9, 2026-11-11).** The backend described here moved
 > out of `winewayland.drv`, which the 11.21 port does not build, into the native driver
 > (`dlls/winerenku.drv/opengl.c`). §2 and the GL half of §3 still hold. The presentation is new:
 > instead of `wl_shm` buffers, a GL window that nothing clips shows its frames in a BView of

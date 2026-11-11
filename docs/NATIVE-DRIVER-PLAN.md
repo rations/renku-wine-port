@@ -173,7 +173,7 @@ no-driver base, all on the build VM:
    "mac,x11,wayland" and none of them exists, so programs get
    `nodrv_CreateWindow … no driver could be loaded`. For the probe, the prefix is seeded with
    `HKCU\Software\Wine\Drivers` `Graphics=null` ([probes/sigprobe-user.reg](probes/sigprobe-user.reg)).
-   Patch 16 replaces this with `renku` first in `default_driver`.
+   Patch 15 replaces this with `renku` first in `default_driver`.
 3. **Wine Mono's install prompt waits for a click**, with 11.19 as well. Mono and Gecko are
    wanted, so prefixes are created with the prompt answered by hand, not skipped. The one
    unattended prefix, `p3prefix`, was made with `WINEDLLOVERRIDES=mscoree,mshtml=`
@@ -210,7 +210,7 @@ What P4 established:
   shape or a per-window alpha. Unless app_server turns out to support one privately,
   `SetWindowRgn` and `WS_EX_LAYERED` alpha degrade to rectangular, opaque windows.
 
-What the first driver stage (patch 15) found on the build VM:
+What the first driver stage (patch 14) found on the build VM:
 
 - **`BScreen` needs `be_app`.** Constructed before the BApplication runs, it is invalid, so the
   driver starts the application before asking for screens.
@@ -225,7 +225,7 @@ What the first driver stage (patch 15) found on the build VM:
   same as a 32bpp DIB, so the surface is copied without conversion. Notepad is black and white,
   so a coloured window still has to confirm it.
 
-What the second stage (patch 17) found:
+What the second stage (patch 16) found:
 
 - **win32u holds back mouse moves.** Pure moves sent with `NtUserSendHardwareInput` reach the
   server only with the next button or wheel input, a move for another window, or an empty
@@ -253,25 +253,25 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
 
 | Gate | What has to work | Status |
 |---|---|---|
-| G1 | notepad and winecfg appear in native windows | **partly**: notepad passed in the build VM on 2026-11-11 (patch 15): one titled native window with its title, menu bar, a white edit area and a blinking caret, nothing garbled. winecfg not tried yet, and not checked on bare metal yet. |
-| G2 | typing, clicking, menus, dialogs | **passed in the build VM**, 2026-11-11 (patch 17): notepad (typing, drag selection, menus by mouse and Alt+F, the save dialog) and Amped - Roots, a JUCE 6.1.5 program (knobs, its own menus, settings dialogs). Not checked on bare metal yet. |
-| G3 | moving, resizing, minimizing and closing from the system decorator | **passed in the build VM**, 2026-11-11 (patch 17): both programs; minimize goes to the Deskbar and restores from it. Not checked on bare metal yet. |
-| G4 | clipboard, both ways | **passed for text in the build VM**, 2026-11-11 (patch 19): notepad and StyledEdit, both ways, from the menus and the shortcuts. Images and other formats are not carried yet. Not checked on bare metal yet. |
-| G5 | OSMesa GL gates 1–5 of [OSMESA-GL-PLAN.md](OSMESA-GL-PLAN.md) §5, under the new driver | **gates 1–4 passed in the build VM**, 2026-11-11 (patch 20), from the work tree, checked on the screen itself by `probes/screencheck.cpp`, three runs each: `probes/osprobe.c` (GL 4.5 on llvmpipe, hrev60072+518, Mesa 22.0.5); `probes/glprobe.c` 29/29 (4.5 compatibility and core contexts; the test pattern the right way up and the right colours; a GL child window in place; the GDI fallback under an overlapping window, which stays on top; the last frame of a burst left on screen; a resize); `probes/d3dprobe.c` 8/8 (wined3d D3D9 and D3D11 feature level 11_0 devices, presented colours on screen). Gate 5, an NA VST3 editor in jackDAW, waits for G6. Not checked on bare metal. |
+| G1 | notepad and winecfg appear in native windows | **partly**: notepad passed in the build VM on 2026-11-11 (patch 14): one titled native window with its title, menu bar, a white edit area and a blinking caret, nothing garbled. winecfg not tried yet, and not checked on bare metal yet. |
+| G2 | typing, clicking, menus, dialogs | **passed in the build VM**, 2026-11-11 (patch 16): notepad (typing, drag selection, menus by mouse and Alt+F, the save dialog) and Amped - Roots, a JUCE 6.1.5 program (knobs, its own menus, settings dialogs). Not checked on bare metal yet. |
+| G3 | moving, resizing, minimizing and closing from the system decorator | **passed in the build VM**, 2026-11-11 (patch 16): both programs; minimize goes to the Deskbar and restores from it. Not checked on bare metal yet. |
+| G4 | clipboard, both ways | **passed for text in the build VM**, 2026-11-11 (patch 18): notepad and StyledEdit, both ways, from the menus and the shortcuts. Images and other formats are not carried yet. Not checked on bare metal yet. |
+| G5 | OSMesa GL gates 1–5 of [OSMESA-GL-PLAN.md](OSMESA-GL-PLAN.md) §5, under the new driver | **gates 1–4 passed in the build VM**, 2026-11-11 (patch 19), from the work tree, checked on the screen itself by `probes/screencheck.cpp`, three runs each: `probes/osprobe.c` (GL 4.5 on llvmpipe, hrev60072+518, Mesa 22.0.5); `probes/glprobe.c` 29/29 (4.5 compatibility and core contexts; the test pattern the right way up and the right colours; a GL child window in place; the GDI fallback under an overlapping window, which stays on top; the last frame of a burst left on screen; a resize); `probes/d3dprobe.c` 8/8 (wined3d D3D9 and D3D11 feature level 11_0 devices, presented colours on screen). Gate 5, an NA VST3 editor in jackDAW, waits for G6. Not checked on bare metal. |
 | G6 | a VST editor through vstbridge rebuilt on this Wine | not started |
 
 ## 5. Phases
 
-Patch numbers in this document are REVISION 8's, which dropped patch 1; records written before it
-have been renumbered to match.
+Patch numbers in this document are REVISION 9's, which dropped patch 4 (REVISION 8 dropped patch 1);
+records written before them have been renumbered to match.
 
 0. Rebase onto 11.21 without Wayland (§1).
 1. Probes P1–P4 (§3).
 2. Skeleton: BApplication thread, displays from `BScreen`, BWindow per top-level, surfaces →
-   G1. **Done as patches 15 and 16** (G1 partly checked, see §4).
+   G1. **Done as patches 14 and 15** (G1 partly checked, see §4).
 3. Input and focus: event queue, keyboard (raw key code → scancode table read from RenkuOS's
    keyboard sources, then KBDTABLES from `get_key_map()`), mouse, capture, cursors → G2, G3.
-   **Done as patches 17 and 18** (G2 and G3 passed in the VM). Patch 18 builds KBDTABLES
+   **Done as patches 16 and 17** (G2 and G3 passed in the VM). Patch 17 builds KBDTABLES
    from `get_key_map()`; `probes/kbdprobe.c` checked them on the US, US-International, German
    and French keymaps. Still open: dead keys (win32u's KBDTABLES code has no `pDeadKey`), and
    keymap changes while a program runs. Cursor shapes are left out by choice: the pointer
@@ -283,8 +283,8 @@ have been renumbered to match.
    dragged.
 4. Window management: menus and tooltips, owned and modal windows, layered windows and regions
    as far as P4 allows.
-5. Desktop: clipboard → G4 (text done as patch 19); keyboard layout (patch 18); then dead keys, IME, systray, as separate patches.
-6. OpenGL: OSMesa rendering, presented through the client surface → G5. **Done as patch 20**
+5. Desktop: clipboard → G4 (text done as patch 18); keyboard layout (patch 17); then dead keys, IME, systray, as separate patches.
+6. OpenGL: OSMesa rendering, presented through the client surface → G5. **Done as patch 19**
    (G5 gates 1–4 passed in the VM). A GL window that nothing clips shows its frames in a view
    of its own, a child of the surface view in its top-level's BWindow (`be_layer_*`), which
    app_server draws as soon as a frame is posted. One that something clips (an overlapping

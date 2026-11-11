@@ -1,7 +1,7 @@
-From 7ac083e169a8a7f9f7b12397a448605d4ab7a513 Mon Sep 17 00:00:00 2001
+From 3214897ec115b208fb016acde50943bc102295aa Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 01/20] 11.8 patches
+Subject: [PATCH 01/19] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -21,27 +21,37 @@ bitblt.c and keyboard.c (for xlibe). Without them, HaikuPorts' "Add Wayland inpu
 dropped too: upstream's #include <linux/input.h> is a system include, which makedep skips when
 it cannot find it (tools/makedep.c, "ignore system files we cannot find"), whereas the quoted
 "input-event-codes.h" made configure fail. Both remain in HaikuPorts' own port.]
+
+[rations: also dropped the fault dump in segv_handler and abrt_handler, with its helpers
+LdrFindEntryForAddress2, WriteRtlString and WriteModuleName. It was debug instrumentation: it
+printed with printf from a signal handler, on every SIGSEGV including the page faults Wine
+handles itself, and then waited on fgetc(stdin) (a local patch had removed that wait). Worse,
+WriteModuleName reads NtCurrentTeb()->Peb->LdrData, which is not set yet early in process
+start, so a fault there faulted again inside the handler, a loop that pinned a core: on a
+kernel without LDT support, every 32-bit process (Wine Mono's installinf-x86.exe,
+syswow64\rundll32.exe in a prefix update) hung that way instead of exiting. Without the dump
+the handler is upstream's; the local patch that removed the wait is dropped with it.]
 ---
- dlls/crypt32/unixlib.c          |   4 ++
- dlls/nsiproxy.sys/ndis.c        |  13 ++++
- dlls/ntdll/unix/file.c          |   7 ++
- dlls/ntdll/unix/loader.c        |   8 +++
- dlls/ntdll/unix/serial.c        |   2 +
- dlls/ntdll/unix/server.c        |   3 +
- dlls/ntdll/unix/signal_x86_64.c | 121 ++++++++++++++++++++++++++++++++
- dlls/ntdll/unix/socket.c        |  15 ++++
- dlls/ntdll/unix/system.c        |  16 +++++
- dlls/ntdll/unix/thread.c        |  17 +++++
- dlls/ntdll/unix/virtual.c       |  51 ++++++++++++++
- dlls/ws2_32/unixlib.c           |   7 ++
- include/wine/server.h           |   4 +-
- programs/winedbg/winedbg.c      |   3 +
- server/change.c                 |   3 +
- server/fd.c                     |   4 ++
- server/signal.c                 |   6 ++
- server/sock.c                   |  14 ++++
- tools/winegcc/winegcc.c         |   3 +
- 19 files changed, 299 insertions(+), 2 deletions(-)
+ dlls/crypt32/unixlib.c          |  4 +++
+ dlls/nsiproxy.sys/ndis.c        | 13 ++++++++
+ dlls/ntdll/unix/file.c          |  7 +++++
+ dlls/ntdll/unix/loader.c        |  8 +++++
+ dlls/ntdll/unix/serial.c        |  2 ++
+ dlls/ntdll/unix/server.c        |  3 ++
+ dlls/ntdll/unix/signal_x86_64.c | 54 +++++++++++++++++++++++++++++++++
+ dlls/ntdll/unix/socket.c        | 15 +++++++++
+ dlls/ntdll/unix/system.c        | 16 ++++++++++
+ dlls/ntdll/unix/thread.c        | 17 +++++++++++
+ dlls/ntdll/unix/virtual.c       | 51 +++++++++++++++++++++++++++++++
+ dlls/ws2_32/unixlib.c           |  7 +++++
+ include/wine/server.h           |  4 +--
+ programs/winedbg/winedbg.c      |  3 ++
+ server/change.c                 |  3 ++
+ server/fd.c                     |  4 +++
+ server/signal.c                 |  6 ++++
+ server/sock.c                   | 14 +++++++++
+ tools/winegcc/winegcc.c         |  3 ++
+ 19 files changed, 232 insertions(+), 2 deletions(-)
 
 diff --git a/dlls/crypt32/unixlib.c b/dlls/crypt32/unixlib.c
 index e5de77a2..4fd62f52 100644
@@ -209,7 +219,7 @@ index fa9138d2..d626ad11 100644
  #include "ntstatus.h"
  #include "windef.h"
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index 7bff70ba..50a7990f 100644
+index 7bff70ba..34dddd5f 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -75,6 +75,20 @@
@@ -319,95 +329,7 @@ index 7bff70ba..50a7990f 100644
      default:
          return FALSE;
      }
-@@ -2229,6 +2280,45 @@ static inline BOOL check_invalid_gsbase( struct thread_data *data, ucontext_t *u
-     return TRUE;
- }
- 
-+NTSTATUS static LdrFindEntryForAddress2( const void *addr, PLDR_DATA_TABLE_ENTRY *pmod )
-+{
-+    PLIST_ENTRY mark, entry;
-+    PLDR_DATA_TABLE_ENTRY mod;
-+
-+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-+    {
-+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-+        if (mod->DllBase <= addr &&
-+            (const char *)addr < (char*)mod->DllBase + mod->SizeOfImage)
-+        {
-+            *pmod = mod;
-+            return STATUS_SUCCESS;
-+        }
-+    }
-+    return STATUS_NO_MORE_ENTRIES;
-+}
-+
-+static void WriteRtlString(UNICODE_STRING str)
-+{
-+	for (int i = 0; i < str.Length; i++) {
-+		printf("%c", str.Buffer[i]);
-+	}
-+}
-+
-+static void WriteModuleName(addr_t address)
-+{
-+	HMODULE hModule = NULL;
-+	PLDR_DATA_TABLE_ENTRY pmod = NULL;
-+	LdrFindEntryForAddress2(
-+		(void*)address,
-+		&pmod
-+	);
-+	hModule = pmod == NULL ? NULL : pmod->DllBase;
-+	printf("  hModule: %p\n", hModule);
-+	if (hModule != NULL)
-+	printf("  BaseDllName: %s\n", debugstr_w(pmod->BaseDllName.Buffer)); printf("\n");
-+}
- 
- /**********************************************************************
-  *		segv_handler
-@@ -2242,6 +2332,20 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
-     struct xcontext context;
-     EXCEPTION_RECORD rec = { .ExceptionAddress = (void *)RIP_sig(sigcontext) };
- 
-+#ifdef __HAIKU__
-+	printf("segv_handler\n");
-+    printf("&segv_handler: %p\n", &segv_handler);
-+    printf("pKiUserExceptionDispatcher: %p\n", pKiUserExceptionDispatcher);
-+    printf("  thread: %" PRId32 "\n", find_thread(NULL));
-+    printf("  IP: %#" PRIx64 "\n", RIP_sig(sigcontext));
-+    printf("  SP: %#" PRIx64 "\n", RSP_sig(sigcontext));
-+    printf("  FP: %#" PRIx64 "\n", RBP_sig(sigcontext));
-+    printf("  address: %#" PRIx64 "\n", siginfo->si_addr);
-+    WriteModuleName(RIP_sig(sigcontext));
-+    fgetc(stdin);
-+    //_exit(1);
-+#endif
-+
-     save_context( data, &context, sigcontext );
- 
-     switch(TRAP_sig(sigcontext))
-@@ -2472,6 +2576,20 @@ static void int_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
- static void abrt_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
- {
-     ucontext_t *sigcontext = _sigcontext;
-+
-+#ifdef __HAIKU__
-+    printf("abrt_handler\n");
-+    printf("&abrt_handler: %p\n", &segv_handler);
-+    printf("pKiUserExceptionDispatcher: %p\n", pKiUserExceptionDispatcher);
-+    printf("  thread: %" PRId32 "\n", find_thread(NULL));
-+    printf("  IP: %#" PRIx64 "\n", RIP_sig(sigcontext));
-+    printf("  SP: %#" PRIx64 "\n", RSP_sig(sigcontext));
-+    printf("  FP: %#" PRIx64 "\n", RBP_sig(sigcontext));
-+    printf("  address: %#" PRIx64 "\n", siginfo->si_addr);
-+    //fgetc(stdin);
-+    //_exit(1);
-+#endif
-+
-     struct thread_data *data = init_handler( sigcontext );
-     struct xcontext context;
-     EXCEPTION_RECORD rec = { .ExceptionCode = EXCEPTION_WINE_ASSERTION,
-@@ -2874,6 +2992,9 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+@@ -2874,6 +2925,9 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
      sysarch( X86_64_SET_GSBASE, &teb );
  #elif defined (__APPLE__)
      thread_data->pthread_teb = mac_thread_gsbase();
@@ -845,10 +767,10 @@ index f800c0f7..ad509c18 100644
 2.47.3
 
 
-From b0df0b6b5e1146f11691640b10c3655f83cd6a46 Mon Sep 17 00:00:00 2001
+From d860e9426d85a9bc0125047143b7ae4e5dc7649e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 02/20] Opensound support
+Subject: [PATCH 02/19] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -918,10 +840,10 @@ index f5844912..1aee2585 100644
 2.47.3
 
 
-From f752c55a97c4658e69844f78d051be157415eb10 Mon Sep 17 00:00:00 2001
+From 92f1174d91d7e291158354efbd91a90e693c2a94 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 03/20] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 03/19] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -1035,57 +957,10 @@ index 88d00d1f..f4ab87b1 100644
 2.47.3
 
 
-From a3b838bf3f16d70b4edd51c837d73f370bffc53b Mon Sep 17 00:00:00 2001
-From: rations <ehqcar@proton.me>
-Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 04/20] Do not block in the SIGSEGV handler on Haiku
-
-The Haiku port left an interactive debug hook in segv_handler: after
-printing the fault it called fgetc(stdin) and waited for a keypress, with
-the _exit(1) below it commented out.
-
-Any process without a usable stdin -- a DAW, a GUI application, anything
-launched from the Deskbar -- therefore hangs instead of crashing.  Worse,
-when stdin is at EOF the read returns immediately, the handler falls
-through, the faulting instruction re-executes and faults again, spinning
-a core indefinitely.  Every crash became an unkillable freeze that hid
-the actual fault, and left orphaned wine sessions behind because the
-faulting process never exited.
-
-Keep the diagnostics, drop the wait, and let execution continue into the
-normal exception dispatch as upstream does.
----
- dlls/ntdll/unix/signal_x86_64.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
-
-diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index 50a7990f..51159fcb 100644
---- a/dlls/ntdll/unix/signal_x86_64.c
-+++ b/dlls/ntdll/unix/signal_x86_64.c
-@@ -2342,7 +2342,14 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
-     printf("  FP: %#" PRIx64 "\n", RBP_sig(sigcontext));
-     printf("  address: %#" PRIx64 "\n", siginfo->si_addr);
-     WriteModuleName(RIP_sig(sigcontext));
--    fgetc(stdin);
-+    /* The Haiku port stopped here with a blocking fgetc(stdin) so a developer
-+     * could inspect the fault interactively.  Anything without a usable stdin
-+     * -- a DAW, any GUI app, anything started from the Deskbar -- then turns
-+     * every SIGSEGV into a hang instead of a crash: the handler either blocks
-+     * forever, or gets EOF straight back, falls through, re-executes the
-+     * faulting instruction and faults again in a tight loop, pinning a core.
-+     * The diagnostics above are kept; execution now continues into the normal
-+     * exception dispatch below, which is what upstream does. */
-     //_exit(1);
- #endif
- 
--- 
-2.47.3
-
-
-From 12875a433f93fba5550295b642cb07217c3a1062 Mon Sep 17 00:00:00 2001
+From 5d6a9a325a002afd6943c50e4596f2db7044b5d4 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 05/20] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 04/19] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -1131,10 +1006,10 @@ index 71ba308c..e959a762 100644
 2.47.3
 
 
-From 2b7a3ec7aa20c930466252db0dac5678fd8a178f Mon Sep 17 00:00:00 2001
+From 98cfd029642ecf239b090e210f5ff46d2ad63550 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 06/20] dxgi: Wait for a refresh interval in
+Subject: [PATCH 05/19] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -1214,10 +1089,10 @@ index e828ed0d..9690dee6 100644
 2.47.3
 
 
-From 0a42024077120607d053971cf91931db729544c4 Mon Sep 17 00:00:00 2001
+From 26183c0c90d985857be4aa218b14444819f531f9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 07/20] sechost: Report no failure actions in
+Subject: [PATCH 06/19] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -1279,10 +1154,10 @@ index f05fd2d7..20a7fb17 100644
 2.47.3
 
 
-From ecedb5097c56f6a95c790a1a27eeb0910bb987db Mon Sep 17 00:00:00 2001
+From 13a4edd402133a4f72faddbf2ef3d483472168b0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 08/20] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 07/19] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -1390,10 +1265,10 @@ index 00000000..07b215a1
 2.47.3
 
 
-From e7d488bddf965b871ecc2416f35084968288127f Mon Sep 17 00:00:00 2001
+From c9d6ba381de89aba32a20bc10275caa440125b8f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 09/20] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 08/19] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -1457,10 +1332,10 @@ index ae51b2f7..691b7984 100644
 2.47.3
 
 
-From 412153e4496d9da1b08a21664c1fd782a2d43317 Mon Sep 17 00:00:00 2001
+From d0013fa18609ad945f85a49236e2f659962772e4 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 10/20] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 09/19] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -1537,10 +1412,10 @@ index 2e6d93b7..bda79d71 100644
 2.47.3
 
 
-From 73a992a849a5d5136361151c604db9a83668ff08 Mon Sep 17 00:00:00 2001
+From 4feb2befa95d389a7bd56a946358ff74a3931e39 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 11/20] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 10/19] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -1568,10 +1443,10 @@ index ad509c18..eb83446b 100644
 2.47.3
 
 
-From a773fe62ee0594dba2849d7e90dc7523debb87bd Mon Sep 17 00:00:00 2001
+From bcc8b5f2b4cf30c8b4b397db00a0ddfa40546332 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 12/20] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 11/19] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -1582,9 +1457,16 @@ This needs a Haiku kernel with per-team LDT support, which adds these
 arch_thread_control() calls next to THREAD_SET_GS_BASE:
 THREAD_SET_LDT_ENTRY, THREAD_SET_FS_BASE, THREAD_GET_FS_BASE and
 THREAD_GET_GS_BASE. The constants get fallback definitions here because
-the stock headers lack them. On a stock kernel the call fails with
-B_BAD_HANDLER and 32-bit processes exit with a clear message; 64-bit
-code is unaffected.
+the stock headers lack them. On a stock kernel the LDT call fails and
+32-bit processes exit with "No LDT support in this Haiku kernel"; 64-bit
+code is unaffected. The failure is B_NAME_NOT_FOUND, not B_BAD_HANDLER:
+the kernel's "thread" handler declines the call with B_BAD_HANDLER, but
+_user_generic_syscall() then tries the next handler, finds none, and
+returns B_NAME_NOT_FOUND (src/system/kernel/syscalls.cpp). So any
+failure exits: a failed entry leaves the %fs selector unusable, and the
+first switch to 32-bit code faults on it. (Until REVISION 9 only
+B_BAD_HANDLER exited; on RenkuOS's stock kernel 32-bit processes then
+spun on that fault instead, found on bare metal in 2026-11.)
 
 The model is FreeBSD's: cs32_sel is the GDT USER32_CODE_SELECTOR (0x1b),
 fs32_sel stays 0 so each thread allocates an LDT entry, and the kernel
@@ -1602,12 +1484,12 @@ saves the FS selector in fpu_state (offset 486) on signal delivery.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ---
- dlls/ntdll/unix/signal_x86_64.c | 123 +++++++++++++++++++++++++++-----
+ dlls/ntdll/unix/signal_x86_64.c | 124 +++++++++++++++++++++++++++-----
  dlls/ntdll/unix/system.c        |   2 +
- 2 files changed, 107 insertions(+), 18 deletions(-)
+ 2 files changed, 108 insertions(+), 18 deletions(-)
 
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index 51159fcb..4b40607d 100644
+index 34dddd5f..ce7401da 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -87,6 +87,19 @@ extern void _thread_set_tsd_base(uint64_t);
@@ -1735,7 +1617,7 @@ index 51159fcb..4b40607d 100644
  #elif defined(__APPLE__)
      /* leave_handler() will set GSBASE to the TEB */
  #endif
-@@ -2767,6 +2783,18 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+@@ -2693,6 +2709,19 @@ void ldt_set_entry( WORD sel, LDT_ENTRY entry )
          perror("i386_set_ldt");
          exit(1);
      }
@@ -1745,16 +1627,17 @@ index 51159fcb..4b40607d 100644
 +
 +    memcpy( ldt_entry.descriptor, &entry, sizeof(entry) );
 +    status = _kern_generic_syscall( THREAD_SYSCALLS, THREAD_SET_LDT_ENTRY, &ldt_entry, sizeof(ldt_entry) );
-+    if (status == B_BAD_HANDLER)
++    /* A kernel without the call answers B_NAME_NOT_FOUND (the "thread" handler declines it and
++     * no other one takes it). Any failure leaves the selector unusable: exit, as above. */
++    if (status != B_OK)
 +    {
-+        fprintf( stderr, "No LDT support in this Haiku kernel\n" );
++        fprintf( stderr, "No LDT support in this Haiku kernel (status %#x)\n", (unsigned int)status );
 +        exit(1);
 +    }
-+    if (status != B_OK) ERR( "THREAD_SET_LDT_ENTRY %#x failed: %#x\n", sel, (int)status );
  #else
      fprintf( stderr, "No LDT support on this platform\n" );
      exit(1);
-@@ -2911,6 +2939,8 @@ void signal_init_process( TEB *teb )
+@@ -2837,6 +2866,8 @@ void signal_init_process( TEB *teb )
          cs32_sel = ldt_alloc_entry( ldt_make_cs32_entry() );
  #elif defined(__FreeBSD__)
          cs32_sel = GSEL(GUCODE32_SEL, SEL_UPL);
@@ -1763,7 +1646,7 @@ index 51159fcb..4b40607d 100644
  #endif
      }
  
-@@ -3105,6 +3135,19 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
+@@ -3031,6 +3062,19 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                     "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
  
  
@@ -1783,7 +1666,7 @@ index 51159fcb..4b40607d 100644
  /***********************************************************************
   *           __wine_syscall_dispatcher
   */
-@@ -3234,6 +3277,24 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+@@ -3160,6 +3204,24 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     "popq %r8\n\t"
                     "leaq -0x98(%rbp),%rcx\n"
                     "2:\n\t"
@@ -1808,7 +1691,7 @@ index 51159fcb..4b40607d 100644
  #elif defined __APPLE__
                     "movq 0x320(%r13),%rdi\n\t"     /* amd64_thread_data()->pthread_teb */
                     "xorl %esi,%esi\n\t"
-@@ -3280,15 +3341,19 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+@@ -3206,15 +3268,19 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     __ASM_CFI(".cfi_remember_state\n\t")
                     __ASM_CFI_CFA_IS_AT2(rcx, 0xa8, 0x01) /* frame->syscall_cfa */
                     "leaq 0x70(%rcx),%rsp\n\t"      /* %rsp > frame means no longer inside syscall */
@@ -1830,7 +1713,7 @@ index 51159fcb..4b40607d 100644
                     "movw %dx,%ss\n\t"
  # endif
                     "1:\n\t"
-@@ -3550,6 +3615,24 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+@@ -3476,6 +3542,24 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                     "popq %r9\n\t"
                     "popq %r8\n\t"
                     "2:\n\t"
@@ -1855,7 +1738,7 @@ index 51159fcb..4b40607d 100644
  #elif defined __APPLE__
                     "movq 0x320(%r13),%rdi\n\t"     /* amd64_thread_data()->pthread_teb */
                     "xorl %esi,%esi\n\t"
-@@ -3576,15 +3659,19 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+@@ -3502,15 +3586,19 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                     /* switch to user stack */
                     "movq 0x88(%rcx),%rsp\n\t"
                     __ASM_CFI(".cfi_restore_state\n\t")
@@ -1894,10 +1777,10 @@ index 7ecb8b4c..6fc66d4a 100644
 2.47.3
 
 
-From 157be3a9d4c30c5b1add38cf58158bab7c4df2de Mon Sep 17 00:00:00 2001
+From d61490f3e90748e213abf83dcf73320f600c3c24 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 13/20] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 12/19] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -1990,10 +1873,10 @@ index fa51e21f..4e275a5c 100644
 2.47.3
 
 
-From 75d0ad49d452239608c1f9d2c9981b4c9ceed440 Mon Sep 17 00:00:00 2001
+From 6bfd5fd684dcb8516ea0fcc29b2e508c1b61c405 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 14/20] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 13/19] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -2027,7 +1910,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
  2 files changed, 121 insertions(+)
 
 diff --git a/dlls/ntdll/unix/signal_x86_64.c b/dlls/ntdll/unix/signal_x86_64.c
-index 4b40607d..80cda84c 100644
+index ce7401da..aea370ff 100644
 --- a/dlls/ntdll/unix/signal_x86_64.c
 +++ b/dlls/ntdll/unix/signal_x86_64.c
 @@ -100,6 +100,15 @@ struct thread_ldt_entry
@@ -2193,7 +2076,7 @@ index 4b40607d..80cda84c 100644
          }
          if (!(needed_flags & ~CONTEXT_I386_DEBUG_REGISTERS)) return ret;
      }
-@@ -2474,11 +2560,20 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2414,11 +2500,20 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
           * and only do a server call if there is any hw bp enabled. */
          if (!(context.c.EFlags & 0x100) || (context.c.Dr7 & 0xff))
          {
@@ -2214,7 +2097,7 @@ index 4b40607d..80cda84c 100644
          }
          context.c.EFlags &= ~0x100;  /* clear single-step flag */
          break;
-@@ -2673,6 +2768,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
+@@ -2599,6 +2694,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *_sigcontext )
              frame->eflags = 0x200;
              fixup_frame_fpu_state( frame, sigcontext );
          }
@@ -2225,7 +2108,7 @@ index 4b40607d..80cda84c 100644
          NtGetContextThread( GetCurrentThread(), &context->c );
          if (xstate_extended_features)
          {
-@@ -3070,6 +3169,22 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+@@ -2997,6 +3096,22 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
      }
  
      if (data->suspend) wait_suspend( &context );
@@ -2270,10 +2153,10 @@ index bb9728f6..4522128d 100644
 2.47.3
 
 
-From cd9c940f4d4b3f557f0150b8ace372e33960a74c Mon Sep 17 00:00:00 2001
+From 2abd94fe3c9a290a0021e6f18cb0830c412c14d6 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 15/20] winerenku.drv: Add a native RenkuOS (Be API) graphics
+Subject: [PATCH 14/19] winerenku.drv: Add a native RenkuOS (Be API) graphics
  driver.
 
 Every Wine port for Haiku-family systems draws through winewayland.drv,
@@ -3955,10 +3838,10 @@ index 00000000..8e499aee
 2.47.3
 
 
-From 6dd54783ce88ee15f047b28046857ce84c716ec1 Mon Sep 17 00:00:00 2001
+From 7f90df47e2ed8410306a89dcd94aa77e3d3e60d0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 16/20] explorer: Try the RenkuOS driver first.
+Subject: [PATCH 15/19] explorer: Try the RenkuOS driver first.
 
 explorer picks the graphics driver from default_driver when the prefix
 sets none. Put "renku" (winerenku.drv) at its head.
@@ -3994,10 +3877,10 @@ index ce70c5dd..f0956929 100644
 2.47.3
 
 
-From 4f3044931be7eca83a33bfb0a8a97ed45d74670c Mon Sep 17 00:00:00 2001
+From efdb5f88d6314e1a9f24c5180b9220e95bc0f881 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 11:21:19 +1000
-Subject: [PATCH 17/20] winerenku.drv: Keyboard and mouse input, activation,
+Subject: [PATCH 16/19] winerenku.drv: Keyboard and mouse input, activation,
  and the decorator.
 
 The first stage drew windows but took no input, and its windows could
@@ -5501,10 +5384,10 @@ index 8e499aee..e7305319 100644
 2.47.3
 
 
-From f4cb8adf34616455b9f0edcb45f802f9a4248ff5 Mon Sep 17 00:00:00 2001
+From 0726f38dcfa5cb77bdc7627b4950da0a3bf21124 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 12:48:32 +1000
-Subject: [PATCH 18/20] winerenku.drv: Keyboard layout from the RenkuOS keymap.
+Subject: [PATCH 17/19] winerenku.drv: Keyboard layout from the RenkuOS keymap.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -6228,10 +6111,10 @@ index 665f3048..3176d6b1 100644
 2.47.3
 
 
-From a4f1985c9c1f80606219eda7e69329538c5a2b95 Mon Sep 17 00:00:00 2001
+From d8902cf5383dec6d82c895711ff599be97050a84 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 18:48:25 +1000
-Subject: [PATCH 19/20] winerenku.drv: Text clipboard, both ways, with
+Subject: [PATCH 18/19] winerenku.drv: Text clipboard, both ways, with
  RenkuOS's.
 
 Wine's clipboard and RenkuOS's system clipboard were separate: text
@@ -6719,10 +6602,10 @@ index 3176d6b1..fc428255 100644
 2.47.3
 
 
-From 84b937391b41629df8a351914f8431ad634291e0 Mon Sep 17 00:00:00 2001
+From 20471616b7920be75b48765d533ef23ff25e24d0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 19:52:17 +1000
-Subject: [PATCH 20/20] winerenku.drv: OpenGL through OSMesa.
+Subject: [PATCH 19/19] winerenku.drv: OpenGL through OSMesa.
 
 Mesa on RenkuOS has no DRI swrast module and no EGL platform Wine can
 use (eglInitialize fails), so the driver had no OpenGL, and wined3d,
