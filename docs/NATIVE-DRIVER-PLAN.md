@@ -256,7 +256,7 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
 | G1 | notepad and winecfg appear in native windows | **partly**: notepad passed in the build VM on 2026-11-11 (patch 16): one titled native window with its title, menu bar, a white edit area and a blinking caret, nothing garbled. winecfg not tried yet, and not checked on bare metal yet. |
 | G2 | typing, clicking, menus, dialogs | **passed in the build VM**, 2026-11-11 (patch 18): notepad (typing, drag selection, menus by mouse and Alt+F, the save dialog) and Amped - Roots, a JUCE 6.1.5 program (knobs, its own menus, settings dialogs). Not checked on bare metal yet. |
 | G3 | moving, resizing, minimizing and closing from the system decorator | **passed in the build VM**, 2026-11-11 (patch 18): both programs; minimize goes to the Deskbar and restores from it. Not checked on bare metal yet. |
-| G4 | clipboard, both ways | not started |
+| G4 | clipboard, both ways | **passed for text in the build VM**, 2026-11-11 (patch 20): notepad and StyledEdit, both ways, from the menus and the shortcuts. Images and other formats are not carried yet. Not checked on bare metal yet. |
 | G5 | OSMesa GL gates 1–5 of [OSMESA-GL-PLAN.md](OSMESA-GL-PLAN.md) §5, under the new driver | not started |
 | G6 | a VST editor through vstbridge rebuilt on this Wine | not started |
 
@@ -280,7 +280,7 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
    dragged.
 4. Window management: menus and tooltips, owned and modal windows, layered windows and regions
    as far as P4 allows.
-5. Desktop: clipboard → G4; then keyboard layouts, IME, systray, as separate patches.
+5. Desktop: clipboard → G4 (text done as patch 20); keyboard layout (patch 19); then dead keys, IME, systray, as separate patches.
 6. OpenGL: OSMesa rendering, presented through the client surface → G5. Then evaluate BGLView.
 7. vstbridge rebuilt on this Wine → G6.
 8. Release, with the gates recorded in the README.

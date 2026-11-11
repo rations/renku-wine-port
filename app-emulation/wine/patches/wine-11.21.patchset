@@ -1,7 +1,7 @@
 From 9794aa43c5296cda799020d712961ddef6ce4367 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Thu, 23 Apr 2026 02:37:32 +0200
-Subject: [PATCH 01/19] Add Wayland input header
+Subject: [PATCH 01/20] Add Wayland input header
 
 ---
  dlls/winewayland.drv/input-event-codes.h | 980 +++++++++++++++++++++++
@@ -1001,7 +1001,7 @@ index 00000000..a4206723
 From 54edd959ff8bc6a4d39da1d1fdfb739d3b02f010 Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 02/19] 11.8 patches
+Subject: [PATCH 02/20] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -1936,7 +1936,7 @@ index f800c0f7..ad509c18 100644
 From 352d50b4e95f0fb797d4cebc18a99a2c0460035e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 03/19] Opensound support
+Subject: [PATCH 03/20] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -2009,7 +2009,7 @@ index f5844912..1aee2585 100644
 From f5d50f5cdf38fa53c60eadd89c86a060bf47063f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 04/19] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 04/20] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -2126,7 +2126,7 @@ index 88d00d1f..f4ab87b1 100644
 From 8a38b157fdfebeb3415dce2dd0d00bb5aa95092d Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 00:23:17 +1000
-Subject: [PATCH 05/19] Do not block in the SIGSEGV handler on Haiku
+Subject: [PATCH 05/20] Do not block in the SIGSEGV handler on Haiku
 
 The Haiku port left an interactive debug hook in segv_handler: after
 printing the fault it called fgetc(stdin) and waited for a keypress, with
@@ -2173,7 +2173,7 @@ index 50a7990f..51159fcb 100644
 From d35ff24f3e83023b4415c6a2491bce2fbf6f24f2 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 06/19] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 06/20] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -2222,7 +2222,7 @@ index 71ba308c..e959a762 100644
 From 2bdb8f0a7d1ae692ffd2dc5941678c63dfb6cacc Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 07/19] dxgi: Wait for a refresh interval in
+Subject: [PATCH 07/20] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -2305,7 +2305,7 @@ index e828ed0d..9690dee6 100644
 From fe774e7377aed353a4e5659ed8bf6150250020a9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 08/19] sechost: Report no failure actions in
+Subject: [PATCH 08/20] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -2370,7 +2370,7 @@ index f05fd2d7..20a7fb17 100644
 From d0189450fae6138ad3a08e6a4c6eb5831eb41dd1 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 09/19] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 09/20] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -2481,7 +2481,7 @@ index 00000000..07b215a1
 From bc41ff7fcdf81723835367a90ceeb37f2252e204 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 10/19] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 10/20] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -2548,7 +2548,7 @@ index ae51b2f7..691b7984 100644
 From 095354e8ab2b425a21dfacca11ed186403718e15 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 11/19] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 11/20] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -2628,7 +2628,7 @@ index 2e6d93b7..bda79d71 100644
 From c9fb2b6bbe6696036cc0a92053f4ad0cabf5a395 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 12/19] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 12/20] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -2659,7 +2659,7 @@ index ad509c18..eb83446b 100644
 From 5cb922bb1d177b1cbc4a6068c224960d359b4a23 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 13/19] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 13/20] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -2985,7 +2985,7 @@ index 7ecb8b4c..6fc66d4a 100644
 From 48b4dfdad9513bee675271ee2c9508c0dae377c8 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 14/19] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 14/20] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -3081,7 +3081,7 @@ index fa51e21f..4e275a5c 100644
 From 440cdc4b66a2023cdded462937a7f57eb3cedfd7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 15/19] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 15/20] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -3361,7 +3361,7 @@ index bb9728f6..4522128d 100644
 From 1f790f5b24947fbcde26aa9ffe5a5a9c4350cc81 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 16/19] winerenku.drv: Add a native RenkuOS (Be API) graphics
+Subject: [PATCH 16/20] winerenku.drv: Add a native RenkuOS (Be API) graphics
  driver.
 
 Every Wine port for Haiku-family systems draws through winewayland.drv,
@@ -5046,7 +5046,7 @@ index 00000000..8e499aee
 From 6673a9cd8c7d665cb1334ffd7a9f1f2f1c48f5a7 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 17/19] explorer: Try the RenkuOS driver first.
+Subject: [PATCH 17/20] explorer: Try the RenkuOS driver first.
 
 explorer picks the graphics driver from default_driver when the prefix
 sets none. Put "renku" (winerenku.drv) at its head.
@@ -5083,7 +5083,7 @@ index ce70c5dd..f0956929 100644
 From eb52b1647008fd6b699e9949f8e441d7fcd734eb Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 11:21:19 +1000
-Subject: [PATCH 18/19] winerenku.drv: Keyboard and mouse input, activation,
+Subject: [PATCH 18/20] winerenku.drv: Keyboard and mouse input, activation,
  and the decorator.
 
 The first stage drew windows but took no input, and its windows could
@@ -6590,7 +6590,7 @@ index 8e499aee..e7305319 100644
 From dc9c973bf8fc152a508b404711a7fb6886ec9249 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 12:48:32 +1000
-Subject: [PATCH 19/19] winerenku.drv: Keyboard layout from the RenkuOS keymap.
+Subject: [PATCH 19/20] winerenku.drv: Keyboard layout from the RenkuOS keymap.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -7310,6 +7310,497 @@ index 665f3048..3176d6b1 100644
      .pSetWindowText = RENKU_SetWindowText,
      .pUpdateDisplayDevices = RENKU_UpdateDisplayDevices,
      .pWindowMessage = RENKU_WindowMessage,
+-- 
+2.47.3
+
+
+From 7edba7d039a2b060fc89f93545498328b4e98f23 Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Wed, 11 Nov 2026 18:48:25 +1000
+Subject: [PATCH 20/20] winerenku.drv: Text clipboard, both ways, with
+ RenkuOS's.
+
+Wine's clipboard and RenkuOS's system clipboard were separate: text
+copied in a Windows program could not be pasted into a RenkuOS one, or
+the other way round. Like winemac, the driver now gives the clipboard
+manager window, which explorer runs on a thread of its own
+(programs/explorer/desktop.c, clipboard_thread), a window procedure
+(pClipboardWindowProc) that keeps the two the same, for text, for every
+Wine program of the desktop at once.
+
+- RenkuOS to Wine. A BLooper of the driver's own watches the system
+  clipboard (BClipboard::StartWatching, be_clipboard.cpp). When another
+  program changes it, the event thread posts WM_USER to the clipboard
+  window, and the window takes Wine's clipboard and puts the text on it
+  as CF_UNICODETEXT; user32 makes CF_TEXT and CF_OEMTEXT from that when
+  a program asks. What was on the clipboard before Wine started is
+  taken the same way when the window is created. explorer passes only
+  WM_NCCREATE, WM_CLIPBOARDUPDATE, WM_RENDERFORMAT, WM_TIMER,
+  WM_DESTROYCLIPBOARD and WM_USER to the driver, so WM_USER is the
+  message (winemac uses it too).
+- Wine to RenkuOS. WM_CLIPBOARDUPDATE (the window is a clipboard format
+  listener) says a Windows program changed Wine's clipboard. Its
+  CF_UNICODETEXT, which win32u renders from CF_TEXT when only that was
+  set, goes to the system clipboard as "text/plain" UTF-8, as BTextView
+  keeps it. Without text, the system clipboard is emptied, as a copy of
+  anything else replaces what was there on Windows.
+- No loops. The window ignores updates while it owns Wine's clipboard
+  (its own imports). The watcher ignores the change notice of the
+  driver's own Commit(): it remembers the registrar's change count that
+  Commit() produced (LocalCount()) and compares it with SystemCount(),
+  under a mutex held across Commit(), as the notice can arrive before
+  Commit() returns.
+- Line ends become CR LF for Windows and LF for RenkuOS, as winemac
+  converts them. CF_UNICODETEXT ends at its NUL, whatever its size.
+
+BClipboard and BLooper need no BApplication (src/kits/app/Clipboard.cpp,
+Looper.cpp), so explorer, which has no windows of its own, still does
+not start one and stays out of the Deskbar. The looper thread is
+spawned with Wine's signals blocked, as the other Be threads are.
+
+Verified in the RenkuOS build VM with notepad and StyledEdit, from the
+build tree: text copied in StyledEdit (menu and Alt+C) pastes into
+notepad (menu and Ctrl+V), and text copied in notepad (menu and Ctrl+C,
+the trace shows 115 bytes exported) pastes into StyledEdit from its
+menu. Alt+V in StyledEdit did not reach the guest: QEMU's window took
+it for its own View menu. Not verified: non-ASCII text and the line
+end conversion, programs that render the clipboard late (delayed
+rendering), very large text. Not done: images and other formats are not
+carried either way.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ dlls/winerenku.drv/Makefile.in      |   2 +
+ dlls/winerenku.drv/be_clipboard.cpp | 130 +++++++++++++++++++++
+ dlls/winerenku.drv/clipboard.c      | 173 ++++++++++++++++++++++++++++
+ dlls/winerenku.drv/event.c          |   4 +
+ dlls/winerenku.drv/renku.h          |   8 ++
+ dlls/winerenku.drv/renku_be.h       |  12 ++
+ dlls/winerenku.drv/renku_main.c     |   4 +-
+ 7 files changed, 331 insertions(+), 2 deletions(-)
+ create mode 100644 dlls/winerenku.drv/be_clipboard.cpp
+ create mode 100644 dlls/winerenku.drv/clipboard.c
+
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+index 627baeda..7991a4cf 100644
+--- a/dlls/winerenku.drv/Makefile.in
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -6,9 +6,11 @@ VER_FILEDESCRIPTION_STR = "Wine RenkuOS driver"
+ 
+ SOURCES = \
+ 	be_app.cpp \
++	be_clipboard.cpp \
+ 	be_event.cpp \
+ 	be_keymap.cpp \
+ 	be_window.cpp \
++	clipboard.c \
+ 	display.c \
+ 	dllmain.c \
+ 	event.c \
+diff --git a/dlls/winerenku.drv/be_clipboard.cpp b/dlls/winerenku.drv/be_clipboard.cpp
+new file mode 100644
+index 00000000..b922ce98
+--- /dev/null
++++ b/dlls/winerenku.drv/be_clipboard.cpp
+@@ -0,0 +1,130 @@
++/*
++ * RenkuOS driver: the system clipboard
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++
++#include <Clipboard.h>
++#include <Looper.h>
++#include <Message.h>
++
++#include <pthread.h>
++#include <stdlib.h>
++#include <string.h>
++
++/* Neither BClipboard nor BLooper needs a BApplication (src/kits/app/Clipboard.cpp and
++ * Looper.cpp; Commit() only adds be_app_messenger as the data source), so the process that
++ * runs Wine's clipboard manager, explorer, does not start one, and does not appear in the
++ * Deskbar. The registrar keeps the clipboard and counts its changes: Commit() leaves the new
++ * count in LocalCount(), and SystemCount() asks for the current one. */
++
++namespace {
++
++pthread_mutex_t clipboard_mutex = PTHREAD_MUTEX_INITIALIZER;
++BClipboard *clipboard;
++uint32 own_count;  /* the count our last Commit() produced */
++
++class ClipboardWatcher : public BLooper
++{
++public:
++    ClipboardWatcher(uint64 cookie) : BLooper("winerenku clipboard"), fCookie(cookie) {}
++
++    void MessageReceived(BMessage *msg) override
++    {
++        if (msg->what != B_CLIPBOARD_CHANGED)
++        {
++            BLooper::MessageReceived(msg);
++            return;
++        }
++        /* Our own Commit() notifies us too; Wine already has that text. */
++        uint32 count = clipboard->SystemCount();
++        pthread_mutex_lock(&clipboard_mutex);
++        bool own = count == own_count;
++        pthread_mutex_unlock(&clipboard_mutex);
++        if (own) return;
++
++        struct be_event event = {};
++        event.type = BE_EVENT_CLIPBOARD;
++        event.cookie = fCookie;
++        be_event_post(&event);
++    }
++
++private:
++    uint64 fCookie;
++};
++
++}  /* namespace */
++
++extern "C" int be_clipboard_watch(uint64_t cookie)
++{
++    ClipboardWatcher *watcher;
++
++    if (clipboard) return -1;
++    clipboard = new BClipboard(NULL);  /* NULL is the "system" clipboard, be_clipboard's */
++    watcher = new ClipboardWatcher(cookie);
++    {
++        be_spawn_guard guard;
++        watcher->Run();
++    }
++    if (clipboard->StartWatching(BMessenger(watcher)) != B_OK) return -1;
++    return 0;
++}
++
++extern "C" char *be_clipboard_get_text(size_t *size)
++{
++    const void *text;
++    ssize_t len;
++    char *ret = NULL;
++
++    if (!clipboard || !clipboard->Lock()) return NULL;  /* Lock() fetches the current data */
++    BMessage *data = clipboard->Data();
++    if (data && data->FindData("text/plain", B_MIME_TYPE, &text, &len) == B_OK && len >= 0 &&
++        (ret = (char *)malloc(len ? len : 1)))
++    {
++        memcpy(ret, text, len);
++        *size = len;
++    }
++    clipboard->Unlock();
++    return ret;
++}
++
++extern "C" int be_clipboard_set_text(const char *text, size_t size)
++{
++    status_t status = B_ERROR;
++
++    if (!clipboard || !clipboard->Lock()) return -1;
++    BMessage *data = clipboard->Data();
++    if (clipboard->Clear() == B_OK && data &&
++        (!text || data->AddData("text/plain", B_MIME_TYPE, text, size) == B_OK))
++    {
++        /* The mutex is held across Commit(): the watcher may hear of this change before
++         * Commit() returns, and it compares only once own_count is set. Commit() waits for
++         * the registrar, which never waits for the watcher, so this cannot deadlock. */
++        pthread_mutex_lock(&clipboard_mutex);
++        status = clipboard->Commit();
++        own_count = clipboard->LocalCount();
++        pthread_mutex_unlock(&clipboard_mutex);
++    }
++    clipboard->Unlock();
++    return status == B_OK ? 0 : -1;
++}
+diff --git a/dlls/winerenku.drv/clipboard.c b/dlls/winerenku.drv/clipboard.c
+new file mode 100644
+index 00000000..6f7fc297
+--- /dev/null
++++ b/dlls/winerenku.drv/clipboard.c
+@@ -0,0 +1,173 @@
++/*
++ * RenkuOS driver: clipboard
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
++
++/* Wine's clipboard and RenkuOS's system clipboard are kept the same, for text, by the
++ * clipboard manager window that the desktop process, explorer, runs on a thread of its own
++ * (programs/explorer/desktop.c, clipboard_thread): its window procedure is this driver's. So
++ * one process does it for every Wine program, as with winemac.
++ *
++ *   - RenkuOS -> Wine: a Be looper watches the system clipboard (be_clipboard.cpp). When
++ *     another program changes it, the event thread posts WM_RENKU_CLIPBOARD_CHANGED here, and
++ *     the window takes the clipboard and puts the text on it as CF_UNICODETEXT; user32
++ *     makes CF_TEXT and CF_OEMTEXT from it when a program asks.
++ *   - Wine -> RenkuOS: WM_CLIPBOARDUPDATE says a Windows program changed Wine's clipboard.
++ *     Its CF_UNICODETEXT (which win32u makes from CF_TEXT if needed) goes to the system
++ *     clipboard as "text/plain"; without text, the system clipboard is emptied, as a Windows
++ *     copy replaces what was there.
++ *
++ * Line ends become CR LF for Windows and LF for RenkuOS, as winemac converts them. Only
++ * text is done; images and other formats are not carried either way yet. */
++
++static HWND clipboard_hwnd;
++
++static void import_from_renku(void)
++{
++    struct set_clipboard_params params = {0};
++    size_t size = 0, i, j, cr = 0;
++    char *text = be_clipboard_get_text(&size), *crlf = NULL;
++    WCHAR *wtext = NULL;
++    DWORD wsize;
++
++    TRACE("%s\n", text ? "text" : "no text");
++
++    if (text)
++    {
++        for (i = 0; i < size; i++) if (text[i] == '\n' && (!i || text[i - 1] != '\r')) cr++;
++        if (!(crlf = malloc(size + cr))) goto done;
++        for (i = j = 0; i < size; i++)
++        {
++            if (text[i] == '\n' && (!i || text[i - 1] != '\r')) crlf[j++] = '\r';
++            crlf[j++] = text[i];
++        }
++        RtlUTF8ToUnicodeN(NULL, 0, &wsize, crlf, j);
++        if (!(wtext = malloc(wsize + sizeof(WCHAR)))) goto done;
++        RtlUTF8ToUnicodeN(wtext, wsize, &wsize, crlf, j);
++        wtext[wsize / sizeof(WCHAR)] = 0;
++        params.data = wtext;
++        params.size = wsize + sizeof(WCHAR);
++    }
++
++    if (!NtUserOpenClipboard(clipboard_hwnd, 0))
++    {
++        WARN("cannot open the clipboard\n");
++        goto done;
++    }
++    NtUserEmptyClipboard();
++    if (wtext) NtUserSetClipboardData(CF_UNICODETEXT, 0, &params);
++    NtUserCloseClipboard();
++
++done:
++    free(wtext);
++    free(crlf);
++    free(text);
++}
++
++static void export_to_renku(void)
++{
++    struct get_clipboard_params params = { .data_only = TRUE, .size = 1024 };
++    WCHAR *wtext = NULL;
++    size_t len = 0, i, j;
++    DWORD size;
++    char *text;
++
++    if (!NtUserOpenClipboard(clipboard_hwnd, 0))
++    {
++        WARN("cannot open the clipboard\n");
++        return;
++    }
++    for (;;)
++    {
++        if (!(params.data = malloc(params.size))) break;
++        if (NtUserGetClipboardData(CF_UNICODETEXT, &params))
++        {
++            wtext = params.data;
++            len = params.size / sizeof(WCHAR);
++            break;
++        }
++        free(params.data);
++        if (!params.data_size) break;  /* no text on the clipboard */
++        params.size = params.data_size;
++        params.data_size = 0;
++    }
++    NtUserCloseClipboard();
++
++    if (!wtext)
++    {
++        TRACE("no text, emptying the system clipboard\n");
++        be_clipboard_set_text(NULL, 0);
++        return;
++    }
++
++    /* CF_UNICODETEXT ends at its NUL, whatever the size of its memory. */
++    for (i = 0; i < len && wtext[i]; i++) {}
++    len = i;
++    RtlUnicodeToUTF8N(NULL, 0, &size, wtext, len * sizeof(WCHAR));
++    if ((text = malloc(size ? size : 1)))
++    {
++        RtlUnicodeToUTF8N(text, size, &size, wtext, len * sizeof(WCHAR));
++        for (i = j = 0; i < size; i++)
++            if (text[i] != '\r' || i + 1 >= size || text[i + 1] != '\n') text[j++] = text[i];
++        TRACE("%u bytes of text\n", (unsigned int)j);
++        be_clipboard_set_text(text, j);
++        free(text);
++    }
++    free(wtext);
++}
++
++/***********************************************************************
++ *           RENKU_ClipboardWindowProc
++ */
++LRESULT RENKU_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
++{
++    switch (msg)
++    {
++    case WM_NCCREATE:
++        clipboard_hwnd = hwnd;
++        NtUserAddClipboardFormatListener(hwnd);
++        if (be_clipboard_watch((UINT_PTR)hwnd))
++            ERR("cannot watch the system clipboard\n");
++        /* What was copied before Wine started is there too. */
++        NtUserPostMessage(hwnd, WM_RENKU_CLIPBOARD_CHANGED, 0, 0);
++        return TRUE;
++    case WM_RENKU_CLIPBOARD_CHANGED:
++        import_from_renku();
++        return 0;
++    case WM_CLIPBOARDUPDATE:
++        /* Our own import comes back as an update too. */
++        if (NtUserGetClipboardOwner() == clipboard_hwnd) break;
++        export_to_renku();
++        break;
++    }
++    return NtUserMessageCall(hwnd, msg, wp, lp, NULL, NtUserDefWindowProc, FALSE);
++}
+diff --git a/dlls/winerenku.drv/event.c b/dlls/winerenku.drv/event.c
+index ff9b44dc..875dce49 100644
+--- a/dlls/winerenku.drv/event.c
++++ b/dlls/winerenku.drv/event.c
+@@ -291,6 +291,10 @@ static void handle_event(const struct be_event *event)
+         TRACE("hwnd %p %s\n", hwnd, event->down ? "minimize" : "restore");
+         NtUserPostMessage(hwnd, WM_SYSCOMMAND, event->down ? SC_MINIMIZE : SC_RESTORE, 0);
+         break;
++    case BE_EVENT_CLIPBOARD:
++        TRACE("clipboard changed\n");
++        NtUserPostMessage(hwnd, WM_RENKU_CLIPBOARD_CHANGED, 0, 0);
++        break;
+     case BE_EVENT_ZOOM:
+         TRACE("hwnd %p zoom\n", hwnd);
+         NtUserPostMessage(hwnd, WM_SYSCOMMAND,
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+index 10a35947..6051b58a 100644
+--- a/dlls/winerenku.drv/renku.h
++++ b/dlls/winerenku.drv/renku.h
+@@ -45,6 +45,14 @@ enum renku_window_message
+     WM_RENKU_FRAME_CHANGED,                        /* the BWindow moved or was resized */
+ };
+ 
++/* Posted by the event thread to the clipboard manager window (clipboard.c). explorer's window
++ * procedure for it passes only WM_NCCREATE, WM_CLIPBOARDUPDATE, WM_RENDERFORMAT, WM_TIMER,
++ * WM_DESTROYCLIPBOARD and WM_USER to the driver (programs/explorer/desktop.c). */
++#define WM_RENKU_CLIPBOARD_CHANGED WM_USER
++
++/* clipboard.c */
++extern LRESULT RENKU_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
++
+ /* display.c */
+ extern UINT RENKU_UpdateDisplayDevices(const struct gdi_device_manager *manager, void *param);
+ 
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+index 2d4d38b6..d0119f32 100644
+--- a/dlls/winerenku.drv/renku_be.h
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -33,6 +33,7 @@
+ #ifndef __WINE_RENKU_BE_H
+ #define __WINE_RENKU_BE_H
+ 
++#include <stddef.h>
+ #include <stdint.h>
+ 
+ #ifdef __cplusplus
+@@ -118,6 +119,7 @@ enum be_event_type
+     BE_EVENT_FRAME,         /* moved or resized; be_window_get_frame() says where it is now */
+     BE_EVENT_MINIMIZE,      /* down: minimize (1) or restore (0), from the decorator or the Deskbar */
+     BE_EVENT_ZOOM,          /* the decorator's zoom button */
++    BE_EVENT_CLIPBOARD,     /* another program changed the system clipboard (be_clipboard_watch) */
+ };
+ 
+ enum be_mouse_button
+@@ -172,6 +174,16 @@ struct be_keymap
+ /* Returns 0 on success. Asks the input server, and waits for its answer. */
+ int be_keymap_get(struct be_keymap *keymap);
+ 
++/* The system clipboard, text only ("text/plain", UTF-8, as BTextView keeps it). These wait
++ * for the registrar, never for a Win32 thread. */
++/* From now on, a change made by another program posts BE_EVENT_CLIPBOARD with cookie.
++ * Once per process; returns 0 on success. */
++int be_clipboard_watch(uint64_t cookie);
++/* The clipboard's text, malloc()ed, not NUL-terminated; NULL if it holds none. */
++char *be_clipboard_get_text(size_t *size);
++/* Replaces the clipboard's contents with text, or empties it if text is NULL. */
++int be_clipboard_set_text(const char *text, size_t size);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/dlls/winerenku.drv/renku_main.c b/dlls/winerenku.drv/renku_main.c
+index 3176d6b1..fc428255 100644
+--- a/dlls/winerenku.drv/renku_main.c
++++ b/dlls/winerenku.drv/renku_main.c
+@@ -50,11 +50,11 @@ char *renku_utf8_from_wstr(const WCHAR *str)
+ 
+ /* Only what win32u cannot do without a window system is here; everything else is win32u's
+  * own default (dlls/win32u/driver.c). Keyboard and mouse input do not go through this table:
+- * the event thread (event.c) sends them; only the keyboard layout (keyboard.c) does. The
+- * clipboard and the other entries come in later patches. */
++ * the event thread (event.c) sends them; only the keyboard layout (keyboard.c) does. */
+ static const struct user_driver_funcs renku_funcs =
+ {
+     .pActivateWindow = RENKU_ActivateWindow,
++    .pClipboardWindowProc = RENKU_ClipboardWindowProc,
+     .pCreateWindowSurface = RENKU_CreateWindowSurface,
+     .pDestroyWindow = RENKU_DestroyWindow,
+     .pGetWindowStyleMasks = RENKU_GetWindowStyleMasks,
 -- 
 2.47.3
 

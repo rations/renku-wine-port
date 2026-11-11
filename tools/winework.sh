@@ -1,14 +1,15 @@
 #!/bin/sh
-# winework.sh — fast edit/build/test/package loop on the build VM, with a mandatory mirror back.
+# winework.sh — fast edit/build/test loop on the build machine, with a mandatory mirror back.
 #
-# A clean `haikuporter -c` build recompiles all of Wine, about ten thousand objects. Almost no
-# change needs that. haikuporter applies .patchset files with git, so
-#   work-<ver>/sources/wine-wine-<ver>   (<ver> from the recipe, see portver.sh)
+# A clean `haikuporter -c` build recompiles all of Wine, about ten thousand objects. A change
+# does not need one to be tested. haikuporter applies .patchset files with git, so
+#   work-<ver>/sources/wine-wine-<ver>   (<ver> from the recipe, see common.sh)
 # is a real git repo whose HEAD^{tree} is the patchset's tree, and every source change made in
-# it since is visible to git. That makes three things cheap, and checkable:
+# it since is visible to git. That makes two things cheap, and checkable:
 #   - testing a change: push the files, make the one target, run against the build tree;
-#   - packaging: bring the tree to the dev tree's HEAD and let make rebuild what changed;
-#   - not losing work: anything edited only on the VM shows up in `status`.
+#   - not losing work: anything edited only on the build machine shows up in `status`.
+# A package is built at a milestone, with a clean build that nothing touches while it runs
+# (README.md, "Building"), and then checked with `checkpkg`.
 #
 # Settings (build host, dev tree, haikuports path): see tools/common.sh.
 #
@@ -20,24 +21,15 @@
 #   winework.sh build [target]  incremental make on the VM (default: all)
 #   winework.sh sync            make the VM tree's sources equal the dev tree's HEAD
 #   winework.sh verify          check that they are equal (exit 1 if not)
-#   winework.sh package         build the recipe's package from the dev tree's HEAD, no -c
 #   winework.sh checkpkg        check the built hpkg of the recipe's REVISION
 #   winework.sh howto           how to test against the build tree without installing
 #
-# Why `package` needs no clean build. A REVISION bump used to force `haikuporter -c` because
-# configure sets prefix=/packages/wine-<ver>-<rev>/.self and a few objects compile that path in
-# (EXTRADEFS with ${bindir}, ${libdir} or ${datadir}: dlls/ntdll unix/loader.o, server/unicode.o,
-# the mscoree, mshtml and appwiz.cpl install-dir lookups, and tools/{wine,widl,wrc,wmc,winegcc}).
-# Re-running configure rewrites the Makefiles but not those objects, and make does not rebuild
-# an object because its Makefile changed: that is how a stale package once shipped. So
-# `package` deletes every object that holds a /packages/wine-<ver>-N/ path for another N, found
-# by searching the objects themselves rather than from that list, removes flag.build so that
-# haikuporter re-runs the recipe's BUILD() (autoreconf, configure, make; see Port.py, build()
-# and _doBuildStage()), and then `checkpkg` extracts the hpkg and fails if any path of another
-# revision is left in it.
-#
-# What still needs `haikuporter -c`: a new pristine tarball (a new Wine version), or a work
-# tree that is damaged or that `verify` cannot match to the dev tree.
+# Why checkpkg. configure sets prefix=/packages/wine-<ver>-<rev>/.self and some objects compile
+# that path in, as text (ntdll, wineserver, the tools) or as UTF-16 (the mscoree, mshtml and
+# appwiz.cpl lookups build it into wide strings). A package whose binaries hold another
+# revision's path works on the build machine and fails everywhere else; that shipped once.
+# checkpkg extracts the package and fails if any file holds another revision's path, in either
+# form, or if none holds the recipe's.
 #
 # Exit status: `status` exits 1 when there are unmirrored edits, so hooks can gate on it, and
 # 3 when the VM cannot be reached.
@@ -63,6 +55,13 @@ NOISE='(^autom4te\.cache/|~$|/(i386|x86_64)-windows/|\.(o|a|so|dll|exe|res)$|^co
 die() { echo "winework: $*" >&2; exit 2; }
 remote() { ssh -o BatchMode=yes "$HOST" "cd $WORK && $1"; }
 has_path() { awk -v f="$1" '$3 == f { found = 1 } END { exit !found }' "$2"; }
+# A PCRE matching the UTF-16LE form of a string (each byte followed by a NUL), for grep -P.
+u16() { printf '%s' "$1" | awk '{ for (i = 1; i <= length($0); i++) { c = substr($0, i, 1);
+                                  printf "%s\\x00", (c == "." ? "\\." : c) } }'; }
+# Remote shell code: prints every /packages/wine-<ver>-N/ path in the files (or, recursively,
+# directories) named after it, in text or in UTF-16, one per line.
+PATHS_IN="paths_in() { grep -raoh '/packages/wine-$VER-[0-9]*/' \"\$@\" 2>/dev/null;
+  LC_ALL=C grep -raohP '$(u16 "/packages/wine-$VER-")(?:[0-9]\\x00)+/\\x00' \"\$@\" 2>/dev/null | tr -d '\\000'; }"
 recipe_rev() { sed -n 's/^REVISION="\(.*\)"/\1/p' "$REPO/$RECIPE"; }
 
 TMP=$(mktemp -d)
@@ -173,7 +172,7 @@ cmd_build() {
     # interactively: driven over ssh it set up and tore down without running the commands piped
     # into it (seen 2026-11-11). make is safe outside: the Makefile has no chroot paths.
     # configure is NOT: run outside, it found nasm and libxkbregistry, which the chroot lacks,
-    # and rewrote include/config.h. configure runs only inside haikuporter (`package`).
+    # and rewrote include/config.h. configure runs only inside haikuporter.
     echo "Incremental make '$target' in the work tree on $HOST..."
     remote "make -j\$(nproc) $target"
 }
@@ -234,38 +233,17 @@ grep -E '^\s*(requires|provides): ' /tmp/winework-info
 d=/tmp/winework-pkgcheck
 rm -rf "\$d"; mkdir "\$d"
 package extract -C "\$d" "\$p"
-echo "package paths compiled in (count, path):"
-grep -raoh '/packages/wine-$VER-[0-9]*/' "\$d" | sort | uniq -c
-bad=\$(grep -raoh '/packages/wine-$VER-[0-9]*/' "\$d" | sort -u | grep -vx '/packages/wine-$VER-$rev/' || true)
-good=\$(grep -ralF '/packages/wine-$VER-$rev/' "\$d" | wc -l)
-rm -rf "\$d"
+$PATHS_IN
+echo "package paths compiled in, as text or UTF-16 (count, path):"
+paths_in "\$d" > /tmp/winework-paths
+sort /tmp/winework-paths | uniq -c
+bad=\$(sort -u /tmp/winework-paths | grep -vx '/packages/wine-$VER-$rev/' || true)
+good=\$(grep -cx '/packages/wine-$VER-$rev/' /tmp/winework-paths || true)
+rm -rf "\$d" /tmp/winework-paths
 [ -z "\$bad" ] || { echo "FAIL: another revision's path is in the package: \$bad"; exit 1; }
-[ "\$good" -gt 0 ] || { echo "FAIL: no file holds /packages/wine-$VER-$rev/"; exit 1; }
-echo "OK: \$good file(s) hold /packages/wine-$VER-$rev/, no other revision's path."
+[ "\$good" -gt 0 ] || { echo "FAIL: nothing holds /packages/wine-$VER-$rev/"; exit 1; }
+echo "OK: /packages/wine-$VER-$rev/ appears \$good times, no other revision's path."
 EOF
-}
-
-cmd_package() {
-    rev=$(recipe_rev)
-    start=$(date +%s)
-    echo "== copying the port directory (recipe REVISION $rev, patchset) to $HOST"
-    rsync -a --delete --exclude 'work-*' --exclude 'download/' \
-        "$REPO/app-emulation/wine/" "$HOST:$PORTS/app-emulation/wine/"
-    echo "== bringing the work tree to the dev tree's HEAD"
-    cmd_sync
-    echo "== deleting objects that hold another revision's /packages path"
-    ssh -o BatchMode=yes "$HOST" "cd $WORK && sh -s" <<EOF
-grep -rlaF --include='*.o' '/packages/wine-$VER-' . | while IFS= read -r o; do
-    if grep -aoh '/packages/wine-$VER-[0-9]*/' "\$o" | grep -qvx '/packages/wine-$VER-$rev/'; then
-        rm -f -- "\$o"; echo "  \$o"
-    fi
-done
-rm -f ../../flag.build
-EOF
-    echo "== haikuporter (no -c): autoreconf, configure, make, install, package"
-    ssh -o BatchMode=yes "$HOST" "cd $PORTS && haikuporter -y -j\$(nproc) $PORT; s=\$?; sync; exit \$s"
-    cmd_checkpkg
-    echo "== done in $(( ($(date +%s) - start) / 60 )) min"
 }
 
 cmd_howto() {
@@ -293,7 +271,7 @@ EOF
 
 case "${1:-}" in
     howto|"") ;;
-    push|pull|sync|verify|package) need_host; need_dev ;;
+    push|pull|sync|verify) need_host; need_dev ;;
     status) need_host; need_dev ;;
     diff|build|checkpkg) need_host ;;
 esac
@@ -306,8 +284,7 @@ case "${1:-}" in
     build)    shift; cmd_build "$@" ;;
     sync)     shift; cmd_sync "$@" ;;
     verify)   shift; cmd_verify "$@" ;;
-    package)  shift; cmd_package "$@" ;;
     checkpkg) shift; cmd_checkpkg "$@" ;;
     howto)    shift; cmd_howto "$@" ;;
-    *) sed -n '2,26p' "$0"; exit 2 ;;
+    *) sed -n '2,25p' "$0"; exit 2 ;;
 esac

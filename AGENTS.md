@@ -101,10 +101,10 @@ Do not re-derive or contradict them without new evidence.
 - **The revision is compiled in.** `configure` sets
   `prefix = /packages/wine-<version>-<revision>/.self`, and some objects bake that path in.
   Re-running `haikuporter` alone after a bump recompiles none of them, and the package then
-  fails on every machine but the build machine with `wine: could not load ntdll.so`. Build a
-  changed port only with `tools/winework.sh package`, or with a clean `haikuporter -c` build.
-  Either way, `tools/winework.sh checkpkg` must pass before the package is shipped. Binaries
-  that hash identical to the previous revision's are the symptom, not reassurance.
+  fails on every machine but the build machine with `wine: could not load ntdll.so`. So a
+  changed port is built clean (`haikuporter -y -c` then `haikuporter -y -j<n>`), and
+  `tools/winework.sh checkpkg` must pass before the package is shipped. Binaries that hash
+  identical to the previous revision's are the symptom, not reassurance.
 - **Preserve upstream authorship.** The first patches are HaikuPorts' (on 11.21: 1–2 by X512,
   3 by Ken Mays; `tools/status.sh` lists the authors by patch). Their `From:` lines are the
   licence's attribution trail: never rewrite, reorder or absorb them.
@@ -123,12 +123,12 @@ works on that tree:
 
 - **A change** (seconds to minutes): `push` the files from the dev tree, `build` the target,
   test from the build tree without installing (`howto`).
-- **A package** (minutes): commit in the dev tree, regenerate and verify the patchset, bump
-  `REVISION`, then `package`. It syncs the work tree to the dev tree's HEAD, deletes only the
-  objects that hold another revision's path, re-runs `haikuporter` without `-c`, and runs
-  `checkpkg`.
-- **A clean build** (`haikuporter -c`, everything recompiled) only for a new Wine version or a
-  damaged work tree.
+- **A package**, at a milestone, not per change: commit in the dev tree, regenerate and verify
+  the patchset, bump `REVISION`, copy the port to the build machine, build clean, then
+  `checkpkg`. About 20 minutes in a VM with 12 cores.
+- **Never interfere with a running build**: do not push files into, delete from, or build in a
+  work tree while haikuporter is building in it. If a build has to stop, interrupt haikuporter
+  (Ctrl-C, SIGINT) so it cleans up its chroot, and build clean again.
 
 Invariants:
 
@@ -137,8 +137,9 @@ Invariants:
   `pull` copies them into the dev tree. Never run `-c` or delete a work tree while `status`
   lists any.
 - **Stop the build machine cleanly.** A hard stop loses recently written files on BFS (a fresh
-  package came back zero-filled). After one, check the recent outputs and run `package`
-  again; no clean build is needed.
+  package came back zero-filled). After one, check the recent outputs: if only the package
+  was lost and the work tree was built for the same `REVISION`, run haikuporter again without
+  `-c` (it skips the build and packages); otherwise build clean.
 - Compiling happens on RenkuOS, never on another OS: a Linux build proves nothing about this
   target. `configure` runs only inside `haikuporter`'s chroot.
 

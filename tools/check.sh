@@ -112,7 +112,7 @@ if [ -n "$changed" ] && [ -n "$HOST" ] && command -v ssh >/dev/null 2>&1; then
         2>/dev/null | awk '{print $1}' | tr '\n' ' ')
     local_sums=$(sha256sum "$PSET" "$RECIPE" | awk '{print $1}' | tr '\n' ' ')
     [ -n "$remote" ] && [ "$remote" != "$local_sums" ] && note "The build machine's copy of the port differs from this repo; a build there would use the old files.
-  tools/winework.sh package copies it over (or rsync with --exclude 'work-*' --exclude 'download/')."
+  Copy it: rsync -a --delete --exclude 'work-*' --exclude 'download/' app-emulation/wine/ <host>:<haikuports>/app-emulation/wine/"
 fi
 
 [ -n "$notes" ] && printf 'tools/check.sh notes (not blocking):\n%s' "$notes" | sed '2,$s/^\([^ ]\)/- \1/'

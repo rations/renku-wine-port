@@ -16,10 +16,11 @@ and coding agents alike. `tools/` has the scripts it describes.
 > `winerenku.drv`, a native graphics driver that gives Windows programs real RenkuOS windows
 > with no Wayland in between. The plan, its probes and its gates are in
 > [docs/NATIVE-DRIVER-PLAN.md](docs/NATIVE-DRIVER-PLAN.md). **The driver works but is not
-> finished (patches 16-19):** Windows programs open in native RenkuOS windows and take
+> finished (patches 16-20):** Windows programs open in native RenkuOS windows and take
 > keyboard and mouse input, and the windows can be moved, resized, minimized, zoomed and
 > closed. Keys type what the RenkuOS keymap says, AltGr included. The pointer stays RenkuOS's
-> own arrow. Not yet: accent (dead) keys, clipboard, OpenGL. configure runs `--without-wayland --without-x --without-opengl`. OpenGL
+> own arrow. Text copied in a Windows program pastes into RenkuOS programs and the other way
+> round. Not yet: accent (dead) keys, images on the clipboard, OpenGL. configure runs `--without-wayland --without-x --without-opengl`. OpenGL
 > is off because win32u's EGL path hangs explorer on RenkuOS; it comes back through the
 > driver. The released package
 > (Wine 11.19, Wayland) is on `master`.
@@ -36,9 +37,9 @@ downloads the upstream tarball (checksum pinned in the recipe) and applies the p
 
 ```
 app-emulation/wine/            drop-in replacement for the haikuports port directory
-  wine-11.21.recipe            REVISION=5
+  wine-11.21.recipe            REVISION=6
   patches/
-    wine-11.21.patchset        the 19 patches below (this is the deliverable)
+    wine-11.21.patchset        the 20 patches below (this is the deliverable)
   additional-files/
     wine.rdef.in               Deskbar icon/version resource template
 tools/                         scripts for maintaining the port (settings: tools/local.conf.example)
@@ -61,8 +62,8 @@ AGENTS.md                      the rules and workflow, for people and coding age
 
 ## The patchset
 
-Nineteen patches. **1–3 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
-`From:` line. **4–19 are local.**
+Twenty patches. **1–3 are from the upstream port** (see *Licensing and credit*), with original authorship preserved in each
+`From:` line. **4–20 are local.**
 
 | # | Patch | Author | Why |
 |---|---|---|---|
@@ -85,6 +86,7 @@ Nineteen patches. **1–3 are from the upstream port** (see *Licensing and credi
 | 17 | explorer: try the RenkuOS driver first | local | explorer loads the first driver in `default_driver` that exists; `renku` now comes first. explorer is Windows (PE) code and cannot test `__HAIKU__`, but it does not need to: where `winerenku.drv` is not built the load fails and the next name is tried, as `mac` already is everywhere but macOS. |
 | 18 | winerenku.drv: keyboard and mouse input, activation, and the decorator | local | **Work in progress, stage 2 of the plan.** Be threads cannot call Wine, so they queue events and one Wine thread passes them to win32u. Mouse input flushes the moves win32u holds back (without that, a drag reached the program only on release). Keys are sent as scancodes, from a table generated from RenkuOS's own scancode map, and are taken before BWindow's shortcuts (Command+Q, Control+Tab, Print Screen), so programs get them all. RenkuOS activations become Wine's foreground window and the other way round, without the two undoing each other; menus and tooltips, including JUCE's unowned ones, never take the focus. The decorator's close, minimize, zoom and resize follow the window style and become Wine's system commands, and moves and resizes are read back from the window. Also: a resized window keeps its picture until Wine has painted the new one, and click-through layered windows (drop shadows) are not shown, since RenkuOS cannot blend windows. Verified on notepad and Amped - Roots. The pointer stays RenkuOS's own arrow; programs' cursor shapes are not used, by choice. **Not done yet** (keyboard layouts: patch 19): showing a normal window without activating it, a work area that leaves out the Deskbar, Deskbar "Quit". |
 | 19 | winerenku.drv: keyboard layout from the RenkuOS keymap | local | **Work in progress, stage 2 of the plan.** Without it win32u typed with its US tables whatever the RenkuOS keymap was: on German the Z key typed y and there was no AltGr. The driver now builds Wine's layout tables from the keymap in Keymap preferences, as winewayland does from xkb. Letters, digits and the + , - . keys get the virtual key of their character (so Ctrl+Z is the key marked Z), other keys keep their US one where free. Characters come from the keymap's normal, Shift, Caps Lock and Option tables. When the keymap makes Right Alt an Option key (German, French, US-International), Right Alt is sent as Windows sends AltGr, Left Ctrl + Right Alt. Verified with [docs/probes/kbdprobe.c](docs/probes/kbdprobe.c) on the US, US-International, German and French keymaps, and by typing in notepad on US-International (AltGr characters, Alt+F, Ctrl shortcuts). **Not done yet:** accent (dead) keys type the accent at once, since win32u's tables have no dead keys; a keymap change applies to programs started after it. |
+| 20 | winerenku.drv: text clipboard, both ways | local | **Work in progress, stage 2 of the plan.** Wine's clipboard and RenkuOS's were separate. The driver now gives explorer's clipboard manager window its window procedure, as winemac does: a looper watches RenkuOS's clipboard and puts new text on Wine's as `CF_UNICODETEXT`, and text a Windows program copies goes to RenkuOS's as `text/plain` UTF-8 (a copy of anything else empties it, as on Windows). Line ends become CR LF and LF. Verified in the build VM between notepad and StyledEdit, both ways, from the menus and with Alt+C / Ctrl+C / Ctrl+V. **Not done yet:** images and other formats; non-ASCII text and line ends not checked yet. |
 
 On RenkuOS, patches 13 and 15 do nothing: its kernel has neither the LDT calls nor
 `THREAD_SET_DEBUG_REGISTERS`, so 32-bit programs exit and
@@ -134,7 +136,7 @@ cd ~/haikuports
 haikuporter -y -j8 wine-11.21
 ```
 
-The package lands in `~/haikuports/packages/wine-11.21-5-x86_64.hpkg`.
+The package lands in `~/haikuports/packages/wine-11.21-6-x86_64.hpkg`.
 
 That plain `haikuporter` build is right for a first build. **Do not rebuild a changed port
 that way:** without `-c`, haikuporter does not re-apply a changed patchset, and the revision is
@@ -150,15 +152,17 @@ wine: could not load ntdll.so: No such file or directory
 runtime_loader: Cannot open file /packages/wine-11.8-8/.self/lib/wine/x86_64-unix/ntdll.so
 ```
 
-There are two correct ways to build a changed port:
+So a changed port is always built clean, and left alone until it ends:
 
-- `tools/winework.sh package` (see below), which rebuilds only what changed. Minutes.
-- A clean build, `haikuporter -y -c wine-11.21` then `haikuporter -y -j12 wine-11.21`, which
-  recompiles everything (19 minutes in the RenkuOS build VM, 10 of them compiling). Needed only
-  for a new Wine version or a damaged work tree.
+```sh
+haikuporter -y -c wine-11.21 && haikuporter -y -j12 wine-11.21   # 19 min in the build VM
+```
 
-Either way, check the package before shipping it: `tools/winework.sh checkpkg` extracts it and
-fails if a path of any other revision is compiled in. On an installed system:
+That is only needed for a package. Testing a change needs no package at all (below), so a
+clean build comes at a milestone, not per change. Check the package before shipping it:
+`tools/winework.sh checkpkg` extracts it and fails if a path of any other revision is compiled
+in, as text or as UTF-16 (mscoree, mshtml and appwiz.cpl hold it in wide strings), or if none
+holds the recipe's. On an installed system:
 
 ```sh
 strings -a /boot/system/bin/wine | grep packages/wine   # must match the installed revision
@@ -169,8 +173,9 @@ payload is unchanged; they are the symptom.
 
 **Stop the build VM cleanly.** A hard stop loses recently written file data on BFS (a fresh
 hpkg came back zero-filled: `package list` reported "Invalid magic"), but not the older build
-tree. After one, check the recent outputs and run `tools/winework.sh package` again; no clean
-build is needed.
+tree. After one, check the recent outputs. If only the package was lost, and the work tree
+was built for the same `REVISION`, `haikuporter -y -j12 wine-11.21` without `-c` makes it again:
+`flag.build` makes it skip the build. Otherwise build clean.
 
 Build dependencies are declared in the recipe (`BUILD_REQUIRES`/`BUILD_PREREQUIRES`) and include
 llvm21 + clang + lld for the PE cross-build; `haikuporter` will tell you what is missing.
@@ -194,15 +199,11 @@ tools/winework.sh status    # edits that exist only on the build machine (exit 1
 tools/winework.sh pull      # copy those into the dev tree
 tools/winework.sh sync      # make the build machine's tree equal the dev tree's HEAD
 tools/winework.sh verify    # check that it does
-tools/winework.sh package   # package the dev tree's HEAD without a clean build
 tools/winework.sh checkpkg  # check the built package of the recipe's REVISION
 ```
 
-`package` copies the port over, `sync`s the tree to the dev tree's HEAD (refusing to overwrite
-edits that exist only there), deletes exactly the objects that hold another revision's
-`/packages/wine-<ver>-N/` path (found by searching the objects), removes `flag.build` so
-haikuporter re-runs the recipe's `BUILD()` (`autoreconf`, `configure`, `make`), runs haikuporter
-without `-c`, flushes the build machine's disk and runs `checkpkg`.
+`push` and `build` touch only the files you name and the targets you ask for, and only while
+no haikuporter build is running. Never change a work tree while haikuporter is building in it.
 
 Nothing needs to be installed to test a change. Wine sets its internal `build_dir` when its
 `ntdll.so` sits under `<tree>/dlls/ntdll`, and then omits the installed `/boot/system/lib/wine`
@@ -223,7 +224,7 @@ directory, so an installed builtin always wins.)
 ### Installing
 
 ```sh
-pkgman install ./wine-11.21-5-x86_64.hpkg
+pkgman install ./wine-11.21-6-x86_64.hpkg
 ```
 
 - **On RenkuOS, build it there.** A package built on RenkuOS requires the build machine's
@@ -324,7 +325,7 @@ needs `haikuporter -c`), test, update the patch table and revision history here,
 |---|---|
 | **this repo** | **Authoritative.** The recipe and patchsets, in git. If it is not committed here, it is not kept. |
 | the dev tree (`WINE_DEV_TREE`) | Working tree for editing source and regenerating the patchset, made by `tools/devtree.sh`: the pristine tarball tagged `pristine-<version>`, and the patches as commits on branch `renku-<version>`. Regenerable; safe to delete and recreate. |
-| the build machine's `<haikuports>/app-emulation/wine/` | Build machine only: a RenkuOS install (a VM is fine) of the release the package is built for. `tools/winework.sh package` copies the port in and builds it. Has no git history of its own: anything edited only there is one `haikuporter -c` from gone (`tools/winework.sh status`). |
+| the build machine's `<haikuports>/app-emulation/wine/` | Build machine only: a RenkuOS install (a VM is fine) of the release the package is built for. Copy the port in, build it clean, copy the `.hpkg` out. Has no git history of its own: anything edited only there is one `haikuporter -c` from gone (`tools/winework.sh status`). |
 
 ## Graphics driver
 
@@ -403,6 +404,7 @@ WINEDEBUG=+winediag wine notepad 2>&1 | head       # the ERR above, if any
 
 | REVISION | Notes |
 |---|---|
+| 6 | Patch 20 (`winerenku.drv` text clipboard, both ways). The patchset applies to pristine 11.21 and gives tree `99051cfc`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM, by the user: text copied in StyledEdit pastes into notepad and text copied in notepad pastes into StyledEdit, from the menus and with Alt+C / Ctrl+C / Ctrl+V (Alt+V was taken by QEMU's own window). **Built** 2026-11-11 on that VM, clean (`haikuporter -y -c` then `-y -j12`): all 20 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `99051cfc`; `tools/winework.sh checkpkg` finds `/packages/wine-11.21-6/` 27 times, as text and as UTF-16, and no other revision's path; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged (the recipe changed only REVISION). **Not installed or run as a package yet.** |
 | 5 | Patch 19 (`winerenku.drv` keyboard layout from the RenkuOS keymap). The patchset applies to pristine 11.21 and gives tree `2aa3600d`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM: kbdprobe matches the US, US-International, German and French keymaps; the user typed in notepad on US-International, AltGr characters included. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12` (the first build of this revision was lost: the VM was stopped uncleanly and the fresh hpkg came back zero-filled, so it was rebuilt): all 19 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `2aa3600d`; the extracted package holds `/packages/wine-11.21-5/` in 7 files and no other revision's path; it contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged from REVISION 4. Clean compile 10 min, package creation 9 min. **Not installed or run as a package yet.** |
 | 4 | Patch 18 (`winerenku.drv` input, activation and the decorator). The patchset applies to pristine 11.21 and gives tree `21a34855`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM, by the user: notepad and Amped - Roots (JUCE 6.1.5) take typing, mouse, menus and dialogs, and are moved, resized, zoomed, minimized and closed with the decorator. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12`: all 18 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `21a34855`; `bin/wine` and `ntdll.so` carry `/packages/wine-11.21-4`; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and its requires are unchanged from REVISION 3. **Not installed or run as a package yet.** |
 | 3 | Patches 16 (`winerenku.drv`, first stage: native windows that draw, no input) and 17 (explorer tries `renku` first), and `lib:libstdc++` in REQUIRES, because the driver is C++. The patchset applies to pristine 11.21 and gives tree `b811720b`, the dev tree's. Verified before packaging, from the work tree on the RenkuOS build VM (hrev60072+518): notepad opens in one native window with its title, menu bar, edit area and caret drawn correctly, and the sigprobe test passes 15/15. **Built** 2026-11-11 on that VM with `haikuporter -c` then `-y -j12`: all 17 patches applied from the committed patchset; the work tree's `HEAD^{tree}` is `b811720b`; the Makefile has `RENKU_LIBS = -lbe -lstdc++` and `config.h` leaves `SONAME_LIBEGL` undefined; `bin/wine` and `ntdll.so` carry `/packages/wine-11.21-3`; the package contains `winerenku.drv` (i386 and x86_64 PE) and `x86_64-unix/winerenku.so`, and requires `haiku>=r1~beta6_hrev60072_518-1`, `lib:libfreetype`, `lib:libgnutls`, `lib:libstdc++`, `lib:libusb_1.0`, `lib:libvulkan`. **Not installed or run as a package yet.** |
