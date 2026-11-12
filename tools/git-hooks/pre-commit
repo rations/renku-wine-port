@@ -1,0 +1,6 @@
+#!/bin/sh
+# Refuses a commit that tools/check.sh --staged finds wrong: the recipe or patchset changed
+# without a REVISION bump, a patchset that does not reproduce the dev tree, a placeholder
+# author. Enable once per clone:  git config core.hooksPath tools/git-hooks
+# (git commit --no-verify skips it, for a commit that is meant to be incomplete.)
+exec sh "$(git rev-parse --show-toplevel)/tools/check.sh" --staged

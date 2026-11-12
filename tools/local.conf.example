@@ -1,0 +1,15 @@
+# Copy to tools/local.conf (not tracked) and set for your machine. Plain shell assignments.
+
+# The dev tree, made by: tools/devtree.sh "$HOME/src/wine-renku-dev"
+WINE_DEV_TREE="$HOME/src/wine-renku-dev"
+
+# The RenkuOS build machine, as you reach it with ssh, for example a Host entry in
+# ~/.ssh/config with its HostName, Port and User.
+WINE_BUILD_HOST=renku-build
+
+# Its haikuports checkout, relative to its home directory.
+WINE_BUILD_PORTS=haikuports
+
+# Optional: local clones of the reference sources, shown by tools/status.sh.
+# WINE_UPSTREAM_TREE="$HOME/src/wine"            # https://github.com/wine-mirror/wine
+# RENKU_SOURCE_TREE="$HOME/src/renku"            # https://github.com/RenkuOS/Source

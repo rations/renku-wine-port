@@ -1,0 +1,556 @@
+winerenku.drv: mouse pointer shapes (SetCursor). Not in the patchset; kept as a starting point.
+
+Left out by choice: over Wine windows the pointer stays RenkuOS's own arrow, which is more
+coherent than one that changes with every program. Use this only if a program needs its
+cursor, for example a plug-in that hides the pointer while a knob is dragged.
+
+What it does: RENKU_SetCursor (new cursor.c) shows Win32's standard cursors (user32 OCR_*,
+comctl32 IDC_COPY/IDC_DIVIDER*, ole32 drag cursors) as app_server's built-in BCursorID shapes,
+and draws any other cursor from its bitmaps as a premultiplied B_RGBA32 BCursor (app_server
+expects premultiplied colour, HWInterface::_DrawCursor). A hidden cursor becomes
+B_CURSOR_ID_NO_CURSOR. The cursor is set on the top-level window's BView with SetViewCursor.
+
+State: builds cleanly on the RenkuOS build VM, but does not work yet. In its only test,
+win32u did call it and it chose the I-beam over notepad's edit area (+cursor trace), yet the
+pointer on screen did not change. The cause was not looked into. Not done either: animated
+cursors (first frame only), SetCursorPos, ClipCursor.
+
+Base: the wine-11.21 dev tree with patches 1-18 (tree 21a34855). To use it there:
+  git apply attic/winerenku-cursor-shapes.diff, then commit it as a patch of its own.
+
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+index 746e265b..5f27b01d 100644
+--- a/dlls/winerenku.drv/Makefile.in
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -8,6 +8,7 @@ SOURCES = \
+ 	be_app.cpp \
+ 	be_event.cpp \
+ 	be_window.cpp \
++	cursor.c \
+ 	display.c \
+ 	dllmain.c \
+ 	event.c \
+diff --git a/dlls/winerenku.drv/be_window.cpp b/dlls/winerenku.drv/be_window.cpp
+index b26d307c..aeb67b69 100644
+--- a/dlls/winerenku.drv/be_window.cpp
++++ b/dlls/winerenku.drv/be_window.cpp
+@@ -25,6 +25,7 @@
+ #include "be_private.h"
+ 
+ #include <Bitmap.h>
++#include <Cursor.h>
+ #include <InterfaceDefs.h>
+ #include <Message.h>
+ #include <Messenger.h>
+@@ -33,6 +34,7 @@
+ #include <Window.h>
+ 
+ #include <math.h>
++#include <string.h>
+ 
+ /* Win32 threads never lock a BWindow: they post a message to it through a BMessenger, which
+  * stays safe to use after the window has gone (the send just fails). Every change below is
+@@ -63,9 +65,31 @@ enum
+     MSG_SET_TITLE   = 'rTtl',
+     MSG_SET_BITMAP  = 'rBmp',
+     MSG_INVALIDATE  = 'rInv',
++    MSG_SET_CURSOR  = 'rCur',
+     MSG_DESTROY     = 'rDel',
+ };
+ 
++/* In the order of enum be_cursor_shape. app_server has every BCursorID built in
++ * (CursorManager::InitializeCursors, src/servers/app/CursorManager.cpp). */
++const BCursorID kCursorIds[] =
++{
++    B_CURSOR_ID_NO_CURSOR,
++    B_CURSOR_ID_SYSTEM_DEFAULT,
++    B_CURSOR_ID_I_BEAM,
++    B_CURSOR_ID_PROGRESS,
++    B_CURSOR_ID_CROSS_HAIR,
++    B_CURSOR_ID_MOVE,
++    B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST,
++    B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST,
++    B_CURSOR_ID_RESIZE_EAST_WEST,
++    B_CURSOR_ID_RESIZE_NORTH_SOUTH,
++    B_CURSOR_ID_NOT_ALLOWED,
++    B_CURSOR_ID_FOLLOW_LINK,
++    B_CURSOR_ID_HELP,
++    B_CURSOR_ID_COPY,
++    B_CURSOR_ID_CREATE_LINK,
++};
++
+ /* Win32 rectangles exclude right and bottom, BRect includes them. */
+ BRect to_brect(const struct be_rect *r)
+ {
+@@ -385,6 +409,18 @@ public:
+             fView->Invalidate(rect);
+             return;
+         }
++        case MSG_SET_CURSOR:
++        {
++            void *cursor;
++            if (msg->FindPointer("cursor", &cursor) != B_OK) break;
++            /* The view keeps a reference to app_server's cursor (View::SetCursor in
++             * src/servers/app/View.cpp), so the BCursor can go at once. app_server takes the
++             * view's cursor at the next mouse move over it (Window::MouseMoved), and at once
++             * if the window is focused and the pointer is over it. */
++            fView->SetViewCursor((BCursor *)cursor, false);
++            delete (BCursor *)cursor;
++            return;
++        }
+         case MSG_DESTROY:
+             /* On the looper thread, with the window locked: Quit() deletes the window, and
+              * the view's destructor drops its bitmap. Wine posts nothing after this. The
+@@ -565,3 +601,40 @@ extern "C" void be_window_invalidate(struct be_window *window, const struct be_r
+     msg.AddRect("rect", to_brect(rect));
+     post(window, &msg);
+ }
++
++/* The BCursor is made here, on the calling thread (app_server answers at once and never waits
++ * for Wine), and the window's looper sets it on the view and deletes it. */
++static void send_cursor(struct be_window *window, BCursor *cursor)
++{
++    BMessage msg(MSG_SET_CURSOR);
++
++    if (!window || cursor->InitCheck() != B_OK)
++    {
++        delete cursor;
++        return;
++    }
++    msg.AddPointer("cursor", cursor);
++    if (window->messenger.SendMessage(&msg) != B_OK) delete cursor;
++}
++
++extern "C" void be_window_set_cursor(struct be_window *window, enum be_cursor_shape shape)
++{
++    if ((size_t)shape >= sizeof(kCursorIds) / sizeof(kCursorIds[0])) shape = BE_CURSOR_DEFAULT;
++    send_cursor(window, new BCursor(kCursorIds[shape]));
++}
++
++extern "C" void be_window_set_cursor_image(struct be_window *window, int width, int height,
++                                           int hot_x, int hot_y, const uint32_t *pixels)
++{
++    if (!window || width <= 0 || height <= 0) return;
++
++    /* Only its bits are read: BCursor sends them to app_server (AS_CREATE_CURSOR_BITMAP),
++     * which keeps its own copy. B_RGBA32 is what app_server draws a cursor from, and it
++     * expects the colour premultiplied (HWInterface::_DrawCursor). */
++    BBitmap bitmap(BRect(0, 0, width - 1, height - 1), B_BITMAP_NO_SERVER_LINK, B_RGBA32);
++    if (bitmap.InitCheck() != B_OK) return;
++    uint8 *dst = (uint8 *)bitmap.Bits();
++    for (int y = 0; y < height; y++, dst += bitmap.BytesPerRow())
++        memcpy(dst, pixels + y * width, width * 4);
++    send_cursor(window, new BCursor(&bitmap, BPoint(hot_x, hot_y)));
++}
+diff --git a/dlls/winerenku.drv/cursor.c b/dlls/winerenku.drv/cursor.c
+new file mode 100644
+index 00000000..52ee9e05
+--- /dev/null
++++ b/dlls/winerenku.drv/cursor.c
+@@ -0,0 +1,300 @@
++/*
++ * RenkuOS driver: mouse pointer shapes
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "config.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++#define OEMRESOURCE
++#include "renku.h"
++#include "wine/debug.h"
++
++WINE_DEFAULT_DEBUG_CHANNEL(cursor);
++
++/* Win32's standard pointers are shown as the system's own, the way winemac and winewayland
++ * show them, so they look like every other program's. Only the resources whose meaning is
++ * plain from Wine's own sources are listed; any other cursor is drawn from its bitmaps. */
++struct system_cursor
++{
++    WORD id;
++    enum be_cursor_shape shape;
++};
++
++static const struct system_cursor user32_cursors[] =
++{
++    { OCR_NORMAL,      BE_CURSOR_DEFAULT },
++    { OCR_IBEAM,       BE_CURSOR_I_BEAM },
++    { OCR_WAIT,        BE_CURSOR_PROGRESS },  /* Haiku has no busy pointer of its own */
++    { OCR_CROSS,       BE_CURSOR_CROSS_HAIR },
++    { OCR_SIZE,        BE_CURSOR_MOVE },
++    { OCR_SIZENWSE,    BE_CURSOR_RESIZE_NWSE },
++    { OCR_SIZENESW,    BE_CURSOR_RESIZE_NESW },
++    { OCR_SIZEWE,      BE_CURSOR_RESIZE_EW },
++    { OCR_SIZENS,      BE_CURSOR_RESIZE_NS },
++    { OCR_SIZEALL,     BE_CURSOR_MOVE },
++    { OCR_NO,          BE_CURSOR_NOT_ALLOWED },
++    { OCR_HAND,        BE_CURSOR_FOLLOW_LINK },
++    { OCR_APPSTARTING, BE_CURSOR_PROGRESS },
++    { OCR_HELP,        BE_CURSOR_HELP },
++    { 0 }
++};
++
++/* dlls/comctl32/comctl32.h */
++static const struct system_cursor comctl32_cursors[] =
++{
++    { 104 /* IDC_COPY */,        BE_CURSOR_COPY },
++    { 106 /* IDC_DIVIDER */,     BE_CURSOR_RESIZE_EW },
++    { 107 /* IDC_DIVIDEROPEN */, BE_CURSOR_RESIZE_EW },
++    { 0 }
++};
++
++/* dlls/ole32/olestd.h, the drag and drop pointers */
++static const struct system_cursor ole32_cursors[] =
++{
++    { 1 /* CURSOR_NODROP */, BE_CURSOR_NOT_ALLOWED },
++    { 3 /* CURSOR_COPY */,   BE_CURSOR_COPY },
++    { 4 /* CURSOR_LINK */,   BE_CURSOR_CREATE_LINK },
++    { 0 }
++};
++
++/* Spelled out: unix-side code has no 16-bit L"" literals (-fshort-wchar is for PE code). */
++static const struct
++{
++    WCHAR name[16];
++    const struct system_cursor *cursors;
++} module_cursors[] =
++{
++    { {'u','s','e','r','3','2','.','d','l','l',0},         user32_cursors },
++    { {'c','o','m','c','t','l','3','2','.','d','l','l',0}, comctl32_cursors },
++    { {'o','l','e','3','2','.','d','l','l',0},             ole32_cursors },
++};
++
++/* The system shape for a cursor loaded from one of the modules above, or -1. */
++static int system_shape(const WCHAR *module_path, const UNICODE_STRING *res_name)
++{
++    const struct system_cursor *cursors = NULL;
++    const WCHAR *module;
++    unsigned int i;
++    WORD id;
++
++    /* NtUserGetIconInfo gives a resource ID as the buffer itself, with no length. */
++    if (!module_path[0] || res_name->Length || !res_name->Buffer) return -1;
++    id = LOWORD(res_name->Buffer);
++    if ((module = wcsrchr(module_path, '\\'))) module++;
++    else module = module_path;
++
++    for (i = 0; i < ARRAY_SIZE(module_cursors); i++)
++        if (!wcsicmp(module, module_cursors[i].name)) cursors = module_cursors[i].cursors;
++    if (!cursors) return -1;
++    for (i = 0; cursors[i].id; i++)
++        if (cursors[i].id == id) return cursors[i].shape;
++    return -1;
++}
++
++static void init_bitmap_info(BITMAPINFO *info, int width, int height, int bpp)
++{
++    memset(&info->bmiHeader, 0, sizeof(info->bmiHeader));
++    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
++    info->bmiHeader.biWidth = width;
++    info->bmiHeader.biHeight = -height;  /* top row first */
++    info->bmiHeader.biPlanes = 1;
++    info->bmiHeader.biBitCount = bpp;
++    info->bmiHeader.biCompression = BI_RGB;
++}
++
++/* A 1-bpp bitmap as a top-down DIB, rows padded to 32 bits. */
++static BYTE *get_mono_bits(HDC hdc, HBITMAP bitmap, int width, int height, int *stride)
++{
++    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
++    BITMAPINFO *info = (BITMAPINFO *)buffer;
++    BYTE *bits;
++
++    *stride = (width + 31) / 32 * 4;
++    if (!(bits = malloc(*stride * height))) return NULL;
++    init_bitmap_info(info, width, height, 1);
++    if (!NtGdiGetDIBitsInternal(hdc, bitmap, 0, height, bits, info, DIB_RGB_COLORS, 0, 0))
++    {
++        free(bits);
++        return NULL;
++    }
++    return bits;
++}
++
++static inline BOOL mono_bit(const BYTE *bits, int stride, int x, int y)
++{
++    return (bits[y * stride + x / 8] >> (7 - x % 8)) & 1;
++}
++
++/* The cursor's image as be_window_set_cursor_image() takes it: B, G, R, A, premultiplied.
++ * Pixels Windows would invert are drawn black, as winewayland draws them: app_server cannot
++ * invert. */
++static UINT32 *cursor_pixels(const ICONINFO *info, int *width, int *height)
++{
++    HDC hdc = NtGdiCreateCompatibleDC(0);
++    UINT32 *pixels = NULL;
++    BYTE *mask = NULL;
++    int stride, x, y, count;
++    BITMAP bm;
++
++    if (!NtGdiExtGetObjectW(info->hbmColor ? info->hbmColor : info->hbmMask, sizeof(bm), &bm))
++        goto done;
++    *width = bm.bmWidth;
++    /* A monochrome cursor's mask holds the AND mask above the XOR mask. */
++    *height = info->hbmColor ? bm.bmHeight : bm.bmHeight / 2;
++    if (*width <= 0 || *height <= 0) goto done;
++    count = *width * *height;
++    if (!(pixels = malloc(count * sizeof(*pixels)))) goto done;
++
++    if (info->hbmColor)
++    {
++        char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
++        BITMAPINFO *bmi = (BITMAPINFO *)buffer;
++        BOOL has_alpha = FALSE;
++        int i;
++
++        init_bitmap_info(bmi, *width, *height, 32);
++        if (!NtGdiGetDIBitsInternal(hdc, info->hbmColor, 0, *height, pixels, bmi,
++                                    DIB_RGB_COLORS, 0, 0))
++            goto failed;
++        for (i = 0; i < count && !has_alpha; i++) has_alpha = (pixels[i] >> 24) != 0;
++
++        if (has_alpha)
++        {
++            /* Windows cursors carry straight alpha. */
++            for (i = 0; i < count; i++)
++            {
++                UINT32 p = pixels[i], a = p >> 24;
++                if (a == 255) continue;
++                pixels[i] = (a << 24) | (((p >> 16 & 0xff) * a / 255) << 16) |
++                            (((p >> 8 & 0xff) * a / 255) << 8) | ((p & 0xff) * a / 255);
++            }
++        }
++        else
++        {
++            /* No alpha channel: the AND mask says which pixels show. */
++            if (!(mask = get_mono_bits(hdc, info->hbmMask, *width, *height, &stride))) goto failed;
++            for (y = 0; y < *height; y++)
++            {
++                for (x = 0; x < *width; x++)
++                {
++                    UINT32 *p = &pixels[y * *width + x];
++                    if (!mono_bit(mask, stride, x, y)) *p |= 0xff000000;
++                    else if (*p & 0xffffff) *p = 0xff000000;
++                    else *p = 0;
++                }
++            }
++        }
++    }
++    else
++    {
++        if (!(mask = get_mono_bits(hdc, info->hbmMask, *width, *height * 2, &stride))) goto failed;
++        for (y = 0; y < *height; y++)
++        {
++            for (x = 0; x < *width; x++)
++            {
++                BOOL and = mono_bit(mask, stride, x, y);
++                BOOL xor = mono_bit(mask, stride, x, y + *height);
++                UINT32 *p = &pixels[y * *width + x];
++                if (and && !xor) *p = 0;
++                else if (!and && xor) *p = 0xffffffff;
++                else *p = 0xff000000;
++            }
++        }
++    }
++    goto done;
++
++failed:
++    free(pixels);
++    pixels = NULL;
++done:
++    free(mask);
++    NtGdiDeleteObjectApp(hdc);
++    return pixels;
++}
++
++static BOOL is_transparent(const UINT32 *pixels, int count)
++{
++    while (count--) if (*pixels++ >> 24) return FALSE;
++    return TRUE;
++}
++
++/***********************************************************************
++ *           RENKU_SetCursor
++ *
++ * win32u calls this on the thread of the window under the pointer, whenever that window or
++ * its cursor changes (server/queue.c, WM_WINE_SETCURSOR); cursor is 0 while it is hidden.
++ * The pointer belongs to the top-level window's BView, which app_server shows while the
++ * pointer is over it.
++ */
++void RENKU_SetCursor(HWND hwnd, HCURSOR cursor)
++{
++    WCHAR module[MAX_PATH], res[MAX_PATH];
++    UNICODE_STRING module_str = { 0, sizeof(module) - sizeof(WCHAR), module };
++    UNICODE_STRING res_str = { 0, sizeof(res) - sizeof(WCHAR), res };
++    struct be_window *window;
++    ICONINFO info;
++    UINT32 *pixels;
++    int shape, width, height;
++
++    TRACE("hwnd %p cursor %p\n", hwnd, cursor);
++
++    if (!(window = renku_get_be_window(hwnd))) return;
++
++    if (!cursor)
++    {
++        be_window_set_cursor(window, BE_CURSOR_NONE);
++        goto done;
++    }
++    if (!NtUserGetIconInfo(cursor, &info, &module_str, &res_str, NULL, 0))
++    {
++        WARN("no icon info for %p\n", cursor);
++        be_window_set_cursor(window, BE_CURSOR_DEFAULT);
++        goto done;
++    }
++    module[module_str.Length] = 0;  /* in characters (NtUserGetIconInfo) */
++
++    if ((shape = system_shape(module, &res_str)) >= 0)
++    {
++        TRACE("%s %u: system shape %d\n", debugstr_w(module), LOWORD(res_str.Buffer), shape);
++        be_window_set_cursor(window, shape);
++    }
++    else if ((pixels = cursor_pixels(&info, &width, &height)))
++    {
++        TRACE("%dx%d image, hotspot %u,%u\n", width, height, info.xHotspot, info.yHotspot);
++        if (is_transparent(pixels, width * height)) be_window_set_cursor(window, BE_CURSOR_NONE);
++        else be_window_set_cursor_image(window, width, height, info.xHotspot, info.yHotspot, pixels);
++        free(pixels);
++    }
++    else
++    {
++        WARN("could not read the bitmaps of %p\n", cursor);
++        be_window_set_cursor(window, BE_CURSOR_DEFAULT);
++    }
++    if (info.hbmColor) NtGdiDeleteObjectApp(info.hbmColor);
++    if (info.hbmMask) NtGdiDeleteObjectApp(info.hbmMask);
++
++done:
++    be_window_release(window);
++}
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+index 5af305e6..049bc752 100644
+--- a/dlls/winerenku.drv/renku.h
++++ b/dlls/winerenku.drv/renku.h
+@@ -45,6 +45,9 @@ enum renku_window_message
+     WM_RENKU_FRAME_CHANGED,                        /* the BWindow moved or was resized */
+ };
+ 
++/* cursor.c */
++extern void RENKU_SetCursor(HWND hwnd, HCURSOR cursor);
++
+ /* display.c */
+ extern UINT RENKU_UpdateDisplayDevices(const struct gdi_device_manager *manager, void *param);
+ 
+@@ -61,6 +64,7 @@ extern void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint
+ extern BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped,
+                                     const struct window_rects *rects);
+ 
++extern struct be_window *renku_get_be_window(HWND hwnd);
+ extern void RENKU_ActivateWindow(HWND hwnd, HWND previous);
+ extern LRESULT RENKU_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+ 
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+index db616b9c..3fe82352 100644
+--- a/dlls/winerenku.drv/renku_be.h
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -106,6 +106,33 @@ void be_window_set_bitmap(struct be_window *window, struct be_bitmap *bitmap, in
+ /* Redraw rect, in window coordinates. */
+ void be_window_invalidate(struct be_window *window, const struct be_rect *rect);
+ 
++/* Pointer shapes app_server draws itself (BCursorID in Cursor.h). */
++enum be_cursor_shape
++{
++    BE_CURSOR_NONE,         /* no pointer at all */
++    BE_CURSOR_DEFAULT,
++    BE_CURSOR_I_BEAM,
++    BE_CURSOR_PROGRESS,
++    BE_CURSOR_CROSS_HAIR,
++    BE_CURSOR_MOVE,
++    BE_CURSOR_RESIZE_NWSE,
++    BE_CURSOR_RESIZE_NESW,
++    BE_CURSOR_RESIZE_EW,
++    BE_CURSOR_RESIZE_NS,
++    BE_CURSOR_NOT_ALLOWED,
++    BE_CURSOR_FOLLOW_LINK,
++    BE_CURSOR_HELP,
++    BE_CURSOR_COPY,
++    BE_CURSOR_CREATE_LINK,
++};
++
++/* The pointer over the window, from now on. */
++void be_window_set_cursor(struct be_window *window, enum be_cursor_shape shape);
++/* The same, from an image: width * height pixels, B, G, R, A in memory with the colour
++ * premultiplied by the alpha, top row first. (hot_x, hot_y) is the pixel that points. */
++void be_window_set_cursor_image(struct be_window *window, int width, int height, int hot_x,
++                                int hot_y, const uint32_t *pixels);
++
+ /* Events from the Be side, in the order they happened. */
+ enum be_event_type
+ {
+diff --git a/dlls/winerenku.drv/renku_main.c b/dlls/winerenku.drv/renku_main.c
+index 665f3048..11a8e7d9 100644
+--- a/dlls/winerenku.drv/renku_main.c
++++ b/dlls/winerenku.drv/renku_main.c
+@@ -50,14 +50,15 @@ char *renku_utf8_from_wstr(const WCHAR *str)
+ 
+ /* Only what win32u cannot do without a window system is here; everything else is win32u's
+  * own default (dlls/win32u/driver.c). Keyboard and mouse input do not go through this table:
+- * the event thread (event.c) sends them. Cursors, clipboard and the other entries come in
+- * later patches. */
++ * the event thread (event.c) sends them. Clipboard and the other entries come in later
++ * patches. */
+ static const struct user_driver_funcs renku_funcs =
+ {
+     .pActivateWindow = RENKU_ActivateWindow,
+     .pCreateWindowSurface = RENKU_CreateWindowSurface,
+     .pDestroyWindow = RENKU_DestroyWindow,
+     .pGetWindowStyleMasks = RENKU_GetWindowStyleMasks,
++    .pSetCursor = RENKU_SetCursor,
+     .pSetWindowText = RENKU_SetWindowText,
+     .pUpdateDisplayDevices = RENKU_UpdateDisplayDevices,
+     .pWindowMessage = RENKU_WindowMessage,
+diff --git a/dlls/winerenku.drv/window.c b/dlls/winerenku.drv/window.c
+index e7305319..75092c75 100644
+--- a/dlls/winerenku.drv/window.c
++++ b/dlls/winerenku.drv/window.c
+@@ -94,6 +94,19 @@ static BOOL is_toplevel(HWND hwnd)
+     return parent && parent == NtUserGetDesktopWindow();
+ }
+ 
++/* The BWindow of hwnd's top-level window, referenced, or NULL. */
++struct be_window *renku_get_be_window(HWND hwnd)
++{
++    struct renku_win_data *data;
++    struct be_window *window = NULL;
++    HWND root = NtUserGetAncestor(hwnd, GA_ROOT);
++
++    if (!root || !(data = get_win_data(root))) return NULL;
++    if ((window = data->window)) be_window_add_ref(window);
++    release_win_data(data);
++    return window;
++}
++
+ /* A window with a caption gets the system decorator, which then draws the caption and the
+  * frame in place of Wine's (see GetWindowStyleMasks). Everything else, popups and menus
+  * included, is borderless and drawn entirely by Wine. */
