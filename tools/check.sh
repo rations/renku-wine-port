@@ -77,6 +77,11 @@ if [ -n "$DEV" ] && [ -d "$DEV/.git" ]; then
         elif printf '%s\n' "$changed" | grep -qx "$PSET"; then
             tmp=$(mktemp -d)
             content "$PSET" > "$tmp/patchset"
+            # As a pre-commit hook, git exports GIT_INDEX_FILE, this repo's index. The
+            # worktree's checkout and git am must use the worktree's own index, or nothing
+            # applies; content() above still needs this repo's.
+            index=${GIT_INDEX_FILE-}
+            unset GIT_INDEX_FILE
             git -C "$DEV" worktree add -q --detach "$tmp/verify" "$PRISTINE" 2>/dev/null
             if (cd "$tmp/verify" && git -c user.name=check -c user.email=check@localhost \
                     am -q "$tmp/patchset") >/dev/null 2>&1; then
@@ -85,6 +90,7 @@ if [ -n "$DEV" ] && [ -d "$DEV/.git" ]; then
                 got="(it does not apply)"
             fi
             git -C "$DEV" worktree remove --force "$tmp/verify" 2>/dev/null
+            if [ -n "$index" ]; then export GIT_INDEX_FILE="$index"; fi
             rm -rf "$tmp"
             want=$(git -C "$DEV" rev-parse 'HEAD^{tree}')
             [ "$got" = "$want" ] || problem "The patchset applied to $PRISTINE gives tree $got, not the dev tree's $want.
