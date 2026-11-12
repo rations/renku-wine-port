@@ -1,7 +1,7 @@
 From 3214897ec115b208fb016acde50943bc102295aa Mon Sep 17 00:00:00 2001
 From: X512 <danger_mail@list.ru>
 Date: Sun, 3 May 2026 11:49:20 +0200
-Subject: [PATCH 01/19] 11.8 patches
+Subject: [PATCH 01/20] 11.8 patches
 
 [rations: rebased onto wine-11.19. system.c: kept upstream's new <assert.h> include alongside the Haiku OS.h block. signal_x86_64.c: dropped the comment-only //#ifndef/#endif pair around usr1_handler, which upstream rewrote (new !data->teb branch); no functional change. thread.c: also renamed spawn_thread around the OS.h include, since 11.19 adds a static spawn_thread() that clashes with Haiku's.]
 
@@ -770,7 +770,7 @@ index f800c0f7..ad509c18 100644
 From d860e9426d85a9bc0125047143b7ae4e5dc7649e Mon Sep 17 00:00:00 2001
 From: Ken Mays <kmays2000@gmail.com>
 Date: Sat, 25 Apr 2026 13:40:26 +0200
-Subject: [PATCH 02/19] Opensound support
+Subject: [PATCH 02/20] Opensound support
 
 [rations: rebased onto wine-11.21. configure.ac: upstream now uses AC_CHECK_MEMBER, not
 AC_CHECK_MEMBERS, for oss_sysinfo.numaudioengines (def2c3df6d3, which dropped the unused
@@ -843,7 +843,7 @@ index f5844912..1aee2585 100644
 From 92f1174d91d7e291158354efbd91a90e693c2a94 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Sun, 19 Jul 2026 22:04:22 +1000
-Subject: [PATCH 03/19] Run static initializers in Winelib modules on Haiku
+Subject: [PATCH 03/20] Run static initializers in Winelib modules on Haiku
 
 Haikus libroot has neither dladdr1() nor dlinfo(), so __wine_init_so_dll()
 compiled to an empty function and no static constructor in any Winelib module
@@ -960,7 +960,7 @@ index 88d00d1f..f4ab87b1 100644
 From 5d6a9a325a002afd6943c50e4596f2db7044b5d4 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 20 Jul 2026 17:47:27 +1000
-Subject: [PATCH 04/19] loader: find the loader path via find_path() on Haiku
+Subject: [PATCH 04/20] loader: find the loader path via find_path() on Haiku
 
 Haiku has no /proc, so get_self_exe() returned NULL and the loader fell
 back to resolving argv[0]. That works for any invocation carrying a
@@ -1009,7 +1009,7 @@ index 71ba308c..e959a762 100644
 From 98cfd029642ecf239b090e210f5ff46d2ad63550 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Mon, 27 Jul 2026 01:36:07 +1000
-Subject: [PATCH 05/19] dxgi: Wait for a refresh interval in
+Subject: [PATCH 05/20] dxgi: Wait for a refresh interval in
  IDXGIOutput::WaitForVBlank().
 
 WaitForVBlank() printed a FIXME and returned E_NOTIMPL immediately,
@@ -1092,7 +1092,7 @@ index e828ed0d..9690dee6 100644
 From 26183c0c90d985857be4aa218b14444819f531f9 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:24 +1000
-Subject: [PATCH 06/19] sechost: Report no failure actions in
+Subject: [PATCH 06/20] sechost: Report no failure actions in
  QueryServiceConfig2W.
 
 services.exe doesn't keep a service's failure actions: ChangeServiceConfig2W accepts them with a
@@ -1157,7 +1157,7 @@ index f05fd2d7..20a7fb17 100644
 From 13a4edd402133a4f72faddbf2ef3d483472168b0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 7 Oct 2026 12:34:45 +1000
-Subject: [PATCH 07/19] msiexec, rundll32: Declare Windows 10 compatibility in
+Subject: [PATCH 07/20] msiexec, rundll32: Declare Windows 10 compatibility in
  their manifests.
 
 Windows 8.1 and later report Windows 8 (6.2) to a program whose manifest doesn't list the newer
@@ -1268,7 +1268,7 @@ index 00000000..07b215a1
 From c9d6ba381de89aba32a20bc10275caa440125b8f Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 10:50:10 +1000
-Subject: [PATCH 08/19] server: Detach asyncs from a queue before terminating
+Subject: [PATCH 08/20] server: Detach asyncs from a queue before terminating
  them in free_async_queue().
 
 free_async_queue() terminated each async while it was still linked into
@@ -1335,7 +1335,7 @@ index ae51b2f7..691b7984 100644
 From d0013fa18609ad945f85a49236e2f659962772e4 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:03:38 +1000
-Subject: [PATCH 09/19] ntdll, server: Deliver signals to specific threads on
+Subject: [PATCH 09/20] ntdll, server: Deliver signals to specific threads on
  Haiku.
 
 get_unix_tid() had no Haiku branch and returned -1, so the server could
@@ -1415,7 +1415,7 @@ index 2e6d93b7..bda79d71 100644
 From 4feb2befa95d389a7bd56a946358ff74a3931e39 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 13:12:19 +1000
-Subject: [PATCH 10/19] winegcc: Do not link with -ldl on Haiku.
+Subject: [PATCH 10/20] winegcc: Do not link with -ldl on Haiku.
 
 Haiku provides dlopen() and friends in libroot and ships no libdl, so
 every Winelib link failed unless an empty libdl.a was put in place by
@@ -1446,7 +1446,7 @@ index ad509c18..eb83446b 100644
 From bcc8b5f2b4cf30c8b4b397db00a0ddfa40546332 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 11/19] ntdll: Support WoW64 (32-bit code) on Haiku.
+Subject: [PATCH 11/20] ntdll: Support WoW64 (32-bit code) on Haiku.
 
 32-bit Windows code needs a 32-bit code selector and a per-thread %fs
 segment whose base is the 32-bit TEB. Stock Haiku has neither an LDT nor
@@ -1780,7 +1780,7 @@ index 7ecb8b4c..6fc66d4a 100644
 From d61490f3e90748e213abf83dcf73320f600c3c24 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Thu, 15 Oct 2026 14:00:46 +1000
-Subject: [PATCH 12/19] ntdll, server: Use the xattr functions from libgnu on
+Subject: [PATCH 12/20] ntdll, server: Use the xattr functions from libgnu on
  Haiku.
 
 The Haiku port disabled HAVE_SYS_XATTR_H in ntdll and the server. Wine
@@ -1876,7 +1876,7 @@ index fa51e21f..4e275a5c 100644
 From 6bfd5fd684dcb8516ea0fcc29b2e508c1b61c405 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Fri, 16 Oct 2026 14:27:35 +1000
-Subject: [PATCH 13/19] ntdll, server: Support hardware breakpoints on Haiku.
+Subject: [PATCH 13/20] ntdll, server: Support hardware breakpoints on Haiku.
 
 Copy protection such as PACE (iLok) sets Dr0-Dr3 and Dr7 on its own
 threads with SetThreadContext and expects EXCEPTION_SINGLE_STEP when a
@@ -2156,7 +2156,7 @@ index bb9728f6..4522128d 100644
 From 2abd94fe3c9a290a0021e6f18cb0830c412c14d6 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 14/19] winerenku.drv: Add a native RenkuOS (Be API) graphics
+Subject: [PATCH 14/20] winerenku.drv: Add a native RenkuOS (Be API) graphics
  driver.
 
 Every Wine port for Haiku-family systems draws through winewayland.drv,
@@ -3841,7 +3841,7 @@ index 00000000..8e499aee
 From 7f90df47e2ed8410306a89dcd94aa77e3d3e60d0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 09:50:19 +1000
-Subject: [PATCH 15/19] explorer: Try the RenkuOS driver first.
+Subject: [PATCH 15/20] explorer: Try the RenkuOS driver first.
 
 explorer picks the graphics driver from default_driver when the prefix
 sets none. Put "renku" (winerenku.drv) at its head.
@@ -3880,7 +3880,7 @@ index ce70c5dd..f0956929 100644
 From efdb5f88d6314e1a9f24c5180b9220e95bc0f881 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 11:21:19 +1000
-Subject: [PATCH 16/19] winerenku.drv: Keyboard and mouse input, activation,
+Subject: [PATCH 16/20] winerenku.drv: Keyboard and mouse input, activation,
  and the decorator.
 
 The first stage drew windows but took no input, and its windows could
@@ -5387,7 +5387,7 @@ index 8e499aee..e7305319 100644
 From 0726f38dcfa5cb77bdc7627b4950da0a3bf21124 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 12:48:32 +1000
-Subject: [PATCH 17/19] winerenku.drv: Keyboard layout from the RenkuOS keymap.
+Subject: [PATCH 17/20] winerenku.drv: Keyboard layout from the RenkuOS keymap.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -6114,7 +6114,7 @@ index 665f3048..3176d6b1 100644
 From d8902cf5383dec6d82c895711ff599be97050a84 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 18:48:25 +1000
-Subject: [PATCH 18/19] winerenku.drv: Text clipboard, both ways, with
+Subject: [PATCH 18/20] winerenku.drv: Text clipboard, both ways, with
  RenkuOS's.
 
 Wine's clipboard and RenkuOS's system clipboard were separate: text
@@ -6605,7 +6605,7 @@ index 3176d6b1..fc428255 100644
 From 20471616b7920be75b48765d533ef23ff25e24d0 Mon Sep 17 00:00:00 2001
 From: rations <ehqcar@proton.me>
 Date: Wed, 11 Nov 2026 19:52:17 +1000
-Subject: [PATCH 19/19] winerenku.drv: OpenGL through OSMesa.
+Subject: [PATCH 19/20] winerenku.drv: OpenGL through OSMesa.
 
 Mesa on RenkuOS has no DRI swrast module and no EGL platform Wine can
 use (eglInitialize fails), so the driver had no OpenGL, and wined3d,
@@ -7875,6 +7875,1215 @@ index e7305319..c1b9a0b2 100644
  static BOOL is_toplevel(HWND hwnd)
  {
      HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
+-- 
+2.47.3
+
+
+From 16d47cf75b05a712fcbcbe72de2d3409405462b5 Mon Sep 17 00:00:00 2001
+From: rations <ehqcar@proton.me>
+Date: Thu, 12 Nov 2026 12:36:22 +1000
+Subject: [PATCH 20/20] winerenku.drv: Show a window in a view of another
+ program.
+
+A plug-in host shows a bridged Windows plug-in's editor inside its own
+window, as REAPER does on Linux by reparenting the editor's X11 window.
+That cannot be done here: app_server lets a program create views only
+in its own windows (ServerWindow::_CreateView looks the parent token up
+in the caller's own token space and requires the caller's window), so a
+Wine window cannot become part of another program's window, and the
+editor opened as a second window of its own.
+
+A top-level window can now ask the driver to be shown by another
+program instead, the host. The program sets the window property
+__wine_renku_hosted before showing the window; the driver then gives it
+no BWindow, sets __wine_renku_team on it to the process's team id, and
+talks to whoever the program hands that and the window handle to. The
+protocol is in renku_host.h, plain C with no Wine or Be types so that a
+host can carry a copy:
+- The host says hello to the process's BApplication, with a version
+  and a BMessenger to send to. A version other than the driver's is
+  refused. RenkuApp gets a MessageReceived for the host's messages.
+- The window surface keeps its pixels in a B_CLONEABLE_AREA. The driver
+  announces the area (id, size, stride, origin) and then each changed
+  rectangle; the host clones the area, copies, and acknowledges, and
+  the driver sends nothing new until it has. A resize makes a new area
+  and announces it. Sends use a zero timeout, so a host that stops
+  reading costs frames and never blocks a Win32 thread.
+- Mouse, wheel and key messages from the host become the driver's own
+  be_events, in screen coordinates and raw key codes, so they take the
+  same path as input from a BWindow. Focus from the host is posted as
+  activation, kept balanced, and dropped when the host says bye, goes
+  away (B_BAD_PORT_ID) or is replaced by a new hello.
+- The host reports where the window's top-left pixel is on screen; the
+  driver moves the window there with NtUserSetRawWindowPos (new
+  BE_EVENT_HOST_MOVED, WM_RENKU_HOST_MOVED), so the program's popups and
+  dialogs, which are ordinary windows with BWindows, open at the right
+  place over the host's window.
+- When the window is destroyed the host is told it is gone, also while
+  a surface still holds the hosted record.
+A GL child of a hosted window has no BWindow to put a layer in, so it
+takes the existing offscreen path and is drawn into the window's pixels
+with GDI. ActivateWindow leaves hosted windows alone. Windows without
+the property are not affected.
+
+Tested on RenkuOS (VM) with docs/probes/hostprobe in renku-wine-port, a
+Winelib program with a hosted window and a native host program: 20 of
+20 checks in each of three runs (pixels and their placement, checked
+on screen with screencheck; focus; click; key; repaint; a GL child;
+wheel; moving the host window; a popup's position after the move; the
+window going away). Killing the host leaves the program running;
+killing the program leaves the host running. glprobe 29/29 and d3dprobe
+8/8 unchanged. Through vstbridge, two VST2 plug-ins' editors (GDI)
+reach the screen in a native host's view, after moving and after
+reopening.
+
+Not verified: drawing straight from a BBitmap on the cloned area (the
+host copies into its own bitmap instead); Direct3D in a hosted window;
+how far behind a GL child's frames run on the GDI path; IME and dead
+keys through a host; a dialog owned by a hosted window stays a free
+window (owner ties are not implemented in the driver); HiDPI and a
+host's content scale.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ dlls/winerenku.drv/Makefile.in  |   1 +
+ dlls/winerenku.drv/be_app.cpp   |  23 ++
+ dlls/winerenku.drv/be_host.cpp  | 511 ++++++++++++++++++++++++++++++++
+ dlls/winerenku.drv/be_private.h |   4 +
+ dlls/winerenku.drv/event.c      |   3 +
+ dlls/winerenku.drv/renku.h      |   5 +-
+ dlls/winerenku.drv/renku_be.h   |  26 ++
+ dlls/winerenku.drv/renku_host.h | 109 +++++++
+ dlls/winerenku.drv/surface.c    |  96 +++++-
+ dlls/winerenku.drv/window.c     | 111 ++++++-
+ 10 files changed, 870 insertions(+), 19 deletions(-)
+ create mode 100644 dlls/winerenku.drv/be_host.cpp
+ create mode 100644 dlls/winerenku.drv/renku_host.h
+
+diff --git a/dlls/winerenku.drv/Makefile.in b/dlls/winerenku.drv/Makefile.in
+index 9177554c..0a5d4efd 100644
+--- a/dlls/winerenku.drv/Makefile.in
++++ b/dlls/winerenku.drv/Makefile.in
+@@ -8,6 +8,7 @@ SOURCES = \
+ 	be_app.cpp \
+ 	be_clipboard.cpp \
+ 	be_event.cpp \
++	be_host.cpp \
+ 	be_keymap.cpp \
+ 	be_window.cpp \
+ 	clipboard.c \
+diff --git a/dlls/winerenku.drv/be_app.cpp b/dlls/winerenku.drv/be_app.cpp
+index c63abf43..c0925426 100644
+--- a/dlls/winerenku.drv/be_app.cpp
++++ b/dlls/winerenku.drv/be_app.cpp
+@@ -24,6 +24,8 @@
+ 
+ #include "be_private.h"
+ 
++#include "renku_host.h"
++
+ #include <Application.h>
+ #include <Screen.h>
+ 
+@@ -93,6 +95,27 @@ public:
+         return false;
+     }
+ 
++    /* Hosts address the process's BApplication (renku_host.h): it is the one target another
++     * program can find from the team id alone, BMessenger(signature, team). */
++    void MessageReceived(BMessage *msg) override
++    {
++        switch (msg->what)
++        {
++        case RENKU_HOST_HELLO:
++        case RENKU_HOST_BYE:
++        case RENKU_HOST_ACK:
++        case RENKU_HOST_MOVED:
++        case RENKU_HOST_MOUSE_MOVE:
++        case RENKU_HOST_MOUSE_BUTTON:
++        case RENKU_HOST_MOUSE_WHEEL:
++        case RENKU_HOST_KEY:
++        case RENKU_HOST_FOCUS:
++            be_host_message(msg);
++            return;
++        }
++        BApplication::MessageReceived(msg);
++    }
++
+ private:
+     sem_id fReady;
+ };
+diff --git a/dlls/winerenku.drv/be_host.cpp b/dlls/winerenku.drv/be_host.cpp
+new file mode 100644
+index 00000000..3e406e1e
+--- /dev/null
++++ b/dlls/winerenku.drv/be_host.cpp
+@@ -0,0 +1,511 @@
++/*
++ * RenkuOS driver: windows shown in a view of another program
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++#if 0
++#pragma makedep unix
++#endif
++
++#include "be_private.h"
++#include "renku_host.h"
++
++#include <Message.h>
++#include <Messenger.h>
++#include <OS.h>
++#include <Rect.h>
++
++#include <map>
++#include <math.h>
++#include <pthread.h>
++
++/* See renku_host.h for the protocol. The pixels go through an area the host clones, because a
++ * BBitmap's own memory cannot be shared with another team. At most one SURFACE or DIRTY is
++ * waiting for the host's ACK at a time, so a host's port never fills up because of us, and a
++ * host that stops reading costs it frames, never a Wine thread its progress: every send has a
++ * zero timeout.
++ *
++ * Locking: hosts_mutex guards the table and every be_host. It is taken by Win32 threads (from
++ * the window surface's flush) and by the BApplication's looper (host messages), and held only
++ * to read or change that state: nothing under it sends a message, calls Wine or waits. That is
++ * the justification rule 2 of the plan asks for: the looper waits at most for such a copy. */
++
++struct be_host_buffer
++{
++    area_id area;
++    void *bits;
++    int width, height, stride;
++    int32 refs;
++};
++
++struct be_host
++{
++    uint64 cookie;
++    int refs;                       /* the window's handle, surfaces, and calls in progress */
++    BMessenger target;              /* the host's view; not valid before a hello */
++    struct be_host_buffer *buffer;  /* the pixels shown, referenced; NULL until drawn */
++    int32 x, y;                     /* where buffer goes in the window */
++    int32 serial;                   /* counts buffers, so that a late ACK is recognised */
++    bool waiting;                   /* a SURFACE or DIRTY is out, not acked yet */
++    bool announce;                  /* the host has not been sent buffer yet */
++    BRect dirty;                    /* changed since the last DIRTY; invalid for nothing */
++    bool focused;                   /* the focus the host reported last, as posted to Wine */
++};
++
++namespace {
++
++pthread_mutex_t hosts_mutex = PTHREAD_MUTEX_INITIALIZER;
++std::map<uint64, struct be_host *> hosts;
++
++/* The largest window the driver will share, in pixels per side; anything bigger is refused
++ * rather than risking an overflowing size. */
++const int kMaxSide = 16384;
++
++void buffer_release(struct be_host_buffer *buffer)
++{
++    /* atomic_add returns the previous value. */
++    if (buffer && atomic_add(&buffer->refs, -1) == 1)
++    {
++        delete_area(buffer->area);
++        delete buffer;
++    }
++}
++
++/* With hosts_mutex held. */
++struct be_host *find_host(uint64 cookie)
++{
++    std::map<uint64, struct be_host *>::iterator it = hosts.find(cookie);
++    return it == hosts.end() ? NULL : it->second;
++}
++
++void post_event(enum be_event_type type, uint64 cookie, struct be_event *event)
++{
++    event->type = type;
++    event->cookie = cookie;
++    be_event_post(event);
++}
++
++/* Focus is posted as an activation, the same event a BWindow sends, and be_event counts those
++ * (be_any_window_active). So every focus is matched by exactly one loss of it, even when the
++ * host goes away instead of saying so. With hosts_mutex held; returns whether to post. */
++bool set_focus(struct be_host *host, bool focus)
++{
++    if (host->focused == focus) return false;
++    host->focused = focus;
++    return true;
++}
++
++void post_focus(uint64 cookie, bool focus)
++{
++    struct be_event event = {};
++    event.down = focus;
++    post_event(BE_EVENT_ACTIVATE, cookie, &event);
++}
++
++/* What to send the host next, if anything. With hosts_mutex held. */
++bool next_message(struct be_host *host, BMessage *msg, BMessenger *target)
++{
++    if (!host->target.IsValid() || host->waiting || !host->buffer) return false;
++
++    if (host->announce)
++    {
++        msg->what = RENKU_HOST_SURFACE;
++        msg->AddInt64(RENKU_HOST_FIELD_COOKIE, (int64)host->cookie);
++        msg->AddInt32(RENKU_HOST_FIELD_SERIAL, host->serial);
++        msg->AddInt32(RENKU_HOST_FIELD_AREA, host->buffer->area);
++        msg->AddInt32(RENKU_HOST_FIELD_WIDTH, host->buffer->width);
++        msg->AddInt32(RENKU_HOST_FIELD_HEIGHT, host->buffer->height);
++        msg->AddInt32(RENKU_HOST_FIELD_STRIDE, host->buffer->stride);
++        msg->AddInt32(RENKU_HOST_FIELD_X, host->x);
++        msg->AddInt32(RENKU_HOST_FIELD_Y, host->y);
++        host->announce = false;
++        host->dirty = BRect();  /* the host copies all of it */
++    }
++    else if (host->dirty.IsValid())
++    {
++        msg->what = RENKU_HOST_DIRTY;
++        msg->AddInt64(RENKU_HOST_FIELD_COOKIE, (int64)host->cookie);
++        msg->AddInt32(RENKU_HOST_FIELD_SERIAL, host->serial);
++        msg->AddInt32(RENKU_HOST_FIELD_X, (int32)host->dirty.left);
++        msg->AddInt32(RENKU_HOST_FIELD_Y, (int32)host->dirty.top);
++        msg->AddInt32(RENKU_HOST_FIELD_RIGHT, (int32)host->dirty.right);
++        msg->AddInt32(RENKU_HOST_FIELD_BOTTOM, (int32)host->dirty.bottom);
++        host->dirty = BRect();
++    }
++    else return false;
++
++    host->waiting = true;
++    *target = host->target;
++    return true;
++}
++
++/* Sends what is due, if anything. The caller holds a reference, not the mutex. */
++void pump(struct be_host *host)
++{
++    BMessage msg;
++    BMessenger target;
++    status_t status;
++    bool lost_focus = false;
++
++    pthread_mutex_lock(&hosts_mutex);
++    if (!next_message(host, &msg, &target))
++    {
++        pthread_mutex_unlock(&hosts_mutex);
++        return;
++    }
++    pthread_mutex_unlock(&hosts_mutex);
++
++    if ((status = target.SendMessage(&msg, (BHandler *)NULL, 0)) == B_OK) return;
++
++    pthread_mutex_lock(&hosts_mutex);
++    host->waiting = false;
++    /* Sent again in full when there is a next time. */
++    host->announce = true;
++    if (status == B_BAD_PORT_ID || status == B_BAD_VALUE)
++    {
++        /* The host is gone; a new hello brings it back. */
++        if (host->target == target)
++        {
++            host->target = BMessenger();
++            lost_focus = set_focus(host, false);
++        }
++    }
++    pthread_mutex_unlock(&hosts_mutex);
++    if (lost_focus) post_focus(host->cookie, false);
++}
++
++/* With hosts_mutex held. */
++void host_add_ref(struct be_host *host)
++{
++    host->refs++;
++}
++
++void host_release(struct be_host *host)
++{
++    struct be_host_buffer *buffer = NULL;
++    BMessenger target;
++    bool lost_focus = false;
++
++    pthread_mutex_lock(&hosts_mutex);
++    if (--host->refs > 0)
++    {
++        pthread_mutex_unlock(&hosts_mutex);
++        return;
++    }
++    if (find_host(host->cookie) == host) hosts.erase(host->cookie);
++    target = host->target;
++    buffer = host->buffer;
++    lost_focus = set_focus(host, false);
++    pthread_mutex_unlock(&hosts_mutex);
++
++    if (target.IsValid())
++    {
++        BMessage msg(RENKU_HOST_GONE);
++        msg.AddInt64(RENKU_HOST_FIELD_COOKIE, (int64)host->cookie);
++        target.SendMessage(&msg, (BHandler *)NULL, 0);
++    }
++    if (lost_focus) post_focus(host->cookie, false);
++    buffer_release(buffer);
++    delete host;
++}
++
++void refuse(BMessage *msg)
++{
++    BMessenger host;
++    if (msg->FindMessenger(RENKU_HOST_FIELD_HOST, &host) != B_OK) return;
++    BMessage reply(RENKU_HOST_REFUSED);
++    reply.AddInt32(RENKU_HOST_FIELD_VERSION, RENKU_HOST_VERSION);
++    reply.AddInt64(RENKU_HOST_FIELD_COOKIE, msg->GetInt64(RENKU_HOST_FIELD_COOKIE, 0));
++    host.SendMessage(&reply, (BHandler *)NULL, 0);
++}
++
++/* A wheel delta is a count of notches; anything beyond this is not from a wheel. */
++float wheel_delta(float delta)
++{
++    if (isnan(delta)) return 0;
++    if (delta > 100) return 100;
++    if (delta < -100) return -100;
++    return delta;
++}
++
++}  /* namespace */
++
++extern "C" struct be_host *be_host_create(uint64_t cookie)
++{
++    struct be_host *host;
++
++    /* Hosts address the BApplication, so it has to be running. */
++    if (be_app_start()) return NULL;
++
++    host = new struct be_host;
++    host->cookie = cookie;
++    host->refs = 1;
++    host->buffer = NULL;
++    host->x = host->y = 0;
++    host->serial = 0;
++    host->waiting = false;
++    host->announce = false;
++    host->focused = false;
++
++    pthread_mutex_lock(&hosts_mutex);
++    if (find_host(cookie))
++    {
++        pthread_mutex_unlock(&hosts_mutex);
++        delete host;
++        return NULL;
++    }
++    hosts[cookie] = host;
++    pthread_mutex_unlock(&hosts_mutex);
++    return host;
++}
++
++extern "C" void be_host_add_ref(struct be_host *host)
++{
++    pthread_mutex_lock(&hosts_mutex);
++    host_add_ref(host);
++    pthread_mutex_unlock(&hosts_mutex);
++}
++
++extern "C" void be_host_release(struct be_host *host)
++{
++    if (host) host_release(host);
++}
++
++extern "C" void be_host_gone(struct be_host *host)
++{
++    BMessenger target;
++    bool lost_focus;
++
++    if (!host) return;
++    pthread_mutex_lock(&hosts_mutex);
++    /* Out of the table, so that a hello for it is answered with RENKU_HOST_GONE, and with no
++     * target, so that nothing more goes out (next_message). */
++    if (find_host(host->cookie) == host) hosts.erase(host->cookie);
++    target = host->target;
++    host->target = BMessenger();
++    lost_focus = set_focus(host, false);
++    pthread_mutex_unlock(&hosts_mutex);
++
++    if (target.IsValid())
++    {
++        BMessage msg(RENKU_HOST_GONE);
++        msg.AddInt64(RENKU_HOST_FIELD_COOKIE, (int64)host->cookie);
++        target.SendMessage(&msg, (BHandler *)NULL, 0);
++    }
++    if (lost_focus) post_focus(host->cookie, false);
++}
++
++extern "C" int32_t be_host_team(void)
++{
++    thread_info info;
++
++    if (get_thread_info(find_thread(NULL), &info) != B_OK) return -1;
++    return info.team;
++}
++
++extern "C" struct be_host_buffer *be_host_buffer_create(int width, int height)
++{
++    struct be_host_buffer *buffer;
++    size_t size;
++    void *bits;
++    area_id area;
++
++    if (width <= 0 || height <= 0 || width > kMaxSide || height > kMaxSide) return NULL;
++    size = (size_t)width * 4 * height;
++    size = (size + B_PAGE_SIZE - 1) & ~((size_t)B_PAGE_SIZE - 1);
++    /* B_CLONEABLE_AREA: without it another team's clone_area() fails with B_NOT_ALLOWED
++     * (src/system/kernel/vm/vm.cpp, vm_clone_area). */
++    area = create_area("winerenku host surface", &bits, B_ANY_ADDRESS, size, B_NO_LOCK,
++                       B_READ_AREA | B_WRITE_AREA | B_CLONEABLE_AREA);
++    if (area < B_OK) return NULL;
++
++    buffer = new struct be_host_buffer;
++    buffer->area = area;
++    buffer->bits = bits;
++    buffer->width = width;
++    buffer->height = height;
++    buffer->stride = width * 4;
++    buffer->refs = 1;
++    return buffer;
++}
++
++extern "C" void *be_host_buffer_bits(struct be_host_buffer *buffer, int *stride)
++{
++    *stride = buffer->stride;
++    return buffer->bits;
++}
++
++extern "C" void be_host_buffer_release(struct be_host_buffer *buffer)
++{
++    buffer_release(buffer);
++}
++
++extern "C" void be_host_set_buffer(struct be_host *host, struct be_host_buffer *buffer, int x, int y)
++{
++    struct be_host_buffer *old;
++
++    if (buffer) atomic_add(&buffer->refs, 1);
++    pthread_mutex_lock(&hosts_mutex);
++    old = host->buffer;
++    host->buffer = buffer;
++    host->x = x;
++    host->y = y;
++    host->serial++;
++    host->announce = buffer != NULL;
++    /* An ACK for the previous buffer no longer counts; the new one goes out at once. */
++    host->waiting = false;
++    host->dirty = BRect();
++    host_add_ref(host);
++    pthread_mutex_unlock(&hosts_mutex);
++
++    buffer_release(old);
++    pump(host);
++    host_release(host);
++}
++
++extern "C" void be_host_invalidate(struct be_host *host, const struct be_rect *rect)
++{
++    /* BRect includes right and bottom, Win32 rectangles do not. */
++    BRect r(rect->left, rect->top, rect->right - 1, rect->bottom - 1);
++
++    if (!r.IsValid()) return;
++    pthread_mutex_lock(&hosts_mutex);
++    host->dirty = host->dirty.IsValid() ? (host->dirty | r) : r;
++    host_add_ref(host);
++    pthread_mutex_unlock(&hosts_mutex);
++
++    pump(host);
++    host_release(host);
++}
++
++/* A message from a host, on the BApplication's looper. Anything in it may be wrong or stale:
++ * it comes from another program, and the window may be gone. */
++void be_host_message(BMessage *msg)
++{
++    struct be_event event = {};
++    struct be_host *host;
++    uint64 cookie;
++    int64 value;
++    bool focus_changed = false, focus = false, lost_focus = false;
++
++    if (msg->FindInt64(RENKU_HOST_FIELD_COOKIE, &value) != B_OK) return;
++    cookie = (uint64)value;
++
++    if (msg->what == RENKU_HOST_HELLO &&
++        msg->GetInt32(RENKU_HOST_FIELD_VERSION, -1) != RENKU_HOST_VERSION)
++    {
++        refuse(msg);
++        return;
++    }
++
++    pthread_mutex_lock(&hosts_mutex);
++    if (!(host = find_host(cookie)))
++    {
++        pthread_mutex_unlock(&hosts_mutex);
++        if (msg->what == RENKU_HOST_HELLO)
++        {
++            /* Tell the host there is nothing to show, so it does not wait for it. */
++            BMessenger target;
++            if (msg->FindMessenger(RENKU_HOST_FIELD_HOST, &target) == B_OK)
++            {
++                BMessage gone(RENKU_HOST_GONE);
++                gone.AddInt64(RENKU_HOST_FIELD_COOKIE, (int64)cookie);
++                target.SendMessage(&gone, (BHandler *)NULL, 0);
++            }
++        }
++        return;
++    }
++    host_add_ref(host);
++
++    switch (msg->what)
++    {
++    case RENKU_HOST_HELLO:
++    {
++        BMessenger target;
++        if (msg->FindMessenger(RENKU_HOST_FIELD_HOST, &target) != B_OK || !target.IsValid()) break;
++        lost_focus = set_focus(host, false);
++        host->target = target;
++        host->waiting = false;
++        host->announce = host->buffer != NULL;
++        break;
++    }
++    case RENKU_HOST_BYE:
++        host->target = BMessenger();
++        host->waiting = false;
++        lost_focus = set_focus(host, false);
++        break;
++    case RENKU_HOST_ACK:
++        if (msg->GetInt32(RENKU_HOST_FIELD_SERIAL, -1) == host->serial) host->waiting = false;
++        break;
++    case RENKU_HOST_FOCUS:
++        if (!host->target.IsValid()) break;
++        focus = msg->GetBool(RENKU_HOST_FIELD_FOCUS, false);
++        focus_changed = set_focus(host, focus);
++        break;
++    }
++    /* Input from a host that has said bye, or was replaced, is dropped. */
++    bool attached = host->target.IsValid();
++    pthread_mutex_unlock(&hosts_mutex);
++
++    if (lost_focus) post_focus(cookie, false);
++    if (focus_changed) post_focus(cookie, focus);
++
++    switch (msg->what)
++    {
++    case RENKU_HOST_HELLO:
++    case RENKU_HOST_ACK:
++        pump(host);
++        break;
++    case RENKU_HOST_MOVED:
++        if (!attached) break;
++        event.x = msg->GetInt32(RENKU_HOST_FIELD_X, 0);
++        event.y = msg->GetInt32(RENKU_HOST_FIELD_Y, 0);
++        post_event(BE_EVENT_HOST_MOVED, cookie, &event);
++        break;
++    case RENKU_HOST_MOUSE_MOVE:
++        if (!attached) break;
++        event.x = msg->GetInt32(RENKU_HOST_FIELD_X, 0);
++        event.y = msg->GetInt32(RENKU_HOST_FIELD_Y, 0);
++        post_event(BE_EVENT_MOUSE_MOVE, cookie, &event);
++        break;
++    case RENKU_HOST_MOUSE_BUTTON:
++        if (!attached) break;
++        event.x = msg->GetInt32(RENKU_HOST_FIELD_X, 0);
++        event.y = msg->GetInt32(RENKU_HOST_FIELD_Y, 0);
++        /* event.c ignores a button it does not know. */
++        event.button = msg->GetInt32(RENKU_HOST_FIELD_BUTTON, -1);
++        event.down = msg->GetBool(RENKU_HOST_FIELD_DOWN, false);
++        post_event(BE_EVENT_MOUSE_BUTTON, cookie, &event);
++        break;
++    case RENKU_HOST_MOUSE_WHEEL:
++        if (!attached) break;
++        event.wheel_x = wheel_delta(msg->GetFloat(RENKU_HOST_FIELD_WHEEL_X, 0));
++        event.wheel_y = wheel_delta(msg->GetFloat(RENKU_HOST_FIELD_WHEEL_Y, 0));
++        post_event(BE_EVENT_MOUSE_WHEEL, cookie, &event);
++        break;
++    case RENKU_HOST_KEY:
++        if (!attached) break;
++        /* event.c ignores a key code outside its table. */
++        event.keycode = msg->GetInt32(RENKU_HOST_FIELD_KEY, -1);
++        event.down = msg->GetBool(RENKU_HOST_FIELD_DOWN, false);
++        post_event(BE_EVENT_KEY, cookie, &event);
++        break;
++    }
++
++    host_release(host);
++}
+diff --git a/dlls/winerenku.drv/be_private.h b/dlls/winerenku.drv/be_private.h
+index 5ee7c494..88697890 100644
+--- a/dlls/winerenku.drv/be_private.h
++++ b/dlls/winerenku.drv/be_private.h
+@@ -49,4 +49,8 @@ private:
+  * side holds only while copying an event out, never while calling Wine or the Be API. */
+ void be_event_post(const struct be_event *event);
+ 
++class BMessage;
++/* A message from a host (renku_host.h), on the BApplication's looper (be_host.cpp). */
++void be_host_message(BMessage *msg);
++
+ #endif /* __WINE_RENKU_BE_PRIVATE_H */
+diff --git a/dlls/winerenku.drv/event.c b/dlls/winerenku.drv/event.c
+index 875dce49..891c8167 100644
+--- a/dlls/winerenku.drv/event.c
++++ b/dlls/winerenku.drv/event.c
+@@ -291,6 +291,9 @@ static void handle_event(const struct be_event *event)
+         TRACE("hwnd %p %s\n", hwnd, event->down ? "minimize" : "restore");
+         NtUserPostMessage(hwnd, WM_SYSCOMMAND, event->down ? SC_MINIMIZE : SC_RESTORE, 0);
+         break;
++    case BE_EVENT_HOST_MOVED:
++        NtUserPostMessage(hwnd, WM_RENKU_HOST_MOVED, (WPARAM)(INT_PTR)event->x, (LPARAM)event->y);
++        break;
+     case BE_EVENT_CLIPBOARD:
+         TRACE("clipboard changed\n");
+         NtUserPostMessage(hwnd, WM_RENKU_CLIPBOARD_CHANGED, 0, 0);
+diff --git a/dlls/winerenku.drv/renku.h b/dlls/winerenku.drv/renku.h
+index 2b9370d9..4ce80765 100644
+--- a/dlls/winerenku.drv/renku.h
++++ b/dlls/winerenku.drv/renku.h
+@@ -43,6 +43,7 @@ enum renku_window_message
+ {
+     WM_RENKU_ACTIVATE = WM_WINE_FIRST_DRIVER_MSG,  /* wp: activated (1) or deactivated (0) */
+     WM_RENKU_FRAME_CHANGED,                        /* the BWindow moved or was resized */
++    WM_RENKU_HOST_MOVED,                           /* wp, lp: a host shows it at x, y now */
+ };
+ 
+ /* Posted by the event thread to the clipboard manager window (clipboard.c). explorer's window
+@@ -90,7 +91,9 @@ extern UINT RENKU_OpenGLInit(UINT version, const struct opengl_funcs *opengl_fun
+ /* surface.c */
+ extern struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+                                                    const RECT *rect);
+-extern struct be_bitmap *renku_surface_bitmap(struct window_surface *surface);
++extern struct window_surface *renku_surface_create_hosted(HWND hwnd, struct be_host *host,
++                                                          const RECT *rect);
++extern BOOL renku_surface_is_ours(struct window_surface *surface);
+ extern void renku_surface_retire(struct window_surface *surface);
+ 
+ /* UTF-8 copy of a Win32 string, malloc()ed; NULL on failure. */
+diff --git a/dlls/winerenku.drv/renku_be.h b/dlls/winerenku.drv/renku_be.h
+index 7edff3a5..9e5785e5 100644
+--- a/dlls/winerenku.drv/renku_be.h
++++ b/dlls/winerenku.drv/renku_be.h
+@@ -124,6 +124,31 @@ void be_layer_set_bitmap(struct be_layer *layer, struct be_bitmap *bitmap);
+ /* Removes the layer and frees the handle. */
+ void be_layer_destroy(struct be_layer *layer);
+ 
++/* A host: a native program that shows one Wine window in a view of its own, instead of the
++ * window getting a BWindow (renku_host.h has the protocol). The handle is reference counted;
++ * the last release tells the host the window is gone. Created before the host has said hello:
++ * until then pixels are kept but not sent. */
++struct be_host;
++struct be_host *be_host_create(uint64_t cookie);
++void be_host_add_ref(struct be_host *host);
++void be_host_release(struct be_host *host);
++/* The window is destroyed: tells the host now, although surfaces (a GL drawable's, say) may
++ * still hold references for a while. Nothing more is sent after it. */
++void be_host_gone(struct be_host *host);
++/* This process's team id, which a host needs to address it. */
++int32_t be_host_team(void);
++
++/* Pixels a host can map: B_RGB32, top row first, in an area other teams can clone. Reference
++ * counted; the host's handle holds one while it shows them. */
++struct be_host_buffer;
++struct be_host_buffer *be_host_buffer_create(int width, int height);
++void *be_host_buffer_bits(struct be_host_buffer *buffer, int *stride);
++void be_host_buffer_release(struct be_host_buffer *buffer);
++/* Show buffer, its top-left pixel at (x, y) in window coordinates. Takes its own reference. */
++void be_host_set_buffer(struct be_host *host, struct be_host_buffer *buffer, int x, int y);
++/* rect of the buffer changed (buffer coordinates). Never waits for the host. */
++void be_host_invalidate(struct be_host *host, const struct be_rect *rect);
++
+ /* Events from the Be side, in the order they happened. */
+ enum be_event_type
+ {
+@@ -137,6 +162,7 @@ enum be_event_type
+     BE_EVENT_MINIMIZE,      /* down: minimize (1) or restore (0), from the decorator or the Deskbar */
+     BE_EVENT_ZOOM,          /* the decorator's zoom button */
+     BE_EVENT_CLIPBOARD,     /* another program changed the system clipboard (be_clipboard_watch) */
++    BE_EVENT_HOST_MOVED,    /* x, y: a host shows the window with its top-left pixel there now */
+ };
+ 
+ enum be_mouse_button
+diff --git a/dlls/winerenku.drv/renku_host.h b/dlls/winerenku.drv/renku_host.h
+new file mode 100644
+index 00000000..8139af1a
+--- /dev/null
++++ b/dlls/winerenku.drv/renku_host.h
+@@ -0,0 +1,109 @@
++/*
++ * RenkuOS driver: showing a window in a view of another program
++ *
++ * Copyright 2026 rations
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
++ */
++
++/* The protocol between the driver and a host: a native program that shows one Wine window in
++ * a view of its own, as a plug-in host shows a plug-in's editor. app_server lets a program
++ * create views only in its own windows (ServerWindow::_CreateView in src/servers/app), so a
++ * Wine window cannot be put into another program's window. Instead the driver gives a window
++ * that asks for it no BWindow, keeps its pixels in an area the host clones, and takes the
++ * host's input as if it came from a BWindow of its own.
++ *
++ * This header is plain C with no Wine or Be types, so that a host can carry a copy. A host
++ * that changes it must change RENKU_HOST_VERSION.
++ *
++ * On the Wine side, a program asks for it per window: it sets the window property
++ * RENKU_HOST_PROP_HOSTED (any non-zero value) on a top-level window before showing it. When
++ * the window is first shown, the driver sets RENKU_HOST_PROP_TEAM on it to the team id of the
++ * process; the program hands that and the window handle (the cookie) to the host. A window
++ * without the property is not affected at all.
++ *
++ * Messages are BMessages. The host sends them to the process's BApplication,
++ * BMessenger(RENKU_HOST_SIGNATURE, team); the driver sends them to the host's BMessenger from
++ * RENKU_HOST_HELLO. Every message carries the cookie, as int64 RENKU_HOST_FIELD_COOKIE.
++ * Coordinates are screen coordinates. Either side may vanish at any time: every send may fail,
++ * and the driver never waits for a host. */
++
++#ifndef __WINE_RENKU_HOST_H
++#define __WINE_RENKU_HOST_H
++
++#define RENKU_HOST_VERSION      1
++#define RENKU_HOST_SIGNATURE    "application/x-vnd.wine"
++
++/* Window property names, as the Win32 side spells them (SetPropW). */
++#define RENKU_HOST_PROP_HOSTED  "__wine_renku_hosted"
++#define RENKU_HOST_PROP_TEAM    "__wine_renku_team"
++
++/* Field names. */
++#define RENKU_HOST_FIELD_COOKIE  "cookie"   /* int64: the window handle */
++#define RENKU_HOST_FIELD_VERSION "version"  /* int32 */
++#define RENKU_HOST_FIELD_HOST    "host"     /* BMessenger: where the driver sends to */
++#define RENKU_HOST_FIELD_AREA    "area"     /* int32 area_id: B_RGB32 pixels, top row first */
++#define RENKU_HOST_FIELD_WIDTH   "width"    /* int32 */
++#define RENKU_HOST_FIELD_HEIGHT  "height"   /* int32 */
++#define RENKU_HOST_FIELD_STRIDE  "stride"   /* int32: bytes per row */
++#define RENKU_HOST_FIELD_SERIAL  "serial"   /* int32: which surface a message is about */
++#define RENKU_HOST_FIELD_X       "x"        /* int32 */
++#define RENKU_HOST_FIELD_Y       "y"        /* int32 */
++#define RENKU_HOST_FIELD_RIGHT   "right"    /* int32, exclusive */
++#define RENKU_HOST_FIELD_BOTTOM  "bottom"   /* int32, exclusive */
++#define RENKU_HOST_FIELD_BUTTON  "button"   /* int32: 0 left, 1 right, 2 middle, 3 and 4 extra */
++#define RENKU_HOST_FIELD_DOWN    "down"     /* bool */
++#define RENKU_HOST_FIELD_KEY     "key"      /* int32: a raw key code, the "key" of B_KEY_DOWN */
++#define RENKU_HOST_FIELD_WHEEL_X "wheel_x"  /* float: notches, positive is right */
++#define RENKU_HOST_FIELD_WHEEL_Y "wheel_y"  /* float: notches, positive is down */
++#define RENKU_HOST_FIELD_FOCUS   "focus"    /* bool */
++
++/* Host -> driver. */
++enum
++{
++    /* version, host: start showing the window. The driver answers with RENKU_HOST_SURFACE
++     * once it has drawn, or RENKU_HOST_REFUSED. A second hello replaces the first host. */
++    RENKU_HOST_HELLO        = 'rhHi',
++    /* The host stops showing the window; the driver keeps drawing until a new hello. */
++    RENKU_HOST_BYE          = 'rhBy',
++    /* serial: the host has copied what the last RENKU_HOST_SURFACE or RENKU_HOST_DIRTY said;
++     * the driver sends the next change only after this. */
++    RENKU_HOST_ACK          = 'rhAk',
++    /* x, y: where the window's top-left pixel is on screen now. */
++    RENKU_HOST_MOVED        = 'rhMv',
++    RENKU_HOST_MOUSE_MOVE   = 'rhMm',  /* x, y */
++    RENKU_HOST_MOUSE_BUTTON = 'rhMb',  /* x, y, button, down */
++    RENKU_HOST_MOUSE_WHEEL  = 'rhMw',  /* wheel_x, wheel_y */
++    RENKU_HOST_KEY          = 'rhKy',  /* key, down */
++    /* focus: the host's view has the keyboard focus in an active window, or no longer has. */
++    RENKU_HOST_FOCUS        = 'rhFc',
++};
++
++/* Driver -> host. */
++enum
++{
++    /* serial, area, width, height, stride, x, y: the window's pixels are now in this area,
++     * with their top-left pixel at (x, y) in the window. Clone it, copy all of it, ack. An
++     * older area is not written to any more. */
++    RENKU_HOST_SURFACE      = 'rhSf',
++    /* serial, x, y, right, bottom: this rectangle of the area changed (area coordinates). */
++    RENKU_HOST_DIRTY        = 'rhDy',
++    /* The window is gone. */
++    RENKU_HOST_GONE         = 'rhGn',
++    /* version: the hello's version is not this driver's. */
++    RENKU_HOST_REFUSED      = 'rhNo',
++};
++
++#endif /* __WINE_RENKU_HOST_H */
+diff --git a/dlls/winerenku.drv/surface.c b/dlls/winerenku.drv/surface.c
+index ce8efe09..271ad19a 100644
+--- a/dlls/winerenku.drv/surface.c
++++ b/dlls/winerenku.drv/surface.c
+@@ -41,8 +41,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(renkudrv);
+ struct renku_surface
+ {
+     struct window_surface header;
+-    struct be_bitmap     *bitmap;   /* owned */
++    struct be_bitmap     *bitmap;   /* owned; NULL for a hosted window */
+     struct be_window     *window;   /* referenced; safe to use after the BWindow has gone */
++    struct be_host_buffer *buffer;  /* owned; a hosted window's pixels, else NULL */
++    struct be_host       *host;     /* referenced; who shows them */
+     LONG                  state;    /* enum surface_state */
+ };
+ 
+@@ -79,7 +81,30 @@ static BOOL renku_surface_flush(struct window_surface *window_surface, const REC
+     char *dst;
+     struct be_rect area;
+ 
+-    if (!surface->bitmap || bytes <= 0) return TRUE;
++    if (bytes <= 0) return TRUE;
++    if (surface->buffer)
++    {
++        /* A hosted window (renku_host.h): the same copy, into the area the host clones. It is
++         * told which part changed, in buffer coordinates. */
++        dst = be_host_buffer_bits(surface->buffer, &dst_stride);
++        src = (const char *)color_bits + dirty->top * src_stride + dirty->left * 4;
++        dst += dirty->top * dst_stride + dirty->left * 4;
++        for (y = dirty->top; y < dirty->bottom; y++, src += src_stride, dst += dst_stride)
++            memcpy(dst, src, bytes);
++
++        /* Replaced already: the host shows another surface's area now. */
++        if (InterlockedCompareExchange(&surface->state, SURFACE_RETIRED, SURFACE_RETIRED) == SURFACE_RETIRED)
++            return TRUE;
++        area.left = dirty->left;
++        area.top = dirty->top;
++        area.right = dirty->right;
++        area.bottom = dirty->bottom;
++        if (InterlockedCompareExchange(&surface->state, SURFACE_SHOWN, SURFACE_NEW) == SURFACE_NEW)
++            be_host_set_buffer(surface->host, surface->buffer, rect->left, rect->top);
++        be_host_invalidate(surface->host, &area);
++        return TRUE;
++    }
++    if (!surface->bitmap) return TRUE;
+     dst = be_bitmap_bits(surface->bitmap, &dst_stride);
+ 
+     src = (const char *)color_bits + dirty->top * src_stride + dirty->left * 4;
+@@ -109,6 +134,8 @@ static void renku_surface_destroy(struct window_surface *window_surface)
+     TRACE("freeing %p\n", surface);
+     if (surface->bitmap) be_bitmap_release(surface->bitmap);
+     if (surface->window) be_window_release(surface->window);
++    if (surface->buffer) be_host_buffer_release(surface->buffer);
++    if (surface->host) be_host_release(surface->host);
+     /* win32u frees the structure itself (window_surface_release). */
+ }
+ 
+@@ -120,6 +147,19 @@ static const struct window_surface_funcs renku_surface_funcs =
+     .destroy = renku_surface_destroy,
+ };
+ 
++/* The BITMAPINFO of a top-down 32-bpp surface of this size. */
++static void init_surface_info(BITMAPINFO *info, int width, int height)
++{
++    memset(info, 0, sizeof(*info));
++    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
++    info->bmiHeader.biWidth       = width;
++    info->bmiHeader.biHeight      = -height; /* top-down */
++    info->bmiHeader.biPlanes      = 1;
++    info->bmiHeader.biBitCount    = 32;
++    info->bmiHeader.biSizeImage   = width * 4 * height;
++    info->bmiHeader.biCompression = BI_RGB;
++}
++
+ struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window, const RECT *rect)
+ {
+     int width = rect->right - rect->left, height = rect->bottom - rect->top;
+@@ -141,15 +181,7 @@ struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+     bits = be_bitmap_bits(bitmap, &stride);
+     memset(bits, 0xff, (size_t)stride * height);
+ 
+-    memset(info, 0, sizeof(*info));
+-    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+-    info->bmiHeader.biWidth       = width;
+-    info->bmiHeader.biHeight      = -height; /* top-down */
+-    info->bmiHeader.biPlanes      = 1;
+-    info->bmiHeader.biBitCount    = 32;
+-    info->bmiHeader.biSizeImage   = width * 4 * height;
+-    info->bmiHeader.biCompression = BI_RGB;
+-
++    init_surface_info(info, width, height);
+     if (!(window_surface = window_surface_create(&renku_surface_funcs, hwnd, rect, info, 0)))
+     {
+         be_bitmap_release(bitmap);
+@@ -164,10 +196,46 @@ struct window_surface *renku_surface_create(HWND hwnd, struct be_window *window,
+     return window_surface;
+ }
+ 
+-struct be_bitmap *renku_surface_bitmap(struct window_surface *window_surface)
++/* The surface of a hosted window (renku_host.h): its pixels go to an area the host clones
++ * instead of a BBitmap. */
++struct window_surface *renku_surface_create_hosted(HWND hwnd, struct be_host *host, const RECT *rect)
+ {
+-    struct renku_surface *surface = get_renku_surface(window_surface);
+-    return surface ? surface->bitmap : NULL;
++    int width = rect->right - rect->left, height = rect->bottom - rect->top;
++    char buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
++    BITMAPINFO *info = (BITMAPINFO *)buffer;
++    struct window_surface *window_surface;
++    struct renku_surface *surface;
++    struct be_host_buffer *pixels;
++    int stride;
++    void *bits;
++
++    if (!(pixels = be_host_buffer_create(width, height)))
++    {
++        ERR("no host buffer for %p, %dx%d\n", hwnd, width, height);
++        return NULL;
++    }
++    bits = be_host_buffer_bits(pixels, &stride);
++    memset(bits, 0xff, (size_t)stride * height);
++
++    init_surface_info(info, width, height);
++    if (!(window_surface = window_surface_create(&renku_surface_funcs, hwnd, rect, info, 0)))
++    {
++        be_host_buffer_release(pixels);
++        return NULL;
++    }
++    surface = get_renku_surface(window_surface);
++    surface->buffer = pixels;
++    be_host_add_ref(host);
++    surface->host = host;
++
++    TRACE("hwnd %p rect %s surface %p, hosted\n", hwnd, wine_dbgstr_rect(rect), surface);
++    return window_surface;
++}
++
++/* Whether this is one of the driver's surfaces, not win32u's dummy or offscreen one. */
++BOOL renku_surface_is_ours(struct window_surface *window_surface)
++{
++    return get_renku_surface(window_surface) != NULL;
+ }
+ 
+ /* window_surface replaced by another one, or the window has none any more: a late first
+diff --git a/dlls/winerenku.drv/window.c b/dlls/winerenku.drv/window.c
+index c1b9a0b2..fc986d6b 100644
+--- a/dlls/winerenku.drv/window.c
++++ b/dlls/winerenku.drv/window.c
+@@ -56,8 +56,17 @@ struct renku_win_data
+     BOOL                   minimized;
+     unsigned int           flags;     /* be_window_flags */
+     BOOL                   be_activating; /* app_server activated it; Wine is catching up */
++    struct be_host        *host;      /* a host shows it instead of a BWindow (renku_host.h);
++                                         window is NULL then */
+ };
+ 
++/* renku_host.h: set by a program on a window it wants shown in another program's view, and
++ * by the driver to tell it which team the host should address. */
++static const WCHAR hosted_prop[] =
++    {'_','_','w','i','n','e','_','r','e','n','k','u','_','h','o','s','t','e','d',0};
++static const WCHAR team_prop[] =
++    {'_','_','w','i','n','e','_','r','e','n','k','u','_','t','e','a','m',0};
++
+ static int win_data_cmp(const void *key, const struct rb_entry *entry)
+ {
+     HWND hwnd = (HWND)key;
+@@ -167,6 +176,45 @@ static struct be_rect be_rect_from(const RECT *r)
+     return rect;
+ }
+ 
++/* A top-level window shown in a view of another program, not in a BWindow of its own
++ * (renku_host.h). The program opted in with hosted_prop; nothing else takes this path. Its
++ * surface keeps the pixels in an area the host clones, and the host's input arrives as the
++ * events a BWindow would send. */
++static BOOL create_hosted_window(HWND hwnd, const struct window_rects *rects)
++{
++    struct renku_win_data *created;
++
++    if (!(created = calloc(1, sizeof(*created)))) return FALSE;
++    created->hwnd = hwnd;
++    created->style = BE_WINDOW_BORDERLESS;
++    created->frame = be_rect_from(&rects->visible);
++    created->rects = *rects;
++    created->visible = TRUE;
++    if (!(created->host = be_host_create((UINT_PTR)hwnd)))
++    {
++        ERR("cannot host %p\n", hwnd);
++        free(created);
++        return FALSE;
++    }
++
++    pthread_mutex_lock(&win_data_mutex);
++    if (rb_get(&win_data_tree, hwnd))
++    {
++        pthread_mutex_unlock(&win_data_mutex);
++        be_host_release(created->host);
++        free(created);
++        return TRUE;
++    }
++    rb_put(&win_data_tree, hwnd, &created->entry);
++    pthread_mutex_unlock(&win_data_mutex);
++
++    /* After the mutex, as win32u may take its own locks (see win_data_mutex). winex11 sets its
++     * window properties from the same hook (X11DRV_create_win_data). */
++    NtUserSetProp(hwnd, team_prop, (HANDLE)(INT_PTR)be_host_team());
++    TRACE("hwnd %p: hosted, team %d\n", hwnd, (int)be_host_team());
++    return TRUE;
++}
++
+ static char *get_window_title(HWND hwnd)
+ {
+     WCHAR text[1024];
+@@ -204,6 +252,7 @@ BOOL RENKU_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struc
+      * waits until the window is visible or being shown. */
+     win_style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
+     if (!(win_style & WS_VISIBLE) && !(swp_flags & SWP_SHOWWINDOW)) return FALSE;
++    if (NtUserGetProp(hwnd, hosted_prop)) return create_hosted_window(hwnd, rects);
+     if (is_blend_only(NtUserGetWindowLongW(hwnd, GWL_EXSTYLE))) return FALSE;
+ 
+     style = style_for(win_style);
+@@ -276,12 +325,22 @@ BOOL RENKU_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect
+     struct window_surface *previous;
+     struct renku_win_data *data;
+     struct be_window *window;
++    struct be_host *host;
+ 
+     TRACE("hwnd %p, layered %u, surface_rect %s, surface %p\n", hwnd, layered, wine_dbgstr_rect(surface_rect), surface);
+ 
+     /* win32u reuses a driver surface only if its rect still matches (dlls/win32u/dce.c). */
+-    if ((previous = *surface) && renku_surface_bitmap(previous)) return TRUE;
++    if ((previous = *surface) && renku_surface_is_ours(previous)) return TRUE;
+     if (!(data = get_win_data(hwnd))) return FALSE;
++    if ((host = data->host))
++    {
++        be_host_add_ref(host);
++        release_win_data(data);
++        if (previous) window_surface_release(previous);
++        *surface = renku_surface_create_hosted(hwnd, host, surface_rect);
++        be_host_release(host);
++        return TRUE;
++    }
+     window = data->window;
+     be_window_add_ref(window);
+     release_win_data(data);
+@@ -305,7 +364,6 @@ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
+     struct renku_win_data *data;
+     struct window_surface *old_surface = NULL;
+     enum be_window_style be_style = style_for(style);
+-    struct be_bitmap *bitmap = renku_surface_bitmap(surface);
+     /* A window that became blend-only after its BWindow was made is hidden instead. */
+     BOOL visible = (style & WS_VISIBLE) && !(swp_flags & SWP_HIDEWINDOW) && !is_blend_only(ex_style);
+     BOOL minimized = (style & WS_MINIMIZE) != 0;
+@@ -313,9 +371,25 @@ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
+     TRACE("hwnd %p new_rects %s after %p flags %08x surface %p\n", hwnd, debugstr_window_rects(new_rects),
+           insert_after, swp_flags, surface);
+ 
++    if (!renku_surface_is_ours(surface)) surface = NULL;  /* win32u's dummy surface, or none */
+     if (!(data = get_win_data(hwnd))) return;
+ 
+     data->rects = *new_rects;
++    if (data->host)
++    {
++        /* No BWindow to move or show: the host decides where it is and tells us (host_moved).
++         * Only the surface is followed. */
++        data->frame = frame;
++        if (surface != data->surface)
++        {
++            if (surface) window_surface_add_ref(surface);
++            if ((old_surface = data->surface)) renku_surface_retire(old_surface);
++            data->surface = surface;
++        }
++        release_win_data(data);
++        if (old_surface) window_surface_release(old_surface);
++        return;
++    }
+     if (be_style != data->style || flags != data->flags)
+     {
+         be_window_set_style(data->window, be_style, flags);
+@@ -330,7 +404,6 @@ void RENKU_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT
+         be_window_set_frame(data->window, &frame);
+         data->frame = frame;
+     }
+-    if (!bitmap) surface = NULL;  /* win32u's dummy surface, or none */
+     if (surface != data->surface)
+     {
+         /* A new surface puts its bitmap in the view on its first flush (surface.c). */
+@@ -445,6 +518,29 @@ static void be_frame_changed(HWND hwnd)
+     NtUserSetRawWindowPos(hwnd, rect, swp_flags, FALSE);
+ }
+ 
++/* A host moved the view it shows a hosted window in: x, y is where its top-left pixel is on
++ * screen now. Wine is told, so that the program's own popups (menus, drop-down lists, which
++ * are BWindows of their own) open where the window really is. */
++static void host_moved(HWND hwnd, int x, int y)
++{
++    UINT swp_flags = SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER;
++    struct renku_win_data *data;
++    RECT rect;
++
++    if (!(data = get_win_data(hwnd))) return;
++    if (!data->host || (x == data->rects.visible.left && y == data->rects.visible.top))
++    {
++        release_win_data(data);
++        return;
++    }
++    rect = data->rects.window;
++    OffsetRect(&rect, x - data->rects.visible.left, y - data->rects.visible.top);
++    release_win_data(data);
++
++    TRACE("hwnd %p, hosted at %d,%d -> window rect %s\n", hwnd, x, y, wine_dbgstr_rect(&rect));
++    NtUserSetRawWindowPos(hwnd, rect, swp_flags, FALSE);
++}
++
+ /***********************************************************************
+  *      WindowMessage (RENKU.@)
+  *
+@@ -464,6 +560,9 @@ LRESULT RENKU_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+     case WM_RENKU_FRAME_CHANGED:
+         be_frame_changed(hwnd);
+         return 0;
++    case WM_RENKU_HOST_MOVED:
++        host_moved(hwnd, (int)(INT_PTR)wp, (int)lp);
++        return 0;
+     }
+     FIXME("hwnd %p, unexpected message %#x, wp %lx, lp %lx\n", hwnd, msg, (long)wp, (long)lp);
+     return 0;
+@@ -482,7 +581,9 @@ void RENKU_ActivateWindow(HWND hwnd, HWND previous)
+     TRACE("%p, previous %p\n", hwnd, previous);
+ 
+     if (!(data = get_win_data(hwnd))) return;
+-    if (!data->be_activating && !(data->flags & BE_WINDOW_AVOID_FOCUS)) be_window_activate(data->window);
++    /* A hosted window's host owns the activation of the window it is in. */
++    if (!data->host && !data->be_activating && !(data->flags & BE_WINDOW_AVOID_FOCUS))
++        be_window_activate(data->window);
+     release_win_data(data);
+ }
+ 
+@@ -518,5 +619,7 @@ void RENKU_DestroyWindow(HWND hwnd)
+     /* The surface holds its own reference to the window handle. */
+     if (data->surface) window_surface_release(data->surface);
+     be_window_release(data->window);
++    be_host_gone(data->host);
++    be_host_release(data->host);
+     free(data);
+ }
 -- 
 2.47.3
 

@@ -258,7 +258,7 @@ Checked by the user on bare-metal RenkuOS. The build VM is for building and the 
 | G3 | moving, resizing, minimizing and closing from the system decorator | **passed in the build VM**, 2026-11-11 (patch 16): both programs; minimize goes to the Deskbar and restores from it. Not checked on bare metal yet. |
 | G4 | clipboard, both ways | **passed for text in the build VM**, 2026-11-11 (patch 18): notepad and StyledEdit, both ways, from the menus and the shortcuts. Images and other formats are not carried yet. Not checked on bare metal yet. |
 | G5 | OSMesa GL gates 1–5 of [OSMESA-GL-PLAN.md](OSMESA-GL-PLAN.md) §5, under the new driver | **gates 1–4 passed in the build VM**, 2026-11-11 (patch 19), from the work tree, checked on the screen itself by `probes/screencheck.cpp`, three runs each: `probes/osprobe.c` (GL 4.5 on llvmpipe, hrev60072+518, Mesa 22.0.5); `probes/glprobe.c` 29/29 (4.5 compatibility and core contexts; the test pattern the right way up and the right colours; a GL child window in place; the GDI fallback under an overlapping window, which stays on top; the last frame of a burst left on screen; a resize); `probes/d3dprobe.c` 8/8 (wined3d D3D9 and D3D11 feature level 11_0 devices, presented colours on screen). Gate 5, an NA VST3 editor in jackDAW, waits for G6. Not checked on bare metal. |
-| G6 | a VST editor through vstbridge rebuilt on this Wine | not started |
+| G6 | a VST editor through vstbridge rebuilt on this Wine | **in progress** (patch 20, REVISION 10): the editor is shown inside the host's window through the driver's hosted mode. In the build VM, from the work tree: `probes/hostprobe.c` 20/20 three times; through vstbridge 0.4, two VST2 editors (GDI) reach the screen in a native host's view. Not yet checked: Kasen's FX window on bare metal, input by hand, a VST3 editor, an NA (GL) editor. |
 
 ## 5. Phases
 
@@ -295,7 +295,11 @@ records written before them have been renumbered to match.
    client windows (which it renders offscreen for every child window; here an unclipped child
    gets a view too). A first version (REVISION 7, never released) used only the GDI path.
    Then evaluate BGLView.
-7. vstbridge rebuilt on this Wine → G6.
+7. vstbridge rebuilt on this Wine → G6. **Patch 20** gives a top-level window that asks for it a
+   hosted mode: no BWindow, its pixels in an area another program clones, that program's input
+   taken as the driver's own (protocol in `dlls/winerenku.drv/renku_host.h`). vstbridge 0.4
+   shows plug-in editors with it inside the host's window, which app_server would not let a
+   Wine BWindow become part of.
 8. Release, with the gates recorded in the README.
 
 Kernel changes any of this needs (for example, 32-bit WoW64 support) are maintained and
